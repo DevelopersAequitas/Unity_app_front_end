@@ -230,28 +230,54 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           response.statusCode! < 300 &&
           response.data is Map<String, dynamic>) {
         final data = response.data['data'];
-        List? rawList;
-        if (data is Map<String, dynamic>) {
-          rawList = data['level4_categories'] as List? ??
-              data['children'] as List? ??
-              data['sub_categories'] as List? ??
-              data['items'] as List?;
-        } else if (data is List) {
-          rawList = data;
+        final List<CategoryItemModel> collected = [];
+
+        void extract(dynamic node) {
+          if (node is Map<String, dynamic>) {
+            final l2 = node['level2_categories'];
+            final l3 = node['level3_categories'];
+            final l4 = node['level4_categories'];
+            final children = node['children'] ?? node['sub_categories'] ?? node['items'];
+
+            if (l4 is List && l4.isNotEmpty) {
+              for (final item in l4) {
+                if (item is Map<String, dynamic>) {
+                  collected.add(CategoryItemModel.fromJson(item));
+                }
+              }
+            } else if (l3 is List && l3.isNotEmpty) {
+              for (final item in l3) {
+                extract(item);
+              }
+            } else if (l2 is List && l2.isNotEmpty) {
+              for (final item in l2) {
+                extract(item);
+              }
+            } else if (children is List && children.isNotEmpty) {
+              for (final item in children) {
+                extract(item);
+              }
+            } else if (node.containsKey('name') || node.containsKey('title')) {
+              collected.add(CategoryItemModel.fromJson(node));
+            }
+          } else if (node is List) {
+            for (final item in node) {
+              extract(item);
+            }
+          }
         }
 
-        if (rawList != null) {
-          final items = rawList
-              .map((e) => CategoryItemModel.fromJson(e as Map<String, dynamic>))
-              .toList();
-          final hasOther = items.any(
+        extract(data);
+
+        if (collected.isNotEmpty) {
+          final hasOther = collected.any(
             (c) =>
                 c.isOther ||
                 c.name.trim().toLowerCase() == 'other' ||
                 c.name.trim().toLowerCase() == 'others',
           );
           if (!hasOther) {
-            items.add(
+            collected.add(
               CategoryItemModel(
                 id: 'other',
                 name: 'Other',
@@ -260,7 +286,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
               ),
             );
           }
-          return items;
+          return collected;
         }
       }
       return _defaultSubcategories(parentId);

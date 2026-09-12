@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../home/data/models/timeline_item_model.dart';
+import '../../../home/domain/entities/timeline_item_entity.dart';
+import '../../../profile/data/models/profile_model.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/geo_peer_model.dart';
 import '../models/match_peer_model.dart';
@@ -40,11 +43,21 @@ abstract class PeersRemoteDataSource {
 
   Future<List<MatchPeerModel>> getMatchPeers();
 
+  Future<ProfileModel> getMemberProfile(String memberId);
+
+  Future<List<TimelineItemEntity>> getMemberPosts(String memberId, {int page = 1});
+
+  Future<void> followUser(String userId);
+
+  Future<void> unfollowUser(String userId);
+
   Future<void> sendConnectionRequest(String memberId);
 
   Future<void> acceptConnectionRequest(String requesterId);
 
   Future<void> declineConnectionRequest(String memberId);
+
+  Future<void> removeConnection(String memberId);
 
   Future<void> cancelSentConnectionRequest(String requestId);
 
@@ -104,7 +117,8 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
       queryParameters: queryParams,
     );
 
-    return _extractPeerList(response.data);
+    final peers = _extractPeerList(response.data);
+    return peers.map((p) => p.copyWith(connectionStatus: 'connected')).toList();
   }
 
   @override
@@ -183,6 +197,111 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
   }
 
   @override
+  Future<ProfileModel> getMemberProfile(String memberId) async {
+    final response = await _dio.get(ApiEndpoints.member(memberId));
+    final data = response.data;
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final inner = data['data'];
+      if (inner is Map<String, dynamic>) {
+        return ProfileModel.fromJson(inner);
+      }
+    }
+    if (data is Map<String, dynamic>) {
+      return ProfileModel.fromJson(data);
+    }
+    throw Exception('Failed to load member profile');
+  }
+
+  @override
+  Future<List<TimelineItemEntity>> getMemberPosts(String memberId, {int page = 1}) async {
+    try {
+      dynamic data;
+      // 1. Primary: /users/{memberId}/posts
+      try {
+        final response = await _dio.get(
+          ApiEndpoints.userPosts(memberId),
+          queryParameters: {'page': page, 'per_page': 10},
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          data = response.data;
+        }
+      } catch (_) {}
+
+      // 2. Fallback: /members/{memberId}/posts
+      if (data == null || (data is Map && data['data'] == null && data['items'] == null && data['posts'] == null)) {
+        try {
+          final response = await _dio.get(
+            '/members/$memberId/posts',
+            queryParameters: {'page': page, 'per_page': 10},
+          );
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            data = response.data;
+          }
+        } catch (_) {}
+      }
+
+      // 3. Fallback: /posts?user_id={memberId}
+      if (data == null || (data is Map && data['data'] == null && data['items'] == null && data['posts'] == null)) {
+        try {
+          final response = await _dio.get(
+            '/posts',
+            queryParameters: {'user_id': memberId, 'page': page, 'per_page': 10},
+          );
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            data = response.data;
+          }
+        } catch (_) {}
+      }
+
+      if (data != null) {
+        List? rawList;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'];
+          if (inner is List) {
+            rawList = inner;
+          } else if (inner is Map<String, dynamic>) {
+            rawList = (inner['items'] ?? inner['posts'] ?? inner['data']) as List?;
+          } else if (data['items'] is List) {
+            rawList = data['items'] as List?;
+          } else if (data['posts'] is List) {
+            rawList = data['posts'] as List?;
+          }
+        } else if (data is List) {
+          rawList = data;
+        }
+
+        if (rawList != null) {
+          return rawList
+              .whereType<Map<String, dynamic>>()
+              .map((json) => TimelineItemModel.fromJson(json).toEntity())
+              .toList();
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> followUser(String userId) async {
+    await _dio.post(ApiEndpoints.followUser(userId));
+  }
+
+  @override
+  Future<void> unfollowUser(String userId) async {
+    try {
+      await _dio.delete(ApiEndpoints.unfollowUser(userId));
+    } catch (_) {
+      try {
+        await _dio.post(ApiEndpoints.unfollowUser(userId));
+      } catch (e) {
+        rethrow;
+      }
+    }
+  }
+
+  @override
   Future<void> sendConnectionRequest(String memberId) async {
     await _dio.post(ApiEndpoints.memberConnections(memberId));
   }
@@ -194,6 +313,11 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
 
   @override
   Future<void> declineConnectionRequest(String memberId) async {
+    await _dio.delete(ApiEndpoints.memberConnections(memberId));
+  }
+
+  @override
+  Future<void> removeConnection(String memberId) async {
     await _dio.delete(ApiEndpoints.memberConnections(memberId));
   }
 

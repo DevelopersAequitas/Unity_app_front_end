@@ -49,7 +49,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<String> uploadFile(File file) async {
-    return remoteDataSource.uploadFile(file);
+  Future<String> uploadFile(File file, {void Function(double progress)? onProgress}) async {
+    return remoteDataSource.uploadFile(file, onProgress: onProgress);
   }
 }

@@ -14,11 +14,13 @@ class LocationPickerResult {
   final String address;
   final double latitude;
   final double longitude;
+  final String? pincode;
 
   const LocationPickerResult({
     required this.address,
     required this.latitude,
     required this.longitude,
+    this.pincode,
   });
 }
 
@@ -63,6 +65,7 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
 
   LatLng _currentCenter = const LatLng(28.6139, 77.2090); // Default to New Delhi
   String _currentAddress = 'Fetching address...';
+  String? _currentPincode;
   bool _isGeocoding = false;
   bool _isLocating = false;
   Timer? _geocodeDebounce;
@@ -197,9 +200,12 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
 
       if (response.statusCode == 200 && response.data is Map) {
         final displayName = response.data['display_name'] as String?;
+        final addressDetails = response.data['address'] as Map<String, dynamic>?;
+        final postcode = addressDetails?['postcode']?.toString();
         if (displayName != null && displayName.isNotEmpty && mounted) {
           setState(() {
             _currentAddress = displayName;
+            _currentPincode = postcode;
             _isGeocoding = false;
           });
           return;
@@ -263,9 +269,12 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
 
     if (lat != null && lon != null) {
       final target = LatLng(lat, lon);
+      final addressDetails = item['address'] as Map<String, dynamic>?;
+      final postcode = addressDetails?['postcode']?.toString();
       setState(() {
         _currentCenter = target;
         _currentAddress = name;
+        _currentPincode = postcode;
         _searchResults = [];
       });
       FocusScope.of(context).unfocus();
@@ -611,11 +620,20 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
                       PrimaryPillButton(
                         label: 'Confirm Company Location',
                         onPressed: () {
+                          String? pincode = _currentPincode?.trim();
+                          if (pincode == null || pincode.isEmpty) {
+                            final pinMatch = RegExp(r'\b([1-9][0-9]{5})\b').firstMatch(_currentAddress);
+                            if (pinMatch != null) {
+                              pincode = pinMatch.group(1);
+                            }
+                          }
+
                           Navigator.of(context).pop(
                             LocationPickerResult(
                               address: _currentAddress,
                               latitude: _currentCenter.latitude,
                               longitude: _currentCenter.longitude,
+                              pincode: pincode,
                             ),
                           );
                         },

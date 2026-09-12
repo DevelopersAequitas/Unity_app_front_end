@@ -1,56 +1,51 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_environment.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/profile_entity.dart';
+import 'intro_video_player_dialog.dart';
 
 class ProfileMediaTab extends StatelessWidget {
   final ProfileEntity profile;
 
-  const ProfileMediaTab({
-    super.key,
-    required this.profile,
-  });
+  const ProfileMediaTab({super.key, required this.profile});
+
+  String? get _effectiveVideoUrl {
+    if (profile.profileVideoUrl != null && profile.profileVideoUrl!.trim().isNotEmpty) {
+      return profile.profileVideoUrl!.trim();
+    }
+    if (profile.profileVideoId != null && profile.profileVideoId!.trim().isNotEmpty) {
+      return '${AppEnvironment.baseUrl}/files/${profile.profileVideoId!.trim()}';
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final mediaList = profile.media;
-    final hasVideo = profile.profileVideoUrl != null && profile.profileVideoUrl!.isNotEmpty;
-    final hasMedia = mediaList.isNotEmpty || hasVideo;
+    final videoUrl = _effectiveVideoUrl;
+    final hasVideo = videoUrl != null && videoUrl.isNotEmpty;
 
-    if (!hasMedia) {
+    if (!hasVideo && mediaList.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl, horizontal: AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: const BoxDecoration(
-                color: AppColor.backgroundSubtle,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.perm_media_outlined,
-                size: 36,
-                color: AppColor.textTertiary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
+            const Icon(Icons.perm_media_outlined, size: 36, color: AppColor.lightTextTertiary),
+            const SizedBox(height: 8),
             Text(
               'No media uploaded yet',
-              style: AppTypography.titleSmall.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColor.textPrimary,
+              style: AppTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                color: AppColor.lightTextPrimary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Upload photos, portfolio items and your profile video to stand out.',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColor.textTertiary,
-                fontSize: 12,
-              ),
+              'Upload photos, portfolio items and video to stand out.',
+              style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextTertiary, fontSize: 11.5),
               textAlign: TextAlign.center,
             ),
           ],
@@ -58,28 +53,34 @@ class ProfileMediaTab extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Profile Video Section if present
-          if (hasVideo) ...[
-            Text(
-              'Profile Video',
-              style: AppTypography.labelLarge.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColor.textPrimary,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (hasVideo) ...[
+          Text(
+            'Profile Video',
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: AppColor.lightTextPrimary,
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Container(
-              height: 180,
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              IntroVideoPlayerDialog.show(
+                context,
+                videoUrl: videoUrl,
+                title: profile.displayName,
+              );
+            },
+            child: Container(
+              height: 160,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColor.black,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(color: AppColor.borderSubtle),
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColor.lightBorder),
               ),
               clipBehavior: Clip.antiAlias,
               child: Stack(
@@ -92,98 +93,66 @@ class ProfileMediaTab extends StatelessWidget {
                       width: double.infinity,
                       height: double.infinity,
                     ),
+                  Container(color: Colors.black.withValues(alpha: 0.35)),
                   Container(
-                    color: Colors.black.withValues(alpha: 0.35),
-                  ),
-                  Container(
-                    width: 48,
-                    height: 48,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: AppColor.white.withValues(alpha: 0.9),
+                      gradient: AppColor.brandGradient,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.primaryPink.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.play_arrow_rounded,
-                      size: 32,
-                      color: AppColor.primary,
-                    ),
+                    child: const Icon(Icons.play_arrow_rounded, size: 28, color: Colors.white),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
-          ],
-
-          // Media items grid
-          if (mediaList.isNotEmpty) ...[
-            Text(
-              'Portfolio & Media (${mediaList.length})',
-              style: AppTypography.labelLarge.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColor.textPrimary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 6,
-                mainAxisSpacing: 6,
-                childAspectRatio: 1,
-              ),
-              itemCount: mediaList.length,
-              itemBuilder: (context, index) {
-                final item = mediaList[index];
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      CachedNetworkImage(
-                        imageUrl: item.url,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: AppColor.backgroundSubtle,
-                          child: const Center(
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 1.5),
-                            ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: AppColor.backgroundSubtle,
-                          child: const Icon(Icons.broken_image_outlined, size: 20, color: AppColor.textTertiary),
-                        ),
-                      ),
-                      if (item.type == 'video')
-                        Positioned(
-                          right: 4,
-                          bottom: 4,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.black54,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Icon(
-                              Icons.play_circle_fill,
-                              size: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
+          ),
+          const SizedBox(height: 16),
         ],
-      ),
+        if (mediaList.isNotEmpty) ...[
+          Text(
+            'Portfolio & Media (${mediaList.length})',
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: AppColor.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1,
+            ),
+            itemCount: mediaList.length,
+            itemBuilder: (_, index) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: mediaList[index].url,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => Container(color: AppColor.lightSurfaceSubtle),
+                  errorWidget: (_, _, _) => Container(
+                    color: AppColor.lightSurfaceSubtle,
+                    child: const Icon(Icons.broken_image_outlined, size: 20, color: AppColor.lightTextTertiary),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ],
     );
   }
 }

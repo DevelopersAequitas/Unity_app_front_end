@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -45,7 +46,9 @@ class _NearMeScreenState extends State<NearMeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
+    final iconColor = isDark
+        ? AppColor.darkTextPrimary
+        : AppColor.lightTextPrimary;
 
     return Scaffold(
       backgroundColor: isDark ? AppColor.darkBackground : AppColor.lightSurface,
@@ -73,16 +76,12 @@ class _NearMeScreenState extends State<NearMeScreen> {
           ),
           // Refresh button
           IconButton(
-            icon: Icon(
-              Icons.refresh_rounded,
-              size: 24,
-              color: iconColor,
-            ),
+            icon: Icon(Icons.refresh_rounded, size: 24, color: iconColor),
             tooltip: 'Refresh Nearby',
             onPressed: () {
-              context
-                  .read<NearMeBloc>()
-                  .add(const NearMeFetchRequested(refresh: true));
+              context.read<NearMeBloc>().add(
+                const NearMeFetchRequested(refresh: true),
+              );
             },
           ),
           const SizedBox(width: 4),
@@ -90,15 +89,15 @@ class _NearMeScreenState extends State<NearMeScreen> {
       ),
       body: BlocConsumer<NearMeBloc, NearMeState>(
         listenWhen: (prev, curr) =>
-            curr.errorMessage != null &&
-            prev.errorMessage != curr.errorMessage,
+            curr.errorMessage != null && prev.errorMessage != curr.errorMessage,
         listener: (context, state) {
           if (state.errorMessage != null) {
             AppSnackBar.showError(context, state.errorMessage!);
           }
         },
         builder: (context, state) {
-          final userCenter = (state.userLatitude != null &&
+          final userCenter =
+              (state.userLatitude != null &&
                   state.userLongitude != null &&
                   state.userLatitude != 0)
               ? LatLng(state.userLatitude!, state.userLongitude!)
@@ -124,8 +123,7 @@ class _NearMeScreenState extends State<NearMeScreen> {
                         TileLayer(
                           urlTemplate:
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName:
-                              'com.peersglobal.unity_app',
+                          userAgentPackageName: 'com.peersglobal.unity_app',
                         ),
                         MarkerLayer(
                           markers: _buildMapMarkers(state, userCenter),
@@ -199,9 +197,7 @@ class _NearMeScreenState extends State<NearMeScreen> {
                   child: NearMeRadiusSelector(
                     selectedRadius: state.selectedRadiusKm,
                     onRadiusChanged: (r) {
-                      context
-                          .read<NearMeBloc>()
-                          .add(NearMeRadiusChanged(r));
+                      context.read<NearMeBloc>().add(NearMeRadiusChanged(r));
                     },
                   ),
                 ),
@@ -219,10 +215,7 @@ class _NearMeScreenState extends State<NearMeScreen> {
                 decoration: const BoxDecoration(
                   color: AppColor.lightSurface,
                   border: Border(
-                    bottom: BorderSide(
-                      color: AppColor.lightBorder,
-                      width: 1,
-                    ),
+                    bottom: BorderSide(color: AppColor.lightBorder, width: 1),
                   ),
                 ),
                 child: Row(
@@ -231,21 +224,21 @@ class _NearMeScreenState extends State<NearMeScreen> {
                       'Nearby Peers',
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                         color: AppColor.lightTextPrimary,
                         letterSpacing: -0.2,
                       ),
                     ),
-                    const Spacer(),
-                    if (state.nearbyPeers.isNotEmpty)
-                      Text(
-                        '${state.nearbyPeers.length} Peers found',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColor.lightTextSecondary,
-                        ),
-                      ),
+                    // const Spacer(),
+                    // if (state.nearbyPeers.isNotEmpty)
+                    //   Text(
+                    //     '${state.nearbyPeers.length} Peers found',
+                    //     style: const TextStyle(
+                    //       fontSize: 12,
+                    //       fontWeight: FontWeight.w600,
+                    //       color: AppColor.lightTextSecondary,
+                    //     ),
+                    //   ),
                   ],
                 ),
               ),
@@ -255,68 +248,75 @@ class _NearMeScreenState extends State<NearMeScreen> {
                 child: RefreshIndicator(
                   color: AppColor.primaryBlue,
                   onRefresh: () async {
-                    context
-                        .read<NearMeBloc>()
-                        .add(const NearMeFetchRequested(refresh: true));
+                    context.read<NearMeBloc>().add(
+                      const NearMeFetchRequested(refresh: true),
+                    );
                   },
-                  child: state.status == NearMeStatus.loading &&
+                  child:
+                      state.status == NearMeStatus.loading &&
                           state.nearbyPeers.isEmpty
                       ? const PeersSkeletonLoader()
                       : state.nearbyPeers.isEmpty
-                          ? _buildEmptyState()
-                          : NotificationListener<ScrollNotification>(
-                              onNotification: (notification) {
-                                if (notification is ScrollUpdateNotification) {
-                                  if (notification.metrics.pixels >=
-                                      notification.metrics.maxScrollExtent - 200) {
-                                    context
-                                        .read<NearMeBloc>()
-                                        .add(const NearMeLoadMoreRequested());
-                                  }
-                                }
-                                return false;
-                              },
-                              child: ListView.builder(
-                                physics:
-                                    const AlwaysScrollableScrollPhysics(),
-                                itemCount: state.nearbyPeers.length +
-                                    (state.isLoadingMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index >= state.nearbyPeers.length) {
-                                    return const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 20),
-                                      child: Center(
-                                        child: SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: AppColor.primaryBlue,
-                                          ),
-                                        ),
+                      ? _buildEmptyState()
+                      : NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            if (notification is ScrollUpdateNotification) {
+                              if (notification.metrics.pixels >=
+                                  notification.metrics.maxScrollExtent - 200) {
+                                context.read<NearMeBloc>().add(
+                                  const NearMeLoadMoreRequested(),
+                                );
+                              }
+                            }
+                            return false;
+                          },
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount:
+                                state.nearbyPeers.length +
+                                (state.isLoadingMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index >= state.nearbyPeers.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColor.primaryBlue,
                                       ),
-                                    );
-                                  }
-                                  final peer = state.nearbyPeers[index];
-                                  return NearMePeerCard(
-                                    peer: peer,
-                                    onConnect: () {
-                                      AppSnackBar.showSuccess(
-                                        context,
-                                        'Connected with ${peer.displayName}',
-                                      );
-                                    },
-                                    onMessage: () {
-                                      AppSnackBar.showInfo(
-                                        context,
-                                        'Messaging ${peer.displayName}',
-                                      );
-                                    },
-                                    onTap: () {},
+                                    ),
+                                  ),
+                                );
+                              }
+                              final peer = state.nearbyPeers[index];
+                              return NearMePeerCard(
+                                peer: peer,
+                                onConnect: () {
+                                  AppSnackBar.showSuccess(
+                                    context,
+                                    'Connected with ${peer.displayName}',
                                   );
                                 },
-                              ),
-                            ),
+                                onMessage: () {
+                                  AppSnackBar.showInfo(
+                                    context,
+                                    'Messaging ${peer.displayName}',
+                                  );
+                                },
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.peerProfile,
+                                    arguments: peer.id,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -429,4 +429,3 @@ class _NearMeScreenState extends State<NearMeScreen> {
     );
   }
 }
-

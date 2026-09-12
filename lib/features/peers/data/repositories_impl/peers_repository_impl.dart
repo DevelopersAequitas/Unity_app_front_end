@@ -1,3 +1,5 @@
+import '../../../home/domain/entities/timeline_item_entity.dart';
+import '../../../profile/domain/entities/profile_entity.dart';
 import '../../domain/entities/geo_peer_entity.dart';
 import '../../domain/entities/match_peer_entity.dart';
 import '../../domain/entities/peer_entity.dart';
@@ -159,6 +161,27 @@ class PeersRepositoryImpl implements PeersRepository {
   }
 
   @override
+  Future<ProfileEntity> getMemberProfile(String memberId) async {
+    final model = await remoteDataSource.getMemberProfile(memberId);
+    return model;
+  }
+
+  @override
+  Future<List<TimelineItemEntity>> getMemberPosts(String memberId, {int page = 1}) {
+    return remoteDataSource.getMemberPosts(memberId, page: page);
+  }
+
+  @override
+  Future<void> followUser(String userId) {
+    return remoteDataSource.followUser(userId);
+  }
+
+  @override
+  Future<void> unfollowUser(String userId) {
+    return remoteDataSource.unfollowUser(userId);
+  }
+
+  @override
   Future<void> sendConnectionRequest(String memberId) {
     return remoteDataSource.sendConnectionRequest(memberId);
   }
@@ -171,6 +194,11 @@ class PeersRepositoryImpl implements PeersRepository {
   @override
   Future<void> declineConnectionRequest(String memberId) {
     return remoteDataSource.declineConnectionRequest(memberId);
+  }
+
+  @override
+  Future<void> removeConnection(String memberId) {
+    return remoteDataSource.removeConnection(memberId);
   }
 
   @override

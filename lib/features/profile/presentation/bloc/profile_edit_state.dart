@@ -9,6 +9,8 @@ class ProfileEditState extends Equatable {
   final String? successMessage;
   final String? errorMessage;
   final String? uploadedFileId;
+  final double uploadProgress;
+  final String? uploadType;
 
   const ProfileEditState({
     this.status = ProfileEditStatus.initial,
@@ -16,6 +18,8 @@ class ProfileEditState extends Equatable {
     this.successMessage,
     this.errorMessage,
     this.uploadedFileId,
+    this.uploadProgress = 0.0,
+    this.uploadType,
   });
 
   ProfileEditState copyWith({
@@ -24,6 +28,8 @@ class ProfileEditState extends Equatable {
     String? successMessage,
     String? errorMessage,
     String? uploadedFileId,
+    double? uploadProgress,
+    String? uploadType,
   }) {
     return ProfileEditState(
       status: status ?? this.status,
@@ -31,6 +37,8 @@ class ProfileEditState extends Equatable {
       successMessage: successMessage,
       errorMessage: errorMessage,
       uploadedFileId: uploadedFileId ?? this.uploadedFileId,
+      uploadProgress: uploadProgress ?? this.uploadProgress,
+      uploadType: uploadType ?? this.uploadType,
     );
   }
 
@@ -41,5 +49,7 @@ class ProfileEditState extends Equatable {
         successMessage,
         errorMessage,
         uploadedFileId,
+        uploadProgress,
+        uploadType,
       ];
 }

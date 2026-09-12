@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../bloc/peers_bloc.dart';
@@ -176,6 +177,13 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
                         AppSnackBar.showInfo(
                           context,
                           'Messaging ${peer.displayName}',
+                        );
+                      },
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.peerProfile,
+                          arguments: peer.id,
                         );
                       },
                       onBookmark: () {

@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/image_source_picker_sheet.dart';
+import '../../../../core/widgets/video_source_picker_sheet.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_edit_bloc.dart';
 import '../bloc/profile_edit_event.dart';
@@ -14,28 +14,23 @@ import '../bloc/profile_edit_state.dart';
 class EditMediaPortfolioScreen extends StatefulWidget {
   final ProfileEntity profile;
 
-  const EditMediaPortfolioScreen({
-    super.key,
-    required this.profile,
-  });
+  const EditMediaPortfolioScreen({super.key, required this.profile});
 
   @override
   State<EditMediaPortfolioScreen> createState() => _EditMediaPortfolioScreenState();
 }
 
 class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickAndUploadImage({
-    required ImageSource source,
-    required bool isCover,
-  }) async {
+  Future<void> _pickAndUploadPhoto({required bool isCover}) async {
     try {
-      final pickedFile = await _picker.pickImage(source: source, imageQuality: 85);
-      if (pickedFile != null && mounted) {
+      final croppedFile = isCover
+          ? await ImageSourcePickerSheet.showCoverPhotoCropper(context)
+          : await ImageSourcePickerSheet.showProfilePhotoCropper(context);
+
+      if (croppedFile != null && mounted) {
         context.read<ProfileEditBloc>().add(
               ProfileUploadPhotoRequested(
-                file: File(pickedFile.path),
+                file: File(croppedFile.path),
                 isCover: isCover,
               ),
             );
@@ -43,7 +38,7 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
+          SnackBar(content: Text('Failed to process image: $e')),
         );
       }
     }
@@ -51,82 +46,38 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
 
   Future<void> _pickAndUploadVideo() async {
     try {
-      final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
+      final pickedFile = await VideoSourcePickerSheet.show(
+        context,
+        maxDurationSeconds: 30,
+      );
       if (pickedFile != null && mounted) {
         context.read<ProfileEditBloc>().add(
-              ProfileUploadVideoRequested(
-                file: File(pickedFile.path),
-              ),
+              ProfileUploadVideoRequested(file: File(pickedFile.path)),
             );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick video: $e')),
+          SnackBar(content: Text('Failed to process video: $e')),
         );
       }
     }
   }
 
-  void _showMediaSourceSheet({required bool isCover, bool isVideo = false}) {
-    if (isVideo) {
-      _pickAndUploadVideo();
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusLg)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_library_outlined, color: AppColor.primary),
-                  title: const Text('Choose from Gallery'),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    _pickAndUploadImage(source: ImageSource.gallery, isCover: isCover);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined, color: AppColor.primary),
-                  title: const Text('Take a Photo'),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    _pickAndUploadImage(source: ImageSource.camera, isCover: isCover);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.background,
+      backgroundColor: AppColor.lightScaffoldBg,
       appBar: AppBar(
         title: Text(
           'Media & Portfolio',
-          style: AppTypography.titleMedium.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColor.textPrimary,
-          ),
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w500, color: AppColor.lightTextPrimary),
         ),
         centerTitle: false,
-        backgroundColor: AppColor.white,
+        backgroundColor: AppColor.lightSurface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColor.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColor.lightTextPrimary),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -134,17 +85,11 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
         listener: (context, state) {
           if (state.status == ProfileEditStatus.uploaded) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.successMessage ?? 'Media updated successfully!'),
-                backgroundColor: const Color(0xFF10B981),
-              ),
+              SnackBar(content: Text(state.successMessage ?? 'Media updated successfully!')),
             );
           } else if (state.status == ProfileEditStatus.failure && state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Colors.red,
-              ),
+              SnackBar(content: Text(state.errorMessage!), backgroundColor: AppColor.error),
             );
           }
         },
@@ -153,51 +98,88 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
           final currentProfile = state.updatedProfile ?? widget.profile;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (isUploading) ...[
-                  const LinearProgressIndicator(color: AppColor.primary),
-                  const SizedBox(height: AppSpacing.sm),
+                  _buildUploadProgress(state),
+                  const SizedBox(height: 12),
                 ],
-
-                // Profile Photo Card
                 _buildMediaSection(
                   title: 'Profile Photo',
-                  subtitle: 'Recommended size: 400x400px (Square)',
+                  subtitle: 'Recommended size: 400x400px (1:1 Square)',
                   imageUrl: currentProfile.profilePhotoUrl,
                   isAvatar: true,
-                  onUpload: () => _showMediaSourceSheet(isCover: false),
+                  onUpload: () => _pickAndUploadPhoto(isCover: false),
                 ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Cover Photo Card
+                const SizedBox(height: 12),
                 _buildMediaSection(
                   title: 'Cover Banner Photo',
-                  subtitle: 'Recommended size: 1200x400px (3:1 aspect ratio)',
+                  subtitle: 'Recommended size: 1200x400px (3:1 banner)',
                   imageUrl: currentProfile.coverPhotoUrl,
                   isAvatar: false,
-                  onUpload: () => _showMediaSourceSheet(isCover: true),
+                  onUpload: () => _pickAndUploadPhoto(isCover: true),
                 ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Profile Video
+                const SizedBox(height: 12),
                 _buildVideoSection(
                   title: 'Profile Introduction Video',
-                  subtitle: 'Upload a 30-60 second pitch video introducing yourself',
+                  subtitle: 'Record or upload a pitch video (Max 30 seconds)',
                   videoUrl: currentProfile.profileVideoUrl,
-                  onUpload: () => _showMediaSourceSheet(isCover: false, isVideo: true),
+                  onUpload: _pickAndUploadVideo,
                 ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Portfolio Items
-                _buildPortfolioGallery(currentProfile.media),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: 24),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildUploadProgress(ProfileEditState state) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColor.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColor.primaryBlue.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryBlue),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Uploading ${state.uploadType ?? "Media"}... Please wait',
+                  style: AppTypography.bodySmall.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppColor.lightTextPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: const LinearProgressIndicator(
+              backgroundColor: AppColor.lightSurfaceSubtle,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColor.primaryBlue),
+              minHeight: 4,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -210,100 +192,79 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
     required VoidCallback onUpload,
   }) {
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColor.borderSubtle),
+        color: AppColor.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColor.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColor.textPrimary,
-                      ),
-                    ),
+                    Text(title, style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w500, fontSize: 13, color: AppColor.lightTextPrimary)),
                     const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColor.textTertiary,
-                        fontSize: 10,
-                      ),
-                    ),
+                    Text(subtitle, style: AppTypography.bodySmall.copyWith(fontSize: 10.5, color: AppColor.lightTextTertiary)),
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              OutlinedButton.icon(
-                onPressed: onUpload,
-                icon: const Icon(Icons.upload_rounded, size: 14),
-                label: Text(hasImage ? 'Change' : 'Upload'),
-                style: OutlinedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              GestureDetector(
+                onTap: onUpload,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: AppColor.brandGradient,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColor.primaryPink.withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1.5),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    hasImage ? 'Change' : 'Upload',
+                    style: AppTypography.labelSmall.copyWith(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 10),
           if (hasImage)
             isAvatar
                 ? Center(
                     child: CircleAvatar(
-                      radius: 40,
+                      radius: 36,
                       backgroundImage: CachedNetworkImageProvider(imageUrl),
                     ),
                   )
                 : ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    borderRadius: BorderRadius.circular(8),
                     child: SizedBox(
-                      height: 120,
+                      height: 110,
                       width: double.infinity,
-                      child: CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        fit: BoxFit.cover,
-                      ),
+                      child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
                     ),
                   )
           else
             Container(
-              height: isAvatar ? 80 : 100,
+              height: isAvatar ? 72 : 90,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColor.backgroundSubtle,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                border: Border.all(color: AppColor.borderSubtle, style: BorderStyle.solid),
+                color: AppColor.lightSurfaceSubtle,
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isAvatar ? Icons.account_circle_outlined : Icons.image_outlined,
-                      size: 28,
-                      color: AppColor.textTertiary,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'No image uploaded',
-                      style: AppTypography.labelSmall.copyWith(color: AppColor.textTertiary),
-                    ),
-                  ],
-                ),
+                child: Icon(isAvatar ? Icons.account_circle_outlined : Icons.image_outlined, size: 28, color: AppColor.lightTextTertiary),
               ),
             ),
         ],
@@ -318,173 +279,80 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
     required VoidCallback onUpload,
   }) {
     final hasVideo = videoUrl != null && videoUrl.isNotEmpty;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColor.borderSubtle),
+        color: AppColor.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColor.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: AppTypography.labelLarge.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColor.textPrimary,
-                      ),
-                    ),
+                    Text(title, style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w500, fontSize: 13, color: AppColor.lightTextPrimary)),
                     const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColor.textTertiary,
-                        fontSize: 10,
-                      ),
-                    ),
+                    Text(subtitle, style: AppTypography.bodySmall.copyWith(fontSize: 10.5, color: AppColor.lightTextTertiary)),
                   ],
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: onUpload,
-                icon: const Icon(Icons.video_call_rounded, size: 16),
-                label: Text(hasVideo ? 'Change' : 'Upload'),
-                style: OutlinedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              GestureDetector(
+                onTap: onUpload,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: AppColor.brandGradient,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColor.primaryPink.withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1.5),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    hasVideo ? 'Change' : 'Upload',
+                    style: AppTypography.labelSmall.copyWith(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 10),
           Container(
-            height: 100,
+            height: 90,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: hasVideo ? AppColor.black : AppColor.backgroundSubtle,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              color: hasVideo ? Colors.black : AppColor.lightSurfaceSubtle,
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
               child: hasVideo
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.play_circle_fill, color: Colors.white, size: 28),
+                        const Icon(Icons.play_circle_fill, color: Colors.white, size: 24),
                         const SizedBox(width: 8),
-                        Text(
-                          'Introduction Video Attached',
-                          style: AppTypography.labelMedium.copyWith(color: Colors.white),
-                        ),
+                        Text('Intro Video Attached', style: AppTypography.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w500)),
                       ],
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.videocam_outlined, size: 28, color: AppColor.textTertiary),
-                        const SizedBox(height: 4),
-                        Text(
-                          'No intro video uploaded',
-                          style: AppTypography.labelSmall.copyWith(color: AppColor.textTertiary),
-                        ),
+                        const Icon(Icons.videocam_outlined, size: 24, color: AppColor.lightTextTertiary),
+                        const SizedBox(height: 2),
+                        Text('No intro video attached', style: AppTypography.bodySmall.copyWith(fontSize: 11, color: AppColor.lightTextTertiary)),
                       ],
                     ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPortfolioGallery(List<MediaItemEntity> media) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColor.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Portfolio & Work Gallery (${media.length})',
-                style: AppTypography.labelLarge.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColor.textPrimary,
-                ),
-              ),
-              InkWell(
-                onTap: () => _showMediaSourceSheet(isCover: false),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.add_photo_alternate_outlined, size: 14, color: AppColor.primary),
-                      const SizedBox(width: 2),
-                      Text(
-                        'Add',
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          if (media.isEmpty)
-            Container(
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColor.backgroundSubtle,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              ),
-              child: Center(
-                child: Text(
-                  'No portfolio items added yet.',
-                  style: AppTypography.labelSmall.copyWith(color: AppColor.textTertiary),
-                ),
-              ),
-            )
-          else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 6,
-                mainAxisSpacing: 6,
-                childAspectRatio: 1,
-              ),
-              itemCount: media.length,
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                  child: CachedNetworkImage(
-                    imageUrl: media[index].url,
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
-            ),
         ],
       ),
     );

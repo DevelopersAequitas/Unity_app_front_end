@@ -6,7 +6,7 @@ class UploadProfileMediaUseCase {
 
   UploadProfileMediaUseCase(this.repository);
 
-  Future<String> call(File file) {
-    return repository.uploadFile(file);
+  Future<String> call(File file, {void Function(double progress)? onProgress}) {
+    return repository.uploadFile(file, onProgress: onProgress);
   }
 }

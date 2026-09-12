@@ -1,82 +1,67 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/theme/app_spacing.dart';
 
-enum ProfileTab { posts, media, about }
+enum ProfileTab { posts, about }
 
 class ProfileContentTabs extends StatelessWidget {
   final ProfileTab selectedTab;
   final ValueChanged<ProfileTab> onTabSelected;
   final int postCount;
-  final int mediaCount;
 
   const ProfileContentTabs({
     super.key,
     required this.selectedTab,
     required this.onTabSelected,
     this.postCount = 0,
-    this.mediaCount = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppColor.backgroundSubtle,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-        border: Border.all(color: AppColor.borderSubtle),
+        color: AppColor.lightSurfaceSubtle,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColor.lightBorder),
       ),
       child: Row(
         children: [
           _buildTab(
-            tab: ProfileTab.posts,
-            label: 'Posts',
-            icon: Icons.grid_on_rounded,
-            count: postCount > 0 ? '$postCount' : null,
+            ProfileTab.posts,
+            'Posts',
+            Icons.grid_on_outlined,
+            postCount > 0 ? '$postCount' : null,
           ),
-          _buildTab(
-            tab: ProfileTab.media,
-            label: 'Media',
-            icon: Icons.video_library_outlined,
-            count: mediaCount > 0 ? '$mediaCount' : null,
-          ),
-          _buildTab(
-            tab: ProfileTab.about,
-            label: 'About',
-            icon: Icons.person_outline_rounded,
-          ),
+          _buildTab(ProfileTab.about, 'About', Icons.person_outline),
         ],
       ),
     );
   }
 
-  Widget _buildTab({
-    required ProfileTab tab,
-    required String label,
-    required IconData icon,
+  Widget _buildTab(
+    ProfileTab tab,
+    String label,
+    IconData icon, [
     String? count,
-  }) {
+  ]) {
     final isSelected = selectedTab == tab;
-
     return Expanded(
       child: GestureDetector(
         onTap: () => onTabSelected(tab),
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
-            color: isSelected ? AppColor.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+            gradient: isSelected ? AppColor.brandGradient : null,
+            borderRadius: BorderRadius.circular(18),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColor.black.withValues(alpha: 0.06),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
+                      color: AppColor.primaryPink.withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ]
                 : null,
@@ -87,33 +72,38 @@ class ProfileContentTabs extends StatelessWidget {
               Icon(
                 icon,
                 size: 14,
-                color: isSelected ? AppColor.primary : AppColor.textTertiary,
+                color: isSelected ? Colors.white : AppColor.lightTextTertiary,
               ),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: AppTypography.labelMedium.copyWith(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? AppColor.primary : AppColor.textTertiary,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : AppColor.lightTextTertiary,
                   fontSize: 12,
                 ),
               ),
               if (count != null) ...[
                 const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColor.primary.withValues(alpha: 0.1)
-                        : AppColor.borderSubtle.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(10),
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : AppColor.lightBorder,
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     count,
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? AppColor.primary : AppColor.textTertiary,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColor.lightTextTertiary,
                     ),
                   ),
                 ),

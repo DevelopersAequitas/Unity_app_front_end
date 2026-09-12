@@ -50,7 +50,11 @@ import 'features/peers/presentation/bloc/matches_bloc.dart';
 import 'features/peers/presentation/bloc/near_me_bloc.dart';
 import 'features/peers/presentation/bloc/peer_requests_bloc.dart';
 import 'features/peers/presentation/bloc/peers_bloc.dart';
-
+import 'features/peers/domain/usecases/follow_user_usecase.dart';
+import 'features/peers/domain/usecases/get_member_posts_usecase.dart';
+import 'features/peers/domain/usecases/get_member_profile_usecase.dart';
+import 'features/peers/domain/usecases/remove_connection_usecase.dart';
+import 'features/peers/domain/usecases/unfollow_user_usecase.dart';
 import 'features/profile/data/datasources/profile_local_datasource.dart';
 import 'features/profile/data/datasources/profile_remote_datasource.dart';
 import 'features/profile/data/repositories_impl/profile_repository_impl.dart';
@@ -142,6 +146,11 @@ void main() async {
   final declineConnectionRequestUseCase = DeclineConnectionRequestUseCase(peersRepository);
   final cancelSentConnectionRequestUseCase = CancelSentConnectionRequestUseCase(peersRepository);
   final togglePeerBookmarkUseCase = TogglePeerBookmarkUseCase(peersRepository);
+  final getMemberProfileUseCase = GetMemberProfileUseCase(peersRepository);
+  final getMemberPostsUseCase = GetMemberPostsUseCase(peersRepository);
+  final followUserUseCase = FollowUserUseCase(peersRepository);
+  final unfollowUserUseCase = UnfollowUserUseCase(peersRepository);
+  final removeConnectionUseCase = RemoveConnectionUseCase(peersRepository);
 
   // Profile UseCases
   final getProfileUseCase = GetProfileUseCase(profileRepository);
@@ -181,6 +190,11 @@ void main() async {
       declineConnectionRequestUseCase: declineConnectionRequestUseCase,
       cancelSentConnectionRequestUseCase: cancelSentConnectionRequestUseCase,
       togglePeerBookmarkUseCase: togglePeerBookmarkUseCase,
+      getMemberProfileUseCase: getMemberProfileUseCase,
+      getMemberPostsUseCase: getMemberPostsUseCase,
+      followUserUseCase: followUserUseCase,
+      unfollowUserUseCase: unfollowUserUseCase,
+      removeConnectionUseCase: removeConnectionUseCase,
       getProfileUseCase: getProfileUseCase,
       updateProfileUseCase: updateProfileUseCase,
       getUserPostsUseCase: getUserPostsUseCase,
@@ -214,6 +228,11 @@ class MyApp extends StatelessWidget {
   final DeclineConnectionRequestUseCase declineConnectionRequestUseCase;
   final CancelSentConnectionRequestUseCase cancelSentConnectionRequestUseCase;
   final TogglePeerBookmarkUseCase togglePeerBookmarkUseCase;
+  final GetMemberProfileUseCase getMemberProfileUseCase;
+  final GetMemberPostsUseCase getMemberPostsUseCase;
+  final FollowUserUseCase followUserUseCase;
+  final UnfollowUserUseCase unfollowUserUseCase;
+  final RemoveConnectionUseCase removeConnectionUseCase;
   final GetProfileUseCase getProfileUseCase;
   final UpdateProfileUseCase updateProfileUseCase;
   final GetUserPostsUseCase getUserPostsUseCase;
@@ -245,6 +264,11 @@ class MyApp extends StatelessWidget {
     required this.declineConnectionRequestUseCase,
     required this.cancelSentConnectionRequestUseCase,
     required this.togglePeerBookmarkUseCase,
+    required this.getMemberProfileUseCase,
+    required this.getMemberPostsUseCase,
+    required this.followUserUseCase,
+    required this.unfollowUserUseCase,
+    required this.removeConnectionUseCase,
     required this.getProfileUseCase,
     required this.updateProfileUseCase,
     required this.getUserPostsUseCase,
@@ -253,7 +277,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<GetMemberProfileUseCase>.value(value: getMemberProfileUseCase),
+        RepositoryProvider<GetMemberPostsUseCase>.value(value: getMemberPostsUseCase),
+        RepositoryProvider<FollowUserUseCase>.value(value: followUserUseCase),
+        RepositoryProvider<UnfollowUserUseCase>.value(value: unfollowUserUseCase),
+        RepositoryProvider<SendConnectionRequestUseCase>.value(value: sendConnectionRequestUseCase),
+        RepositoryProvider<RemoveConnectionUseCase>.value(value: removeConnectionUseCase),
+        RepositoryProvider<CancelSentConnectionRequestUseCase>.value(value: cancelSentConnectionRequestUseCase),
+        RepositoryProvider<TogglePeerBookmarkUseCase>.value(value: togglePeerBookmarkUseCase),
+      ],
+      child: MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (_) => AuthBloc(
@@ -343,6 +378,7 @@ class MyApp extends StatelessWidget {
         initialRoute: AppRoutes.splash,
         onGenerateRoute: AppRouter.onGenerateRoute,
       ),
+    ),
     );
   }
 }

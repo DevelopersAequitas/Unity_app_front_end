@@ -1,4 +1,5 @@
 import '../../domain/entities/timeline_item_entity.dart';
+import '../../domain/entities/timeline_media_entity.dart';
 import 'timeline_author_model.dart';
 import 'timeline_collaboration_model.dart';
 import 'timeline_impact_model.dart';
@@ -42,9 +43,9 @@ class TimelineItemModel {
   });
 
   factory TimelineItemModel.fromJson(Map<String, dynamic> json) {
-    final mediaList = json['media'] as List?;
+    final mediaList = (json['media'] ?? json['creative_media'] ?? json['creatives']) as List?;
     final tagsList = json['tags'] as List?;
-    final authorMap = json['author'] as Map<String, dynamic>?;
+    final authorMap = (json['author'] ?? json['user'] ?? json['member'] ?? json['creator']) as Map<String, dynamic>?;
     final acceptedMap = json['accepted_by'] as Map<String, dynamic>?;
     final impactMap = json['impact'] as Map<String, dynamic>?;
 
@@ -67,12 +68,21 @@ class TimelineItemModel {
         );
       }
     }
+    if (parsedMedia.isEmpty) {
+      final directImageUrl = (json['image_url'] ?? json['imageUrl'] ?? json['image'] ?? json['file_url'])?.toString();
+      final directVideoUrl = (json['video_url'] ?? json['videoUrl'] ?? json['video'])?.toString();
+      if (directImageUrl != null && directImageUrl.isNotEmpty) {
+        parsedMedia.add(TimelineMediaModel(url: directImageUrl, type: MediaType.image));
+      } else if (directVideoUrl != null && directVideoUrl.isNotEmpty) {
+        parsedMedia.add(TimelineMediaModel(url: directVideoUrl, type: MediaType.video));
+      }
+    }
 
     return TimelineItemModel(
       id: (json['id'] ?? '').toString(),
       type: (json['type'] ?? json['source_type'] ?? 'post').toString(),
       postType: json['post_type'] as String?,
-      contentText: (json['content_text'] ?? json['text'] ?? '').toString(),
+      contentText: (json['content_text'] ?? json['content'] ?? json['caption'] ?? json['text'] ?? json['description'] ?? json['title'] ?? '').toString(),
       isVerified: json['is_verified'] as bool? ?? false,
       media: parsedMedia,
       tags: tagsList?.map((t) => t.toString()).toList() ?? const [],
@@ -82,7 +92,7 @@ class TimelineItemModel {
       savesCount: (json['saves_count'] as num?)?.toInt() ?? 0,
       isLikedByMe: json['is_liked_by_me'] as bool? ?? false,
       isSaved: (json['is_saved'] ?? json['is_saved_by_me']) as bool? ?? false,
-      createdAt: (json['created_at'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? json['createdAt'] ?? json['date'] ?? json['posted_at'] ?? '').toString(),
       acceptedBy: acceptedMap != null ? TimelineCollaborationModel.fromJson(acceptedMap) : null,
       impact: impactMap != null ? TimelineImpactModel.fromJson(impactMap) : null,
     );

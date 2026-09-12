@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
@@ -100,6 +101,16 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                           return RequestPeerCard(
                             request: request,
                             isSent: !isReceivedTab,
+                            onTap: () {
+                              final targetId = request.peer.id.isNotEmpty
+                                  ? request.peer.id
+                                  : request.id;
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.peerProfile,
+                                arguments: targetId,
+                              );
+                            },
                             onAccept: () {
                               context.read<PeerRequestsBloc>().add(
                                     PeerRequestAcceptRequested(

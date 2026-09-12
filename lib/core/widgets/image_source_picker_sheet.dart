@@ -5,15 +5,39 @@ import '../theme/app_color.dart';
 import '../theme/app_typography.dart';
 
 class ImageSourcePickerSheet extends StatelessWidget {
-  const ImageSourcePickerSheet({super.key});
+  final String sheetTitle;
+  final String sheetSubtitle;
 
-  static Future<XFile?> show(BuildContext context) async {
+  const ImageSourcePickerSheet({
+    super.key,
+    this.sheetTitle = 'Select Photo',
+    this.sheetSubtitle = 'Choose a source to upload your photo',
+  });
+
+  static Future<XFile?> show(
+    BuildContext context, {
+    String sheetTitle = 'Select Photo',
+    String sheetSubtitle = 'Choose a source to upload your photo',
+    String cropperTitle = 'Crop Photo',
+    CropAspectRatio aspectRatio = const CropAspectRatio(ratioX: 1, ratioY: 1),
+    CropStyle cropStyle = CropStyle.rectangle,
+    CropAspectRatioPreset initAspectRatio = CropAspectRatioPreset.square,
+    List<CropAspectRatioPreset> aspectRatioPresets = const [
+      CropAspectRatioPreset.square,
+    ],
+    bool lockAspectRatio = true,
+    int maxWidth = 1600,
+    int maxHeight = 1600,
+  }) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => const ImageSourcePickerSheet(),
+      builder: (ctx) => ImageSourcePickerSheet(
+        sheetTitle: sheetTitle,
+        sheetSubtitle: sheetSubtitle,
+      ),
     );
 
     if (source != null) {
@@ -22,41 +46,39 @@ class ImageSourcePickerSheet extends StatelessWidget {
         final picked = await picker.pickImage(
           source: source,
           imageQuality: 90,
-          maxWidth: 1600,
-          maxHeight: 1600,
+          maxWidth: maxWidth.toDouble(),
+          maxHeight: maxHeight.toDouble(),
         );
         if (picked == null) return null;
 
         final cropped = await ImageCropper().cropImage(
           sourcePath: picked.path,
-          compressQuality: 85,
-          aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+          compressQuality: 88,
+          aspectRatio: aspectRatio,
           uiSettings: [
             AndroidUiSettings(
-              toolbarTitle: 'Edit Profile Photo',
+              toolbarTitle: cropperTitle,
               toolbarColor: isDark ? AppColor.darkSurface : AppColor.primaryBlue,
               toolbarWidgetColor: Colors.white,
               activeControlsWidgetColor: AppColor.primaryBlue,
-              initAspectRatio: CropAspectRatioPreset.square,
-              lockAspectRatio: true,
+              initAspectRatio: initAspectRatio,
+              lockAspectRatio: lockAspectRatio,
+              cropStyle: cropStyle,
               hideBottomControls: false,
-              aspectRatioPresets: const [
-                CropAspectRatioPreset.square,
-              ],
+              aspectRatioPresets: aspectRatioPresets,
             ),
             IOSUiSettings(
-              title: 'Edit Profile Photo',
+              title: cropperTitle,
               doneButtonTitle: 'Done',
               cancelButtonTitle: 'Cancel',
-              aspectRatioLockEnabled: true,
+              cropStyle: cropStyle,
+              aspectRatioLockEnabled: lockAspectRatio,
               resetAspectRatioEnabled: false,
-              aspectRatioPickerButtonHidden: true,
+              aspectRatioPickerButtonHidden: lockAspectRatio,
               resetButtonHidden: false,
               rotateButtonsHidden: false,
               rotateClockwiseButtonHidden: false,
-              aspectRatioPresets: const [
-                CropAspectRatioPreset.square,
-              ],
+              aspectRatioPresets: aspectRatioPresets,
             ),
           ],
         );
@@ -70,6 +92,41 @@ class ImageSourcePickerSheet extends StatelessWidget {
       }
     }
     return null;
+  }
+
+  static Future<XFile?> showProfilePhotoCropper(BuildContext context) {
+    return show(
+      context,
+      sheetTitle: 'Select Profile Photo',
+      sheetSubtitle: 'Choose a source to upload your profile photo',
+      cropperTitle: 'Crop Profile Photo (1:1 Square)',
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      cropStyle: CropStyle.circle,
+      initAspectRatio: CropAspectRatioPreset.square,
+      aspectRatioPresets: const [CropAspectRatioPreset.square],
+      lockAspectRatio: true,
+      maxWidth: 1200,
+      maxHeight: 1200,
+    );
+  }
+
+  static Future<XFile?> showCoverPhotoCropper(BuildContext context) {
+    return show(
+      context,
+      sheetTitle: 'Select Cover Banner Photo',
+      sheetSubtitle: 'Choose a source to upload your cover banner',
+      cropperTitle: 'Crop Cover Photo (3:1 Banner)',
+      aspectRatio: const CropAspectRatio(ratioX: 3, ratioY: 1),
+      cropStyle: CropStyle.rectangle,
+      initAspectRatio: CropAspectRatioPreset.ratio16x9,
+      aspectRatioPresets: const [
+        CropAspectRatioPreset.ratio5x4,
+        CropAspectRatioPreset.original,
+      ],
+      lockAspectRatio: true,
+      maxWidth: 1920,
+      maxHeight: 1080,
+    );
   }
 
   @override
@@ -113,7 +170,7 @@ class ImageSourcePickerSheet extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Select Profile Photo',
+                sheetTitle,
                 style: AppTypography.titleMedium.copyWith(
                   color: primaryTextColor,
                   fontWeight: FontWeight.w500,
@@ -122,7 +179,7 @@ class ImageSourcePickerSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Choose a source to upload your photo',
+                sheetSubtitle,
                 style: AppTypography.bodySmall.copyWith(
                   color: secondaryTextColor,
                 ),

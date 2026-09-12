@@ -13,6 +13,7 @@ class PeerEntity extends Equatable {
   final int? lifeImpactedCount;
   final bool isVerified;
   final bool isBookmarked;
+  final bool isFollowing;
   final bool isOnline;
   final String connectionStatus; // 'none', 'pending', 'connected'
 
@@ -29,6 +30,7 @@ class PeerEntity extends Equatable {
     this.lifeImpactedCount,
     this.isVerified = false,
     this.isBookmarked = false,
+    this.isFollowing = false,
     this.isOnline = false,
     this.connectionStatus = 'none',
   });
@@ -46,6 +48,7 @@ class PeerEntity extends Equatable {
     int? lifeImpactedCount,
     bool? isVerified,
     bool? isBookmarked,
+    bool? isFollowing,
     bool? isOnline,
     String? connectionStatus,
   }) {
@@ -62,6 +65,7 @@ class PeerEntity extends Equatable {
       lifeImpactedCount: lifeImpactedCount ?? this.lifeImpactedCount,
       isVerified: isVerified ?? this.isVerified,
       isBookmarked: isBookmarked ?? this.isBookmarked,
+      isFollowing: isFollowing ?? this.isFollowing,
       isOnline: isOnline ?? this.isOnline,
       connectionStatus: connectionStatus ?? this.connectionStatus,
     );
@@ -81,6 +85,7 @@ class PeerEntity extends Equatable {
         lifeImpactedCount,
         isVerified,
         isBookmarked,
+        isFollowing,
         isOnline,
         connectionStatus,
       ];

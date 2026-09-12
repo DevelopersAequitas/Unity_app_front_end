@@ -229,8 +229,9 @@ class PeerCard extends StatelessWidget {
         statusLower == 'requested';
     final isConnected = statusLower == 'connected' ||
         statusLower == 'approved' ||
-        statusLower == 'accepted';
-    final hasScheduleP2P = isConnected && onScheduleP2P != null;
+        statusLower == 'accepted' ||
+        onScheduleP2P != null;
+    final hasScheduleP2P = onScheduleP2P != null;
 
     return Row(
       children: [
@@ -269,7 +270,7 @@ class PeerCard extends StatelessWidget {
                           'SCHEDULE P2P',
                           style: TextStyle(
                             fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             letterSpacing: 0.2,
                             color: AppColor.white,
                           ),
@@ -289,7 +290,7 @@ class PeerCard extends StatelessWidget {
                               : (isConnected ? 'CONNECTED' : 'CONNECT'),
                           style: TextStyle(
                             fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             letterSpacing: 0.2,
                             color: (!isPending && !isConnected)
                                 ? AppColor.white
@@ -333,7 +334,7 @@ class PeerCard extends StatelessWidget {
                         'MESSAGE',
                         style: TextStyle(
                           fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w500,
                           letterSpacing: 0.2,
                           color: AppColor.lightTextPrimary,
                         ),

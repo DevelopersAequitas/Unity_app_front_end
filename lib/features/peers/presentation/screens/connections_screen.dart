@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
@@ -92,7 +93,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                             '${state.connections.length} Connections',
                             style: const TextStyle(
                               fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                               color: AppColor.lightTextSecondary,
                             ),
                           ),
@@ -126,6 +127,13 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                           final peer = state.connections[index];
                           return ConnectedPeerCard(
                             peer: peer,
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.peerProfile,
+                                arguments: peer.id,
+                              );
+                            },
                             onScheduleP2P: () {
                               AppSnackBar.showInfo(
                                 context,

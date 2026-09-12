@@ -42,3 +42,12 @@ class ProfileUploadVideoRequested extends ProfileEditEvent {
   @override
   List<Object?> get props => [file];
 }
+
+class ProfileUploadProgressUpdated extends ProfileEditEvent {
+  final double progress;
+
+  const ProfileUploadProgressUpdated(this.progress);
+
+  @override
+  List<Object?> get props => [progress];
+}

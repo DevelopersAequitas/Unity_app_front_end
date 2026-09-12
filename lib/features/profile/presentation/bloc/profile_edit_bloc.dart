@@ -19,6 +19,14 @@ class ProfileEditBloc extends Bloc<ProfileEditEvent, ProfileEditState> {
     on<ProfileSaveSectionRequested>(_onSaveSectionRequested);
     on<ProfileUploadPhotoRequested>(_onUploadPhotoRequested);
     on<ProfileUploadVideoRequested>(_onUploadVideoRequested);
+    on<ProfileUploadProgressUpdated>(_onUploadProgressUpdated);
+  }
+
+  void _onUploadProgressUpdated(
+    ProfileUploadProgressUpdated event,
+    Emitter<ProfileEditState> emit,
+  ) {
+    emit(state.copyWith(uploadProgress: event.progress));
   }
 
   Future<void> _onSaveSectionRequested(
@@ -47,17 +55,31 @@ class ProfileEditBloc extends Bloc<ProfileEditEvent, ProfileEditState> {
     ProfileUploadPhotoRequested event,
     Emitter<ProfileEditState> emit,
   ) async {
-    emit(state.copyWith(status: ProfileEditStatus.uploading, errorMessage: null));
+    final mediaLabel = event.isCover ? 'Cover Banner' : 'Profile Photo';
+    emit(state.copyWith(
+      status: ProfileEditStatus.uploading,
+      uploadProgress: 0.0,
+      uploadType: mediaLabel,
+      errorMessage: null,
+    ));
     try {
-      final fileId = await uploadFileUseCase(event.file);
+      final fileId = await uploadFileUseCase(
+        event.file,
+        onProgress: (progress) {
+          if (!isClosed) {
+            add(ProfileUploadProgressUpdated(progress));
+          }
+        },
+      );
       final updateKey = event.isCover ? 'cover_photo_id' : 'profile_photo_id';
       final updatedProfile = await updateProfileUseCase({updateKey: fileId});
       profileBloc.add(ProfileLocallyUpdated(updatedProfile));
       emit(state.copyWith(
         status: ProfileEditStatus.uploaded,
+        uploadProgress: 1.0,
         updatedProfile: updatedProfile,
         uploadedFileId: fileId,
-        successMessage: '${event.isCover ? "Cover" : "Profile"} photo updated successfully!',
+        successMessage: '$mediaLabel updated successfully!',
         errorMessage: null,
       ));
     } catch (e) {
@@ -72,13 +94,26 @@ class ProfileEditBloc extends Bloc<ProfileEditEvent, ProfileEditState> {
     ProfileUploadVideoRequested event,
     Emitter<ProfileEditState> emit,
   ) async {
-    emit(state.copyWith(status: ProfileEditStatus.uploading, errorMessage: null));
+    emit(state.copyWith(
+      status: ProfileEditStatus.uploading,
+      uploadProgress: 0.0,
+      uploadType: 'Profile Video',
+      errorMessage: null,
+    ));
     try {
-      final fileId = await uploadFileUseCase(event.file);
+      final fileId = await uploadFileUseCase(
+        event.file,
+        onProgress: (progress) {
+          if (!isClosed) {
+            add(ProfileUploadProgressUpdated(progress));
+          }
+        },
+      );
       final updatedProfile = await updateProfileUseCase({'profile_video_id': fileId});
       profileBloc.add(ProfileLocallyUpdated(updatedProfile));
       emit(state.copyWith(
         status: ProfileEditStatus.uploaded,
+        uploadProgress: 1.0,
         updatedProfile: updatedProfile,
         uploadedFileId: fileId,
         successMessage: 'Profile video updated successfully!',

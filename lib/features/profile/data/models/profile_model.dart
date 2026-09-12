@@ -3,6 +3,7 @@ import '../../domain/entities/profile_entity.dart';
 class ProfileModel extends ProfileEntity {
   const ProfileModel({
     required super.id,
+    super.userId,
     super.peerId,
     super.publicProfileSlug,
     super.profilePhotoId,
@@ -46,6 +47,10 @@ class ProfileModel extends ProfileEntity {
     super.postsCount = 0,
     super.coinsBalance = 0,
     super.lifeImpactedCount = 0,
+    super.badgesCount = 0,
+    super.p2pMeetingsCount = 0,
+    super.referralsCount = 0,
+    super.businessDealsCount = 0,
     super.businessType,
     super.experienceYears,
     super.experienceSummary,
@@ -76,6 +81,8 @@ class ProfileModel extends ProfileEntity {
     super.businessKeywords = const [],
     super.productsServicesOffered,
     super.businessAddress,
+    super.googleMapsLatitude,
+    super.googleMapsLongitude,
     super.businessCity,
     super.businessState,
     super.businessPincode,
@@ -93,11 +100,21 @@ class ProfileModel extends ProfileEntity {
     super.otherCategoryName,
     super.businessSubCategory,
     super.businessCategory,
+    super.mainBusinessCategory,
+    super.mainBusinessCategoryId,
+    super.businessCategoryId,
+    super.isOtherCategory = false,
     super.introducedByUser,
+    super.isFollowing = false,
+    super.isBookmark = false,
+    super.isConnected = false,
+    super.isRequested = false,
+    super.connectionStatus = 'none',
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
-    final root = (json.containsKey('data') && json['data'] is Map<String, dynamic>)
+    final root =
+        (json.containsKey('data') && json['data'] is Map<String, dynamic>)
         ? json['data'] as Map<String, dynamic>
         : json;
 
@@ -107,10 +124,12 @@ class ProfileModel extends ProfileEntity {
       final c = root['city'] as Map<String, dynamic>;
       cityEntity = ProfileCityEntity(
         id: c['id']?.toString(),
-        name: (c['name'] ?? c['display_name'] ?? c['formatted_location'] ?? '').toString(),
+        name: (c['name'] ?? c['display_name'] ?? c['formatted_location'] ?? '')
+            .toString(),
         formattedLocation: c['formatted_location']?.toString(),
       );
-    } else if (root['city'] != null && root['city'].toString().trim().isNotEmpty) {
+    } else if (root['city'] != null &&
+        root['city'].toString().trim().isNotEmpty) {
       cityEntity = ProfileCityEntity(
         name: root['city'].toString(),
         formattedLocation: root['city'].toString(),
@@ -144,7 +163,8 @@ class ProfileModel extends ProfileEntity {
         if (item is Map<String, dynamic>) {
           memberships.add(
             CircleMembershipEntity(
-              circleMemberId: (item['circle_member_id'] ?? item['id'] ?? '').toString(),
+              circleMemberId: (item['circle_member_id'] ?? item['id'] ?? '')
+                  .toString(),
               circleId: (item['circle_id'] ?? '').toString(),
               circleName: (item['circle_name'] ?? '').toString(),
               circleSlug: item['circle_slug']?.toString(),
@@ -204,17 +224,26 @@ class ProfileModel extends ProfileEntity {
     if (root['social_links'] is Map) {
       final s = root['social_links'] as Map<String, dynamic>;
       socialEntity = SocialLinksEntity(
-        website: s['website']?.toString() ?? root['website']?.toString() ?? root['business_website']?.toString(),
-        linkedin: s['linkedin']?.toString() ?? root['linkedin_profile']?.toString(),
-        instagram: s['instagram']?.toString() ?? root['instagram_handle']?.toString(),
-        facebook: s['facebook']?.toString() ?? root['facebook_profile']?.toString(),
+        website:
+            s['website']?.toString() ??
+            root['website']?.toString() ??
+            root['business_website']?.toString(),
+        linkedin:
+            s['linkedin']?.toString() ?? root['linkedin_profile']?.toString(),
+        instagram:
+            s['instagram']?.toString() ?? root['instagram_handle']?.toString(),
+        facebook:
+            s['facebook']?.toString() ?? root['facebook_profile']?.toString(),
         twitter: s['twitter']?.toString() ?? root['twitter_handle']?.toString(),
-        youtube: s['youtube']?.toString() ?? root['youtube_channel']?.toString(),
-        otherWebsite: s['other_website']?.toString() ?? root['other_website']?.toString(),
+        youtube:
+            s['youtube']?.toString() ?? root['youtube_channel']?.toString(),
+        otherWebsite:
+            s['other_website']?.toString() ?? root['other_website']?.toString(),
       );
     } else {
       socialEntity = SocialLinksEntity(
-        website: root['website']?.toString() ?? root['business_website']?.toString(),
+        website:
+            root['website']?.toString() ?? root['business_website']?.toString(),
         linkedin: root['linkedin_profile']?.toString(),
         instagram: root['instagram_handle']?.toString(),
         facebook: root['facebook_profile']?.toString(),
@@ -253,25 +282,44 @@ class ProfileModel extends ProfileEntity {
 
     List<String> parseStringList(dynamic val) {
       if (val is List) {
-        return val.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+        return val
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
       }
       return const [];
     }
 
     return ProfileModel(
-      id: (root['id'] ?? '').toString(),
+      id: (root['id'] ?? root['user_id'] ?? '').toString(),
+      userId: root['user_id']?.toString() ?? root['userId']?.toString(),
       peerId: root['peer_id']?.toString(),
       publicProfileSlug: root['public_profile_slug']?.toString(),
       profilePhotoId: root['profile_photo_id']?.toString(),
       profilePhotoUrl: root['profile_photo_url']?.toString(),
       coverPhotoId: root['cover_photo_id']?.toString(),
       coverPhotoUrl: root['cover_photo_url']?.toString(),
-      profileVideoId: root['profile_video_id']?.toString(),
-      profileVideoUrl: root['profile_video_url']?.toString(),
+      profileVideoId: (root['profile_video'] is Map
+              ? (root['profile_video']['id']?.toString())
+              : null) ??
+          (root['profile_video_id'] ??
+                  root['intro_video_id'] ??
+                  root['profile_video_file_id'] ??
+                  root['intro_video_file_id'])
+              ?.toString(),
+      profileVideoUrl: (root['profile_video'] is Map
+              ? (root['profile_video']['url']?.toString())
+              : null) ??
+          (root['profile_video_url'] ??
+                  root['intro_video_url'] ??
+                  (root['profile_video'] is String ? root['profile_video'] : null) ??
+                  root['intro_video'])
+              ?.toString(),
       welcomeCreativeUrl: root['welcome_creative_url']?.toString(),
       firstName: root['first_name']?.toString(),
       lastName: root['last_name']?.toString(),
-      displayName: (root['display_name'] ?? root['name'] ?? 'Peers Member').toString(),
+      displayName: (root['display_name'] ?? root['name'] ?? 'Peers Member')
+          .toString(),
       companyName: root['company_name']?.toString(),
       designation: root['designation']?.toString(),
       email: root['email']?.toString(),
@@ -288,7 +336,8 @@ class ProfileModel extends ProfileEntity {
       address: root['address']?.toString(),
       timezone: root['timezone']?.toString(),
       membershipStatus: root['membership_status']?.toString(),
-      membershipStatusLabel: root['membership_status_label']?.toString() ?? 'Member',
+      membershipStatusLabel:
+          root['membership_status_label']?.toString() ?? 'Member',
       membershipStartsAt: root['membership_starts_at']?.toString(),
       membershipEndsAt: root['membership_ends_at']?.toString(),
       activeCircleId: root['active_circle_id']?.toString(),
@@ -297,12 +346,28 @@ class ProfileModel extends ProfileEntity {
       activeCircle: activeCircleEntity,
       circleMemberships: memberships,
       categories: categoriesList,
-      connectionCount: int.tryParse(root['connection_count']?.toString() ?? '0') ?? 0,
-      followersCount: int.tryParse(root['followers_count']?.toString() ?? '0') ?? 0,
-      followingCount: int.tryParse(root['following_count']?.toString() ?? '0') ?? 0,
+      connectionCount:
+          int.tryParse(root['connection_count']?.toString() ?? '0') ?? 0,
+      followersCount:
+          int.tryParse(root['followers_count']?.toString() ?? '0') ?? 0,
+      followingCount:
+          int.tryParse(root['following_count']?.toString() ?? '0') ?? 0,
       postsCount: int.tryParse(root['posts_count']?.toString() ?? '0') ?? 0,
       coinsBalance: int.tryParse(root['coins_balance']?.toString() ?? '0') ?? 0,
-      lifeImpactedCount: int.tryParse(root['life_impacted_count']?.toString() ?? '0') ?? 0,
+      lifeImpactedCount:
+          int.tryParse(root['life_impacted_count']?.toString() ?? '0') ?? 0,
+      badgesCount: int.tryParse(root['badges_count']?.toString() ?? '0') ?? 0,
+      p2pMeetingsCount:
+          int.tryParse(root['p2p_meetings_count']?.toString() ?? '0') ?? 0,
+      referralsCount:
+          int.tryParse(root['referrals_count']?.toString() ?? '0') ?? 0,
+      businessDealsCount:
+          int.tryParse(
+            root['business_deals_count']?.toString() ??
+                root['deals_count']?.toString() ??
+                '0',
+          ) ??
+          0,
       businessType: root['business_type']?.toString(),
       experienceYears: int.tryParse(root['experience_years']?.toString() ?? ''),
       experienceSummary: root['experience_summary']?.toString(),
@@ -312,16 +377,21 @@ class ProfileModel extends ProfileEntity {
       interests: parseStringList(root['interests']),
       industryTags: parseStringList(root['industry_tags']),
       targetRegions: parseStringList(root['target_regions']),
-      targetBusinessCategories: parseStringList(root['target_business_categories']),
+      targetBusinessCategories: parseStringList(
+        root['target_business_categories'],
+      ),
       hobbiesInterests: parseStringList(root['hobbies_interests']),
       leadershipRoles: parseStringList(root['leadership_roles']),
       specialRecognitions: parseStringList(root['special_recognitions']),
       socialLinks: socialEntity,
       media: mediaList,
-      isVerified: root['is_verified'] == true || root['is_verified_peer'] == true,
+      isVerified:
+          root['is_verified'] == true || root['is_verified_peer'] == true,
       isSponsoredMember: root['is_sponsored_member'] == true,
       companyType: root['company_type']?.toString(),
-      yearOfEstablishment: int.tryParse(root['year_of_establishment']?.toString() ?? ''),
+      yearOfEstablishment: int.tryParse(
+        root['year_of_establishment']?.toString() ?? '',
+      ),
       annualRevenueRange: root['annual_revenue_range']?.toString(),
       turnoverRange: root['turnover_range']?.toString(),
       numberOfEmployees: root['number_of_employees']?.toString(),
@@ -333,6 +403,16 @@ class ProfileModel extends ProfileEntity {
       businessKeywords: parseStringList(root['business_keywords']),
       productsServicesOffered: root['products_services_offered']?.toString(),
       businessAddress: root['business_address']?.toString(),
+      googleMapsLatitude: double.tryParse(
+        root['google_maps_latitude']?.toString() ??
+            root['latitude']?.toString() ??
+            '',
+      ),
+      googleMapsLongitude: double.tryParse(
+        root['google_maps_longitude']?.toString() ??
+            root['longitude']?.toString() ??
+            '',
+      ),
       businessCity: root['business_city']?.toString(),
       businessState: root['business_state']?.toString(),
       businessPincode: root['business_pincode']?.toString(),
@@ -341,16 +421,48 @@ class ProfileModel extends ProfileEntity {
       collaborationGoals: parseStringList(root['collaboration_goals']),
       preferredMeetingFormat: root['preferred_meeting_format']?.toString(),
       willingToMentor: root['willing_to_mentor'] == true,
-      openToCrossCityCollaboration: root['open_to_cross_city_collaboration'] == true,
+      openToCrossCityCollaboration:
+          root['open_to_cross_city_collaboration'] == true,
       openToSpeakingAtEvents: root['open_to_speaking_at_events'] == true,
-      communityDirectoryListing: root['community_directory_listing']?.toString(),
+      communityDirectoryListing: root['community_directory_listing']
+          ?.toString(),
       contactVisibility: root['contact_visibility']?.toString(),
       sustainabilityAreas: parseStringList(root['sustainability_areas']),
       greenpreneurGoals: parseStringList(root['greenpreneur_goals']),
       otherCategoryName: root['other_category_name']?.toString(),
       businessSubCategory: root['business_sub_category']?.toString(),
-      businessCategory: root['business_category']?.toString(),
+      businessCategory: root['business_category'] is Map
+          ? (root['business_category']['name'] ??
+                    root['business_category']['title'])
+                ?.toString()
+          : root['business_category']?.toString(),
+      mainBusinessCategory: root['main_business_category'] is Map
+          ? (root['main_business_category']['name'] ??
+                    root['main_business_category']['title'])
+                ?.toString()
+          : root['main_business_category']?.toString(),
+      mainBusinessCategoryId:
+          int.tryParse(root['main_business_category_id']?.toString() ?? '') ??
+          (root['main_business_category'] is Map
+              ? int.tryParse(
+                  root['main_business_category']['id']?.toString() ?? '',
+                )
+              : null),
+      businessCategoryId:
+          int.tryParse(root['business_category_id']?.toString() ?? '') ??
+          (root['business_category'] is Map
+              ? int.tryParse(root['business_category']['id']?.toString() ?? '')
+              : null),
+      isOtherCategory: root['is_other_category'] == true,
       introducedByUser: introducedEntity,
+      isFollowing: root['is_following'] == true,
+      isBookmark: root['is_bookmark'] == true,
+      isConnected: root['is_connected'] == true || root['connection_status'] == 'connected',
+      isRequested: root['is_requested'] == true || root['connection_status'] == 'pending_sent' || root['connection_status'] == 'pending',
+      connectionStatus: (root['connection_status'] ??
+              root['connection_state'] ??
+              (root['is_connected'] == true ? 'connected' : (root['is_requested'] == true ? 'pending' : 'none')))
+          .toString(),
     );
   }
 
@@ -378,7 +490,13 @@ class ProfileModel extends ProfileEntity {
       'dob': dob,
       'anniversary_date': anniversaryDate,
       'preferred_language': preferredLanguage,
-      'city': city != null ? {'id': city!.id, 'name': city!.name, 'formatted_location': city!.formattedLocation} : null,
+      'city': city != null
+          ? {
+              'id': city!.id,
+              'name': city!.name,
+              'formatted_location': city!.formattedLocation,
+            }
+          : null,
       'state': state,
       'country': country,
       'pincode': pincode,
@@ -397,6 +515,10 @@ class ProfileModel extends ProfileEntity {
       'posts_count': postsCount,
       'coins_balance': coinsBalance,
       'life_impacted_count': lifeImpactedCount,
+      'badges_count': badgesCount,
+      'p2p_meetings_count': p2pMeetingsCount,
+      'referrals_count': referralsCount,
+      'business_deals_count': businessDealsCount,
       'business_type': businessType,
       'experience_years': experienceYears,
       'experience_summary': experienceSummary,
@@ -481,19 +603,26 @@ class ProfileModel extends ProfileEntity {
       if (experienceSummary != null) 'experience_summary': experienceSummary,
       if (bio != null) 'bio': bio,
       if (companyType != null) 'company_type': companyType,
-      if (yearOfEstablishment != null) 'year_of_establishment': yearOfEstablishment,
-      if (annualRevenueRange != null) 'annual_revenue_range': annualRevenueRange,
+      if (yearOfEstablishment != null)
+        'year_of_establishment': yearOfEstablishment,
+      if (annualRevenueRange != null)
+        'annual_revenue_range': annualRevenueRange,
       if (numberOfEmployees != null) 'number_of_employees': numberOfEmployees,
       if (gstNumber != null) 'gst_number': gstNumber,
       if (businessWebsite != null) 'business_website': businessWebsite,
       if (businessAddress != null) 'business_address': businessAddress,
+      if (googleMapsLatitude != null) 'google_maps_latitude': googleMapsLatitude,
+      if (googleMapsLongitude != null) 'google_maps_longitude': googleMapsLongitude,
       if (businessPincode != null) 'business_pincode': businessPincode,
       if (businessCountry != null) 'business_country': businessCountry,
       if (otherCategoryName != null) 'other_category_name': otherCategoryName,
-      if (businessSubCategory != null) 'business_sub_category': businessSubCategory,
-      if (productsServicesOffered != null) 'products_services_offered': productsServicesOffered,
+      if (businessSubCategory != null)
+        'business_sub_category': businessSubCategory,
+      if (productsServicesOffered != null)
+        'products_services_offered': productsServicesOffered,
       if (superpower != null) 'superpower': superpower,
-      if (preferredMeetingFormat != null) 'preferred_meeting_format': preferredMeetingFormat,
+      if (preferredMeetingFormat != null)
+        'preferred_meeting_format': preferredMeetingFormat,
       'skills': skills,
       'interests': interests,
       'i_can_help_with': iCanHelpWith,
@@ -508,17 +637,20 @@ class ProfileModel extends ProfileEntity {
       'willing_to_mentor': willingToMentor,
       'open_to_cross_city_collaboration': openToCrossCityCollaboration,
       'open_to_speaking_at_events': openToSpeakingAtEvents,
-      if (communityDirectoryListing != null) 'community_directory_listing': communityDirectoryListing,
+      if (communityDirectoryListing != null)
+        'community_directory_listing': communityDirectoryListing,
       if (contactVisibility != null) 'contact_visibility': contactVisibility,
       if (socialLinks != null)
         'social_links': {
           if (socialLinks!.website != null) 'website': socialLinks!.website,
           if (socialLinks!.linkedin != null) 'linkedin': socialLinks!.linkedin,
-          if (socialLinks!.instagram != null) 'instagram': socialLinks!.instagram,
+          if (socialLinks!.instagram != null)
+            'instagram': socialLinks!.instagram,
           if (socialLinks!.facebook != null) 'facebook': socialLinks!.facebook,
           if (socialLinks!.twitter != null) 'twitter': socialLinks!.twitter,
           if (socialLinks!.youtube != null) 'youtube': socialLinks!.youtube,
-          if (socialLinks!.otherWebsite != null) 'other_website': socialLinks!.otherWebsite,
+          if (socialLinks!.otherWebsite != null)
+            'other_website': socialLinks!.otherWebsite,
         },
     };
   }

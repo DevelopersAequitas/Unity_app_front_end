@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
@@ -99,6 +100,13 @@ class _MatchesScreenState extends State<MatchesScreen> {
                                   (context, index, percentX, percentY) {
                                 return MatchDiscoveryCard(
                                   match: matches[index],
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.peerProfile,
+                                      arguments: matches[index].id,
+                                    );
+                                  },
                                 );
                               },
                               onSwipe:
@@ -167,7 +175,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             'You are all caught up!',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w500,
               color: AppColor.lightTextPrimary,
             ),
           ),

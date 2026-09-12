@@ -11,7 +11,7 @@ abstract class ProfileRemoteDataSource {
   Future<ProfileModel> getProfile();
   Future<ProfileModel> updateProfile(Map<String, dynamic> data);
   Future<List<TimelineItemEntity>> getUserPosts({int page = 1});
-  Future<String> uploadFile(File file);
+  Future<String> uploadFile(File file, {void Function(double progress)? onProgress});
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -98,7 +98,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<String> uploadFile(File file) async {
+  Future<String> uploadFile(File file, {void Function(double progress)? onProgress}) async {
     try {
       final fileName = file.path.split(RegExp(r'[/\\]')).last;
       final formData = FormData.fromMap({
@@ -111,6 +111,15 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final response = await dioClient.dio.post(
         ApiEndpoints.fileUpload,
         data: formData,
+        options: Options(
+          sendTimeout: const Duration(minutes: 5),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+        onSendProgress: (sent, total) {
+          if (total > 0 && onProgress != null) {
+            onProgress(sent / total);
+          }
+        },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

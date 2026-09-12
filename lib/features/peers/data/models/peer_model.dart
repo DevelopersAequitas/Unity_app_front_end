@@ -13,6 +13,7 @@ class PeerModel {
   final int? lifeImpactedCount;
   final bool isVerified;
   final bool isBookmarked;
+  final bool isFollowing;
   final bool isOnline;
   final String connectionStatus;
 
@@ -29,6 +30,7 @@ class PeerModel {
     this.lifeImpactedCount,
     this.isVerified = false,
     this.isBookmarked = false,
+    this.isFollowing = false,
     this.isOnline = false,
     this.connectionStatus = 'none',
   });
@@ -84,6 +86,9 @@ class PeerModel {
         json['is_bookmark'] == true ||
         json['is_bookmarked'] == true;
 
+    final bool following = userMap['is_following'] == true ||
+        json['is_following'] == true;
+
     final bool online = userMap['is_online'] == true ||
         userMap['online_status'] == 'online' ||
         json['is_online'] == true;
@@ -92,7 +97,8 @@ class PeerModel {
     if (json['is_connected'] == true ||
         userMap['is_connected'] == true ||
         json['is_approved'] == true ||
-        userMap['is_approved'] == true) {
+        userMap['is_approved'] == true ||
+        json['connected_at'] != null) {
       connStatus = 'connected';
     } else if (json['connection_status'] != null &&
         json['connection_status'].toString().isNotEmpty &&
@@ -126,8 +132,45 @@ class PeerModel {
       lifeImpactedCount: impact,
       isVerified: verified,
       isBookmarked: bookmarked,
+      isFollowing: following,
       isOnline: online,
       connectionStatus: connStatus,
+    );
+  }
+
+  PeerModel copyWith({
+    String? id,
+    String? displayName,
+    String? firstName,
+    String? lastName,
+    String? profilePhotoUrl,
+    String? companyName,
+    String? city,
+    String? designation,
+    String? category,
+    int? lifeImpactedCount,
+    bool? isVerified,
+    bool? isBookmarked,
+    bool? isFollowing,
+    bool? isOnline,
+    String? connectionStatus,
+  }) {
+    return PeerModel(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
+      companyName: companyName ?? this.companyName,
+      city: city ?? this.city,
+      designation: designation ?? this.designation,
+      category: category ?? this.category,
+      lifeImpactedCount: lifeImpactedCount ?? this.lifeImpactedCount,
+      isVerified: isVerified ?? this.isVerified,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+      isFollowing: isFollowing ?? this.isFollowing,
+      isOnline: isOnline ?? this.isOnline,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
     );
   }
 
@@ -145,6 +188,7 @@ class PeerModel {
       'life_impacted_count': lifeImpactedCount,
       'is_verified': isVerified,
       'is_bookmarked': isBookmarked,
+      'is_following': isFollowing,
       'is_online': isOnline,
       'connection_status': connectionStatus,
     };
@@ -164,6 +208,7 @@ class PeerModel {
       lifeImpactedCount: lifeImpactedCount,
       isVerified: isVerified,
       isBookmarked: isBookmarked,
+      isFollowing: isFollowing,
       isOnline: isOnline,
       connectionStatus: connectionStatus,
     );

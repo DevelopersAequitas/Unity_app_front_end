@@ -30,6 +30,9 @@ class ApiEndpoints {
 
   // Peers & Connections
   static const String membersLimited = '/members/limited';
+  static String member(String id) => '/members/$id';
+  static String followUser(String userId) => '/users/$userId/follow';
+  static String unfollowUser(String userId) => '/users/$userId/unfollow';
   static const String connections = '/connections';
   static const String connectionRequests = '/me/connection-requests';
   static const String sentConnectionRequests = '/connections/sent';
@@ -43,5 +46,6 @@ class ApiEndpoints {
   // Profile & Uploads
   static const String profile = '/profile';
   static const String profilePosts = '/profile/posts';
+  static String userPosts(String userId) => '/users/$userId/posts';
   static const String fileUpload = '/files/upload';
 }

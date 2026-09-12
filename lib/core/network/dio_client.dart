@@ -64,6 +64,13 @@ class DioClient {
   }
 
   static String _extractErrorMessage(DioException error) {
+    if (error.type == DioExceptionType.sendTimeout) {
+      return 'Upload timed out. Please check your connection and try again.';
+    }
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return 'Connection timed out. Please try again.';
+    }
     if (error.response?.data is Map<String, dynamic>) {
       final map = error.response!.data as Map<String, dynamic>;
       return (map['message'] ?? map['error'] ?? 'An error occurred').toString();
@@ -80,6 +87,7 @@ class DioClient {
       return ServerException(message, status);
     }
     if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.connectionError) {
       return NetworkException(message);

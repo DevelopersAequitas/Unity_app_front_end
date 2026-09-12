@@ -21,7 +21,7 @@ class ConnectedPeerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PeerCard(
-      peer: peer,
+      peer: peer.copyWith(connectionStatus: 'connected'),
       onScheduleP2P: onScheduleP2P,
       onMessage: onMessage,
       onBookmark: onBookmark,

@@ -9,6 +9,17 @@ import '../../features/peers/presentation/screens/connections_screen.dart';
 import '../../features/peers/presentation/screens/matches_screen.dart';
 import '../../features/peers/presentation/screens/near_me_screen.dart';
 import '../../features/peers/presentation/screens/peer_requests_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../features/peers/domain/usecases/cancel_sent_connection_request_usecase.dart';
+import '../../features/peers/domain/usecases/follow_user_usecase.dart';
+import '../../features/peers/domain/usecases/get_member_posts_usecase.dart';
+import '../../features/peers/domain/usecases/get_member_profile_usecase.dart';
+import '../../features/peers/domain/usecases/remove_connection_usecase.dart';
+import '../../features/peers/domain/usecases/send_connection_request_usecase.dart';
+import '../../features/peers/domain/usecases/toggle_peer_bookmark_usecase.dart';
+import '../../features/peers/domain/usecases/unfollow_user_usecase.dart';
+import '../../features/peers/presentation/bloc/peer_profile_bloc.dart';
+import '../../features/peers/presentation/screens/peer_profile_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 
 class AppRoutes {
@@ -24,6 +35,7 @@ class AppRoutes {
   static const String peerRequests = '/peer-requests';
   static const String nearMe = '/near-me';
   static const String matches = '/matches';
+  static const String peerProfile = '/peer-profile';
   static const String profile = '/profile';
 }
 
@@ -89,6 +101,24 @@ class AppRouter {
       case AppRoutes.matches:
         return MaterialPageRoute(
           builder: (_) => const MatchesScreen(),
+          settings: settings,
+        );
+      case AppRoutes.peerProfile:
+        final peerId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (ctx) => PeerProfileBloc(
+              getMemberProfileUseCase: ctx.read<GetMemberProfileUseCase>(),
+              getMemberPostsUseCase: ctx.read<GetMemberPostsUseCase>(),
+              followUserUseCase: ctx.read<FollowUserUseCase>(),
+              unfollowUserUseCase: ctx.read<UnfollowUserUseCase>(),
+              sendConnectionRequestUseCase: ctx.read<SendConnectionRequestUseCase>(),
+              cancelSentConnectionRequestUseCase: ctx.read<CancelSentConnectionRequestUseCase>(),
+              togglePeerBookmarkUseCase: ctx.read<TogglePeerBookmarkUseCase>(),
+              removeConnectionUseCase: ctx.read<RemoveConnectionUseCase>(),
+            ),
+            child: PeerProfileScreen(peerId: peerId),
+          ),
           settings: settings,
         );
       case AppRoutes.profile:

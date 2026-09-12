@@ -60,7 +60,8 @@ class AppColor {
   static const Color warning = Color(0xFFF59E0B);
   static const Color black = Color(0xFF000000);
 
-  // Design Tokens Aliases
+  static const Color lightTextTertiary = lightTextDisabled;
+  static const Color accentGreen = success;
   static const Color primary = primaryBlue;
   static const Color primaryGradientEnd = primaryPink;
   static const Color textPrimary = lightTextPrimary;

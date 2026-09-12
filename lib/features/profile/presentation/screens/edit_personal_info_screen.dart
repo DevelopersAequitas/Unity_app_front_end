@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/datasources/location_remote_datasource.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/city_picker_sheet.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_edit_bloc.dart';
 import '../bloc/profile_edit_event.dart';
@@ -22,6 +25,9 @@ class EditPersonalInfoScreen extends StatefulWidget {
 
 class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  late final LocationRemoteDataSource _locationDataSource;
+  String? _selectedCityId;
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -56,14 +62,18 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   @override
   void initState() {
     super.initState();
+    _locationDataSource = LocationRemoteDataSourceImpl(dioClient: DioClient());
+
     final p = widget.profile;
+    _selectedCityId = p.city?.id?.toString();
+
     _firstNameController = TextEditingController(text: p.firstName ?? '');
     _lastNameController = TextEditingController(text: p.lastName ?? '');
     _displayNameController = TextEditingController(text: p.displayName); 
     _emailController = TextEditingController(text: p.email ?? '');
     _phoneController = TextEditingController(text: p.phone ?? '');
     _secondaryMobileController = TextEditingController(text: p.secondaryMobile ?? '');
-    _cityNameController = TextEditingController(text: p.city?.name ?? '');
+    _cityNameController = TextEditingController(text: p.city?.name ?? p.city?.formattedLocation ?? '');
     _stateController = TextEditingController(text: p.state ?? '');
     _countryController = TextEditingController(text: p.country ?? '');
     _pincodeController = TextEditingController(text: p.pincode ?? '');
@@ -93,6 +103,30 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     _pincodeController.dispose();
     _addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickCity() async {
+    final picked = await CityPickerSheet.show(
+      context,
+      dataSource: _locationDataSource,
+      selectedCityId: _selectedCityId,
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedCityId = picked.id;
+        _cityNameController.text = picked.name.isNotEmpty ? picked.name : picked.label;
+        if (picked.state.isNotEmpty) {
+          _stateController.text = picked.state;
+        } else if (picked.stateCode.isNotEmpty) {
+          _stateController.text = picked.stateCode;
+        }
+        if (picked.country.isNotEmpty) {
+          _countryController.text = picked.country;
+        } else if (picked.countryCode.isNotEmpty) {
+          _countryController.text = picked.countryCode;
+        }
+      });
+    }
   }
 
   Future<void> _pickDate({required bool isDob}) async {
@@ -125,6 +159,9 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
       'gender': _gender,
       'dob': _dob != null ? _formatIsoDate(_dob!) : null,
       'anniversary_date': _anniversaryDate != null ? _formatIsoDate(_anniversaryDate!) : null,
+      if (_selectedCityId != null && _selectedCityId!.isNotEmpty) 'city_id': _selectedCityId,
+      'city': _cityNameController.text.trim(),
+      'city_of_residence': _cityNameController.text.trim(),
       'state': _stateController.text.trim(),
       'country': _countryController.text.trim(),
       'pincode': _pincodeController.text.trim(),
@@ -148,7 +185,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
         title: Text(
           'Personal Information',
           style: AppTypography.titleMedium.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w500,
             color: AppColor.textPrimary,
           ),
         ),
@@ -300,7 +337,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                     'LOCATION DETAILS',
                     style: AppTypography.labelSmall.copyWith(
                       color: AppColor.textTertiary,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -313,23 +350,12 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildTextField(
-                          controller: _cityNameController,
-                          label: 'City',
-                          enabled: false,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: _buildTextField(
-                          controller: _stateController,
-                          label: 'State',
-                        ),
-                      ),
-                    ],
+                  _buildPickerField(
+                    label: 'City',
+                    value: _cityNameController.text,
+                    placeholder: 'Select City',
+                    icon: Icons.location_city_rounded,
+                    onTap: _pickCity,
                   ),
                   const SizedBox(height: AppSpacing.sm),
 
@@ -337,19 +363,25 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                     children: [
                       Expanded(
                         child: _buildTextField(
-                          controller: _countryController,
-                          label: 'Country',
+                          controller: _stateController,
+                          label: 'State',
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: _buildTextField(
-                          controller: _pincodeController,
-                          label: 'Pincode',
-                          keyboardType: TextInputType.number,
+                          controller: _countryController,
+                          label: 'Country',
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  _buildTextField(
+                    controller: _pincodeController,
+                    label: 'Pincode',
+                    keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: AppSpacing.xl),
 
@@ -387,7 +419,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                                   'Save Changes',
                                   style: AppTypography.labelLarge.copyWith(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                         ),
@@ -420,7 +452,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
           label,
           style: AppTypography.labelSmall.copyWith(
             color: AppColor.textSecondary,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 4),
@@ -456,6 +488,57 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     );
   }
 
+  Widget _buildPickerField({
+    required String label,
+    required String value,
+    required String placeholder,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColor.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: AppColor.white,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              border: Border.all(color: AppColor.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 17, color: AppColor.primaryBlue),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    value.isNotEmpty ? value : placeholder,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: value.isNotEmpty ? AppColor.textPrimary : AppColor.textTertiary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down_rounded, size: 22, color: AppColor.textTertiary),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildDropdown({
     required String label,
     required String? value,
@@ -469,7 +552,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
           label,
           style: AppTypography.labelSmall.copyWith(
             color: AppColor.textSecondary,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 4),
@@ -511,7 +594,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
           label,
           style: AppTypography.labelSmall.copyWith(
             color: AppColor.textSecondary,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 4),
