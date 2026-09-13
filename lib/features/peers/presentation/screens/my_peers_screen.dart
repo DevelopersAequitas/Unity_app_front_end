@@ -166,6 +166,11 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
                       );
                     }
                     final peer = state.peers[index];
+                    final statusLower = peer.connectionStatus.toLowerCase();
+                    final isConnected = statusLower == 'connected' ||
+                        statusLower == 'approved' ||
+                        statusLower == 'accepted';
+
                     return PeerCard(
                       peer: peer,
                       onConnect: () {
@@ -173,6 +178,14 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
                           PeerConnectRequested(peer.id),
                         );
                       },
+                      onScheduleP2P: isConnected
+                          ? () {
+                              AppSnackBar.showInfo(
+                                context,
+                                'Scheduling P2P with ${peer.displayName}',
+                              );
+                            }
+                          : null,
                       onMessage: () {
                         AppSnackBar.showInfo(
                           context,

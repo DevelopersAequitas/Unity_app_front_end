@@ -11,6 +11,7 @@ abstract class ProfileRemoteDataSource {
   Future<ProfileModel> getProfile();
   Future<ProfileModel> updateProfile(Map<String, dynamic> data);
   Future<List<TimelineItemEntity>> getUserPosts({int page = 1});
+  Future<List<TimelineItemEntity>> getSavedPosts({int page = 1});
   Future<String> uploadFile(File file, {void Function(double progress)? onProgress});
 }
 
@@ -77,6 +78,32 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final response = await dioClient.dio.get(
         ApiEndpoints.profilePosts,
         queryParameters: {'page': page},
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          final items = data['data']?['items'] ?? data['items'] ?? data['data'];
+          if (items is List) {
+            return items
+                .whereType<Map<String, dynamic>>()
+                .map((json) => TimelineItemModel.fromJson(json).toEntity())
+                .toList();
+          }
+        }
+        return [];
+      }
+      return [];
+    } on DioException catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<List<TimelineItemEntity>> getSavedPosts({int page = 1}) async {
+    try {
+      final response = await dioClient.dio.get(
+        ApiEndpoints.savedPosts,
+        queryParameters: {'page': page, 'per_page': 20},
       );
       if (response.statusCode == 200) {
         final data = response.data;

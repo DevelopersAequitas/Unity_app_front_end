@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/timeline_item_entity.dart';
+import 'post_options_bottom_sheet.dart';
 import 'timeline_author_row.dart';
 import 'timeline_interaction_bar.dart';
 
 class TimelineImpactCard extends StatelessWidget {
   final TimelineItemEntity item;
   final VoidCallback? onLikeTap;
+  final VoidCallback? onLikesCountTap;
   final VoidCallback? onCommentTap;
   final VoidCallback? onSaveTap;
   final VoidCallback? onShareTap;
+  final VoidCallback? onAuthorTap;
 
   const TimelineImpactCard({
     super.key,
     required this.item,
     this.onLikeTap,
+    this.onLikesCountTap,
     this.onCommentTap,
     this.onSaveTap,
     this.onShareTap,
+    this.onAuthorTap,
   });
 
   @override
@@ -29,7 +33,7 @@ class TimelineImpactCard extends StatelessWidget {
     final impact = item.impact;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
         borderRadius: BorderRadius.circular(16),
@@ -44,11 +48,13 @@ class TimelineImpactCard extends StatelessWidget {
           TimelineAuthorRow(
             author: item.author,
             createdAt: item.createdAt,
+            onMoreTap: () => PostOptionsBottomSheet.show(context, item: item),
+            onAuthorTap: onAuthorTap,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: AppColor.success.withValues(alpha: isDark ? 0.12 : 0.06),
               borderRadius: BorderRadius.circular(12),
@@ -65,23 +71,24 @@ class TimelineImpactCard extends StatelessWidget {
                   children: [
                     Text(
                       'Impact Created',
-                      style: AppTypography.labelSmall.copyWith(
+                      style: const TextStyle(
                         color: AppColor.success,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     if (impact?.lifeImpacted != null && impact!.lifeImpacted > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppColor.success.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${impact.lifeImpacted} Lives Impacted',
-                          style: AppTypography.labelSmall.copyWith(
+                          style: const TextStyle(
                             color: AppColor.success,
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -89,27 +96,29 @@ class TimelineImpactCard extends StatelessWidget {
                   ],
                 ),
                 if (impact?.action.isNotEmpty == true) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     impact!.action,
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: TextStyle(
                       color: primaryTextColor,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
                 if (impact?.impactedPeerDisplayName?.isNotEmpty == true) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       Text(
                         'Impacted Peer: ',
-                        style: AppTypography.bodySmall.copyWith(color: secondaryTextColor),
+                        style: TextStyle(color: secondaryTextColor, fontSize: 10.5, fontWeight: FontWeight.w400),
                       ),
                       Text(
                         impact!.impactedPeerDisplayName!,
-                        style: AppTypography.bodySmall.copyWith(
+                        style: TextStyle(
                           color: primaryTextColor,
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -119,7 +128,7 @@ class TimelineImpactCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           TimelineInteractionBar(
             likesCount: item.likesCount,
             commentsCount: item.commentsCount,
@@ -127,6 +136,7 @@ class TimelineImpactCard extends StatelessWidget {
             isLiked: item.isLikedByMe,
             isSaved: item.isSaved,
             onLikeTap: onLikeTap,
+            onLikesCountTap: onLikesCountTap,
             onCommentTap: onCommentTap,
             onSaveTap: onSaveTap,
             onShareTap: onShareTap,

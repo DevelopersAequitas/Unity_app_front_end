@@ -22,19 +22,36 @@ class MatchesBloc extends Bloc<MatchesEvent, MatchesState> {
     MatchesFetchRequested event,
     Emitter<MatchesState> emit,
   ) async {
-    emit(state.copyWith(status: MatchesStatus.loading, currentIndex: 0));
+    // 1. Instant Cache-first load if empty
+    if (state.matches.isEmpty) {
+      final cached = await getMatchPeersUseCase.getCached();
+      if (cached.isNotEmpty) {
+        emit(state.copyWith(
+          status: MatchesStatus.success,
+          matches: cached,
+          currentIndex: 0,
+        ));
+      } else {
+        emit(state.copyWith(status: MatchesStatus.loading, currentIndex: 0));
+      }
+    }
+
+    // 2. Background fresh remote fetch
     try {
       final matches = await getMatchPeersUseCase();
       emit(state.copyWith(
         status: MatchesStatus.success,
         matches: matches,
         currentIndex: 0,
+        errorMessage: null,
       ));
     } catch (e) {
-      emit(state.copyWith(
-        status: MatchesStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      if (state.matches.isEmpty) {
+        emit(state.copyWith(
+          status: MatchesStatus.failure,
+          errorMessage: e.toString(),
+        ));
+      }
     }
   }
 

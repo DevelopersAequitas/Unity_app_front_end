@@ -9,6 +9,8 @@ import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
 import '../bloc/profile_posts_bloc.dart';
 import '../bloc/profile_posts_event.dart';
+import '../bloc/profile_saved_posts_bloc.dart';
+import '../bloc/profile_saved_posts_event.dart';
 import '../bloc/profile_edit_bloc.dart';
 import '../bloc/profile_edit_event.dart';
 import '../bloc/profile_edit_state.dart';
@@ -18,8 +20,10 @@ import '../widgets/profile_membership_card.dart';
 import '../widgets/profile_circles_card.dart';
 import '../widgets/profile_content_tabs.dart';
 import '../widgets/profile_posts_tab.dart';
+import '../widgets/profile_saved_posts_tab.dart';
 import '../widgets/profile_about_tab.dart';
 import '../widgets/profile_skeleton_loader.dart';
+import '../widgets/profile_share_card_sheet.dart';
 import 'edit_profile_overview_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -38,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     context.read<ProfileBloc>().add(const ProfileFetchRequested());
     context.read<ProfilePostsBloc>().add(const ProfilePostsFetchRequested());
+    context.read<ProfileSavedPostsBloc>().add(const ProfileSavedPostsFetchRequested());
   }
 
   @override
@@ -49,6 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _handleRefresh() async {
     context.read<ProfileBloc>().add(const ProfileRefreshRequested());
     context.read<ProfilePostsBloc>().add(const ProfilePostsRefreshRequested());
+    context.read<ProfileSavedPostsBloc>().add(const ProfileSavedPostsRefreshRequested());
   }
 
   Future<void> _handleEditPhoto({required bool isCover}) async {
@@ -98,8 +104,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         actions: [
+          BlocBuilder<ProfileBloc, ProfileState>(
+            builder: (context, state) {
+              final profile = state.profile;
+              if (profile == null) return const SizedBox.shrink();
+              return IconButton(
+                icon: const Icon(Icons.share_outlined, size: 20, color: AppColor.lightTextPrimary),
+                onPressed: () => ProfileShareCardSheet.show(
+                  context,
+                  profile: profile,
+                  isOwnProfile: true,
+                ),
+              );
+            },
+          ),
           Padding(
-            padding: const EdgeInsets.only(right: 14),
+            padding: const EdgeInsets.only(right: 14, left: 4),
             child: GestureDetector(
               onTap: _navigateToEditProfile,
               child: Container(
@@ -172,6 +192,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 12),
                   if (_selectedTab == ProfileTab.posts)
                     ProfilePostsTab(scrollController: _scrollController)
+                  else if (_selectedTab == ProfileTab.saved)
+                    ProfileSavedPostsTab(scrollController: _scrollController)
                   else
                     ProfileAboutTab(profile: profile),
                   const SizedBox(height: 24),

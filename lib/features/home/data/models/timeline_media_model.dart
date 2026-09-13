@@ -1,3 +1,4 @@
+import '../../../../core/constants/app_environment.dart';
 import '../../domain/entities/timeline_media_entity.dart';
 
 class TimelineMediaModel {
@@ -38,8 +39,13 @@ class TimelineMediaModel {
       }
     }
 
+    var url = (json['url'] ?? json['file_url'] ?? json['creative_url'] ?? json['image'] ?? json['image_url'] ?? '').toString().trim();
+    if (url.isNotEmpty && url.startsWith('/')) {
+      url = '${AppEnvironment.baseUrl}$url';
+    }
+
     return TimelineMediaModel(
-      url: (json['url'] ?? json['file_url'] ?? json['creative_url'] ?? '').toString(),
+      url: url,
       type: resolvedType,
       mimeType: mimeType,
       fileId: (json['file_id'] ?? json['id'])?.toString(),

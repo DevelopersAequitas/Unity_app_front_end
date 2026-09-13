@@ -9,4 +9,8 @@ class GetMatchPeersUseCase {
   Future<List<MatchPeerEntity>> call() {
     return repository.getMatchPeers();
   }
+
+  Future<List<MatchPeerEntity>> getCached() {
+    return repository.getCachedMatches();
+  }
 }

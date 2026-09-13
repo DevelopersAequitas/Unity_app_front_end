@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/events/peers_event_bus.dart';
+import '../../../home/domain/usecases/toggle_post_like_usecase.dart';
+import '../../../home/domain/usecases/toggle_post_save_usecase.dart';
 import '../../domain/usecases/cancel_sent_connection_request_usecase.dart';
 import '../../domain/usecases/follow_user_usecase.dart';
 import '../../domain/usecases/get_member_posts_usecase.dart';
@@ -20,6 +22,8 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
   final RemoveConnectionUseCase removeConnectionUseCase;
   final CancelSentConnectionRequestUseCase cancelSentConnectionRequestUseCase;
   final TogglePeerBookmarkUseCase togglePeerBookmarkUseCase;
+  final TogglePostLikeUseCase? togglePostLikeUseCase;
+  final TogglePostSaveUseCase? togglePostSaveUseCase;
 
   PeerProfileBloc({
     required this.getMemberProfileUseCase,
@@ -30,6 +34,8 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     required this.removeConnectionUseCase,
     required this.cancelSentConnectionRequestUseCase,
     required this.togglePeerBookmarkUseCase,
+    this.togglePostLikeUseCase,
+    this.togglePostSaveUseCase,
   }) : super(const PeerProfileState()) {
     on<PeerProfileFetchRequested>(_onFetch);
     on<PeerProfileFollowToggled>(_onFollowToggle);
@@ -40,6 +46,20 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     on<PeerProfilePostsLoadMoreRequested>(_onLoadMorePosts);
     on<PeerProfilePostLikeToggled>(_onPostLikeToggled);
     on<PeerProfilePostSaveToggled>(_onPostSaveToggled);
+    on<PeerProfilePostCommentCountIncremented>(_onPostCommentCountIncremented);
+  }
+
+  void _onPostCommentCountIncremented(
+    PeerProfilePostCommentCountIncremented event,
+    Emitter<PeerProfileState> emit,
+  ) {
+    final updatedPosts = state.posts.map((post) {
+      if (post.id == event.postId) {
+        return post.copyWith(commentsCount: post.commentsCount + 1);
+      }
+      return post;
+    }).toList();
+    emit(state.copyWith(posts: updatedPosts));
   }
 
   Future<void> _onFetch(
@@ -60,13 +80,7 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
             ? profile.userId!
             : (profile.id.isNotEmpty ? profile.id : event.peerId);
 
-        var posts = await getMemberPostsUseCase(targetId);
-        if (posts.isEmpty && profile.id.isNotEmpty && profile.id != targetId) {
-          posts = await getMemberPostsUseCase(profile.id);
-        }
-        if (posts.isEmpty && event.peerId.isNotEmpty && event.peerId != targetId && event.peerId != profile.id) {
-          posts = await getMemberPostsUseCase(event.peerId);
-        }
+        final posts = await getMemberPostsUseCase(targetId);
 
         emit(state.copyWith(
           posts: posts,
@@ -110,12 +124,14 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     }
   }
 
-  void _onPostLikeToggled(
+  Future<void> _onPostLikeToggled(
     PeerProfilePostLikeToggled event,
     Emitter<PeerProfileState> emit,
-  ) {
+  ) async {
+    bool wasLiked = false;
     final updatedPosts = state.posts.map((post) {
       if (post.id == event.postId) {
+        wasLiked = post.isLikedByMe;
         final newIsLiked = !post.isLikedByMe;
         final newCount = newIsLiked
             ? post.likesCount + 1
@@ -125,14 +141,34 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
       return post;
     }).toList();
     emit(state.copyWith(posts: updatedPosts));
+
+    if (togglePostLikeUseCase != null) {
+      try {
+        await togglePostLikeUseCase!(event.postId, isCurrentlyLiked: wasLiked);
+      } catch (_) {
+        // Revert on error
+        final reverted = state.posts.map((post) {
+          if (post.id == event.postId) {
+            final prevCount = wasLiked
+                ? post.likesCount + 1
+                : (post.likesCount > 0 ? post.likesCount - 1 : 0);
+            return post.copyWith(isLikedByMe: wasLiked, likesCount: prevCount);
+          }
+          return post;
+        }).toList();
+        emit(state.copyWith(posts: reverted));
+      }
+    }
   }
 
-  void _onPostSaveToggled(
+  Future<void> _onPostSaveToggled(
     PeerProfilePostSaveToggled event,
     Emitter<PeerProfileState> emit,
-  ) {
+  ) async {
+    bool wasSaved = false;
     final updatedPosts = state.posts.map((post) {
       if (post.id == event.postId) {
+        wasSaved = post.isSaved;
         final newIsSaved = !post.isSaved;
         final newCount = newIsSaved
             ? post.savesCount + 1
@@ -142,6 +178,24 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
       return post;
     }).toList();
     emit(state.copyWith(posts: updatedPosts));
+
+    if (togglePostSaveUseCase != null) {
+      try {
+        await togglePostSaveUseCase!(event.postId, isCurrentlySaved: wasSaved);
+      } catch (_) {
+        // Revert on error
+        final reverted = state.posts.map((post) {
+          if (post.id == event.postId) {
+            final prevCount = wasSaved
+                ? post.savesCount + 1
+                : (post.savesCount > 0 ? post.savesCount - 1 : 0);
+            return post.copyWith(isSaved: wasSaved, savesCount: prevCount);
+          }
+          return post;
+        }).toList();
+        emit(state.copyWith(posts: reverted));
+      }
+    }
   }
 
   Future<void> _onFollowToggle(

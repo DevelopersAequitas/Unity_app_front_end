@@ -52,7 +52,22 @@ class PeerRequestsBloc extends Bloc<PeerRequestsEvent, PeerRequestsState> {
     PeerRequestsFetchRequested event,
     Emitter<PeerRequestsState> emit,
   ) async {
-    emit(state.copyWith(status: PeerRequestsStatus.loading));
+    // 1. Fast cache-first check
+    if (state.receivedRequests.isEmpty && state.sentRequests.isEmpty) {
+      final cachedReceived = await getConnectionRequestsUseCase.getCached();
+      final cachedSent = await getSentConnectionRequestsUseCase.getCached();
+      if (cachedReceived.isNotEmpty || cachedSent.isNotEmpty) {
+        emit(state.copyWith(
+          status: PeerRequestsStatus.success,
+          receivedRequests: cachedReceived,
+          sentRequests: cachedSent,
+        ));
+      } else {
+        emit(state.copyWith(status: PeerRequestsStatus.loading));
+      }
+    }
+
+    // 2. Background fresh remote fetch
     try {
       final received = await getConnectionRequestsUseCase();
       final sent = await getSentConnectionRequestsUseCase();
@@ -60,12 +75,15 @@ class PeerRequestsBloc extends Bloc<PeerRequestsEvent, PeerRequestsState> {
         status: PeerRequestsStatus.success,
         receivedRequests: received,
         sentRequests: sent,
+        errorMessage: null,
       ));
     } catch (e) {
-      emit(state.copyWith(
-        status: PeerRequestsStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      if (state.receivedRequests.isEmpty && state.sentRequests.isEmpty) {
+        emit(state.copyWith(
+          status: PeerRequestsStatus.failure,
+          errorMessage: e.toString(),
+        ));
+      }
     }
   }
 

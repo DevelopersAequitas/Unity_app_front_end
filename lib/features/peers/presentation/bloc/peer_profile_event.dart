@@ -55,3 +55,11 @@ class PeerProfilePostSaveToggled extends PeerProfileEvent {
   @override
   List<Object?> get props => [postId];
 }
+
+class PeerProfilePostCommentCountIncremented extends PeerProfileEvent {
+  final String postId;
+  const PeerProfilePostCommentCountIncremented(this.postId);
+
+  @override
+  List<Object?> get props => [postId];
+}

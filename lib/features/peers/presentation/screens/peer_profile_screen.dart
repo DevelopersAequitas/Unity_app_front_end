@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../bloc/peer_profile_bloc.dart';
 import '../bloc/peer_profile_event.dart';
@@ -11,7 +12,13 @@ import '../widgets/peer_profile/peer_profile_chips_card.dart';
 import '../widgets/peer_profile/peer_profile_contact_card.dart';
 import '../widgets/peer_profile/peer_profile_header.dart';
 import '../widgets/peer_profile/peer_profile_posts_section.dart';
+import '../widgets/peer_profile/peer_profile_skeleton_loader.dart';
 import '../widgets/peer_profile/peer_profile_stats.dart';
+import '../../../home/presentation/bloc/home_bloc.dart';
+import '../../../home/presentation/bloc/home_event.dart';
+import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
+import '../../../profile/presentation/bloc/profile_posts_event.dart';
+import '../../../profile/presentation/widgets/profile_share_card_sheet.dart';
 
 class PeerProfileScreen extends StatefulWidget {
   final String peerId;
@@ -30,43 +37,42 @@ class _PeerProfileScreenState extends State<PeerProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColor.lightBackground,
-      appBar: AppBar(
-        backgroundColor: AppColor.lightBackground,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColor.lightTextPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: BlocBuilder<PeerProfileBloc, PeerProfileState>(
-          builder: (context, state) => Text(
-            state.profile?.displayName.toUpperCase() ?? 'PEER PROFILE',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: 0.5, color: AppColor.lightTextPrimary),
+    return BlocBuilder<PeerProfileBloc, PeerProfileState>(
+      buildWhen: (prev, curr) => prev.profile?.displayName != curr.profile?.displayName,
+      builder: (context, state) {
+        final title = state.profile?.displayName.toUpperCase() ?? 'PEER';
+        return Scaffold(
+          backgroundColor: AppColor.lightBackground,
+          appBar: AppCommonBar(
+            title: title,
+            showBack: true,
+            showSearch: false,
+            showNotifications: false,
+            showProfile: false,
+            onBackTap: () => Navigator.pop(context),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.more_vert_rounded),
+                onPressed: () => _showOptionsSheet(context),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert_rounded, color: AppColor.lightTextPrimary),
-            onPressed: () => _showOptionsSheet(context),
+          body: BlocConsumer<PeerProfileBloc, PeerProfileState>(
+            listener: (context, state) {
+              if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+                AppSnackBar.showError(context, state.errorMessage!);
+              }
+            },
+            builder: (context, state) => _buildBody(context, state),
           ),
-        ],
-      ),
-      body: BlocConsumer<PeerProfileBloc, PeerProfileState>(
-        listener: (context, state) {
-          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
-            AppSnackBar.showError(context, state.errorMessage!);
-          }
-        },
-        builder: (context, state) => _buildBody(context, state),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildBody(BuildContext context, PeerProfileState state) {
     if (state.status == PeerProfileStatus.loading || state.status == PeerProfileStatus.initial) {
-      return const Center(child: CircularProgressIndicator(color: AppColor.primaryBlue));
+      return const PeerProfileSkeletonLoader();
     }
     if (state.status == PeerProfileStatus.failure || state.profile == null) {
       return Center(
@@ -129,8 +135,62 @@ class _PeerProfileScreenState extends State<PeerProfileScreen> {
               hasMore: state.hasMorePosts,
               isLoadingMore: state.isLoadingMorePosts,
               onLoadMore: () => bloc.add(const PeerProfilePostsLoadMoreRequested()),
-              onLikeTap: (id) => bloc.add(PeerProfilePostLikeToggled(id)),
-              onSaveTap: (id) => bloc.add(PeerProfilePostSaveToggled(id)),
+              onLikeTap: (id) {
+                final matches = state.posts.where((p) => p.id == id);
+                if (matches.isNotEmpty) {
+                  final post = matches.first;
+                  final currentLiked = post.isLikedByMe;
+                  final newLiked = !currentLiked;
+                  final newCount = (post.likesCount + (newLiked ? 1 : -1)).clamp(0, 9999999);
+                  bloc.add(PeerProfilePostLikeToggled(id));
+                  try {
+                    context.read<HomeBloc>().add(
+                      HomePostLikeSyncRequested(
+                        postId: id,
+                        isLiked: newLiked,
+                        likesCount: newCount,
+                      ),
+                    );
+                  } catch (_) {}
+                  try {
+                    context.read<ProfilePostsBloc>().add(
+                      ProfilePostLikeSyncRequested(
+                        postId: id,
+                        isLiked: newLiked,
+                        likesCount: newCount,
+                      ),
+                    );
+                  } catch (_) {}
+                } else {
+                  bloc.add(PeerProfilePostLikeToggled(id));
+                }
+              },
+              onSaveTap: (id) {
+                final matches = state.posts.where((p) => p.id == id);
+                if (matches.isNotEmpty) {
+                  final post = matches.first;
+                  final newSaved = !post.isSaved;
+                  bloc.add(PeerProfilePostSaveToggled(id));
+                  try {
+                    context.read<HomeBloc>().add(
+                      HomePostSaveSyncRequested(
+                        postId: id,
+                        isSaved: newSaved,
+                      ),
+                    );
+                  } catch (_) {}
+                  try {
+                    context.read<ProfilePostsBloc>().add(
+                      ProfilePostSaveSyncRequested(
+                        postId: id,
+                        isSaved: newSaved,
+                      ),
+                    );
+                  } catch (_) {}
+                } else {
+                  bloc.add(PeerProfilePostSaveToggled(id));
+                }
+              },
             ),
             const SizedBox(height: 18),
             Padding(
@@ -162,7 +222,9 @@ class _PeerProfileScreenState extends State<PeerProfileScreen> {
               title: const Text('Share Profile', style: TextStyle(fontWeight: FontWeight.w400)),
               onTap: () {
                 Navigator.pop(ctx);
-                AppSnackBar.showInfo(context, 'Profile link copied');
+                if (profile != null) {
+                  ProfileShareCardSheet.show(context, profile: profile);
+                }
               },
             ),
             if (isConnected)

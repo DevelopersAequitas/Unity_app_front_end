@@ -69,31 +69,22 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     return sorted;
   }
 
-  bool _isNotConnected(PeerEntity p) {
-    final status = p.connectionStatus.toLowerCase();
-    return status != 'connected' &&
-        status != 'approved' &&
-        status != 'accepted' &&
-        status != 'is_connected';
+  /// Excludes system/org accounts that have no company, designation, or category.
+  bool _isRealPeer(PeerEntity p) {
+    final hasCompany = p.companyName != null && p.companyName!.trim().isNotEmpty;
+    final hasDesignation = p.designation != null && p.designation!.trim().isNotEmpty;
+    final hasCategory = p.category != null && p.category!.trim().isNotEmpty;
+    return hasCompany || hasDesignation || hasCategory;
   }
 
   void _onStatusUpdated(
     PeerStatusUpdated event,
     Emitter<PeersState> emit,
   ) {
-    final statusLower = event.status.toLowerCase();
-    if (statusLower == 'connected' ||
-        statusLower == 'approved' ||
-        statusLower == 'accepted') {
-      // Filter out connected peers from Peers Tab
-      final updated = state.peers.where((p) => p.id != event.peerId).toList();
-      emit(state.copyWith(peers: updated));
-    } else {
-      final updated = state.peers.map((p) {
-        return p.id == event.peerId ? p.copyWith(connectionStatus: event.status) : p;
-      }).toList();
-      emit(state.copyWith(peers: updated));
-    }
+    final updated = state.allPeers.map((p) {
+      return p.id == event.peerId ? p.copyWith(connectionStatus: event.status) : p;
+    }).toList();
+    emit(state.copyWith(allPeers: updated));
   }
 
   @override
@@ -106,25 +97,45 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     PeersFetchRequested event,
     Emitter<PeersState> emit,
   ) async {
-    if (state.peers.isEmpty) {
+    final isDefaultQuery = state.searchQuery.isEmpty;
+
+    // 1. Instant Cache-first load if empty
+    if (state.allPeers.isEmpty && isDefaultQuery) {
+      final cached = await getAllPeersUseCase.getCached();
+      if (cached.isNotEmpty) {
+        final valid = cached.where((p) => _isRealPeer(p)).toList();
+        final sorted = _applySort(valid, state.selectedSort);
+        emit(state.copyWith(
+          status: PeersStatus.success,
+          allPeers: sorted,
+          page: 1,
+          hasMore: cached.length >= 20,
+        ));
+      } else {
+        emit(state.copyWith(status: PeersStatus.loading, page: 1));
+      }
+    } else if (state.allPeers.isEmpty) {
       emit(state.copyWith(status: PeersStatus.loading, page: 1));
     }
+
+    // 2. Background fresh remote fetch
     try {
       final peers = await getAllPeersUseCase(
         page: 1,
         search: state.searchQuery,
         sort: state.selectedSort,
       );
-      final nonConnectedPeers = peers.where(_isNotConnected).toList();
-      final sortedPeers = _applySort(nonConnectedPeers, state.selectedSort);
+      final validPeers = peers.where((p) => _isRealPeer(p)).toList();
+      final sortedPeers = _applySort(validPeers, state.selectedSort);
       emit(state.copyWith(
         status: PeersStatus.success,
-        peers: sortedPeers,
+        allPeers: sortedPeers,
         hasMore: peers.length >= 20,
         page: 1,
+        errorMessage: null,
       ));
     } catch (e) {
-      if (state.peers.isEmpty) {
+      if (state.allPeers.isEmpty) {
         emit(state.copyWith(
           status: PeersStatus.failure,
           errorMessage: e.toString(),
@@ -143,11 +154,11 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
         search: state.searchQuery,
         sort: state.selectedSort,
       );
-      final nonConnectedPeers = peers.where(_isNotConnected).toList();
-      final sortedPeers = _applySort(nonConnectedPeers, state.selectedSort);
+      final validPeers2 = peers.where((p) => _isRealPeer(p)).toList();
+      final sortedPeers = _applySort(validPeers2, state.selectedSort);
       emit(state.copyWith(
         status: PeersStatus.success,
-        peers: sortedPeers,
+        allPeers: sortedPeers,
         hasMore: peers.length >= 20,
         page: 1,
       ));
@@ -174,13 +185,13 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
         ));
         return;
       }
-      final nonConnectedNewPeers = newPeers.where(_isNotConnected).toList();
-      final existingIds = state.peers.map((p) => p.id).toSet();
+      final validNewPeers = newPeers.where((p) => _isRealPeer(p)).toList();
+      final existingIds = state.allPeers.map((p) => p.id).toSet();
       final uniqueNewPeers =
-          nonConnectedNewPeers.where((p) => !existingIds.contains(p.id)).toList();
-      final combined = [...state.peers, ...uniqueNewPeers];
+          validNewPeers.where((p) => !existingIds.contains(p.id)).toList();
+      final combined = [...state.allPeers, ...uniqueNewPeers];
       emit(state.copyWith(
-        peers: _applySort(combined, state.selectedSort),
+        allPeers: _applySort(combined, state.selectedSort),
         page: nextPage,
         hasMore: newPeers.length >= 20,
         isLoadingMore: false,
@@ -202,8 +213,8 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     PeersSortChanged event,
     Emitter<PeersState> emit,
   ) async {
-    final sortedPeers = _applySort(state.peers, event.sort);
-    emit(state.copyWith(selectedSort: event.sort, peers: sortedPeers));
+    final sortedPeers = _applySort(state.allPeers, event.sort);
+    emit(state.copyWith(selectedSort: event.sort, allPeers: sortedPeers));
   }
 
   Future<void> _onConnect(
@@ -223,13 +234,13 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     PeerBookmarkToggled event,
     Emitter<PeersState> emit,
   ) async {
-    final updated = state.peers.map((p) {
+    final updated = state.allPeers.map((p) {
       if (p.id == event.peerId) {
         return p.copyWith(isBookmarked: !event.isCurrentlyBookmarked);
       }
       return p;
     }).toList();
-    emit(state.copyWith(peers: updated));
+    emit(state.copyWith(allPeers: updated));
     try {
       await togglePeerBookmarkUseCase(
         event.peerId,

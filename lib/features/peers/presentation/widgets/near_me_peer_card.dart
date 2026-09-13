@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_avatar.dart';
+import '../../../../core/widgets/app_gradient_text.dart';
 import '../../domain/entities/geo_peer_entity.dart';
 
 class NearMePeerCard extends StatelessWidget {
@@ -153,20 +154,43 @@ class NearMePeerCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
                     color: AppColor.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    peer.category!,
-                    style: const TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.primaryBlue,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColor.primaryBlue.withValues(alpha: 0.15),
+                      width: 0.8,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback: (bounds) =>
+                            AppColor.brandGradient.createShader(
+                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                        ),
+                        child: const Icon(
+                          Icons.sell_outlined,
+                          size: 9,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: AppGradientText(
+                          peer.category!,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -212,7 +236,7 @@ class NearMePeerCard extends StatelessWidget {
               '$count',
               style: const TextStyle(
                 fontSize: 11.5,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w500,
                 color: AppColor.white,
               ),
             ),

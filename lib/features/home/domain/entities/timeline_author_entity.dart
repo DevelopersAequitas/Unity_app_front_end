@@ -7,6 +7,9 @@ class TimelineAuthorEntity extends Equatable {
   final String? lastName;
   final String? profilePhotoUrl;
   final bool isVerified;
+  final String? designation;
+  final String? companyName;
+  final String? level4Category;
 
   const TimelineAuthorEntity({
     required this.id,
@@ -15,6 +18,9 @@ class TimelineAuthorEntity extends Equatable {
     this.lastName,
     this.profilePhotoUrl,
     this.isVerified = false,
+    this.designation,
+    this.companyName,
+    this.level4Category,
   });
 
   @override
@@ -25,5 +31,8 @@ class TimelineAuthorEntity extends Equatable {
     lastName,
     profilePhotoUrl,
     isVerified,
+    designation,
+    companyName,
+    level4Category,
   ];
 }

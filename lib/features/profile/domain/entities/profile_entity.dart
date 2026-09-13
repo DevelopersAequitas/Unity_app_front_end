@@ -109,6 +109,7 @@ class ProfileEntity extends Equatable {
   final bool isConnected;
   final bool isRequested;
   final String connectionStatus;
+  final bool isOnline;
 
   const ProfileEntity({
     required this.id,
@@ -219,6 +220,7 @@ class ProfileEntity extends Equatable {
     this.isConnected = false,
     this.isRequested = false,
     this.connectionStatus = 'none',
+    this.isOnline = false,
   });
 
   ProfileEntity copyWith({
@@ -330,6 +332,7 @@ class ProfileEntity extends Equatable {
     bool? isConnected,
     bool? isRequested,
     String? connectionStatus,
+    bool? isOnline,
   }) {
     return ProfileEntity(
       id: id ?? this.id,
@@ -440,6 +443,7 @@ class ProfileEntity extends Equatable {
       isConnected: isConnected ?? this.isConnected,
       isRequested: isRequested ?? this.isRequested,
       connectionStatus: connectionStatus ?? this.connectionStatus,
+      isOnline: isOnline ?? this.isOnline,
     );
   }
 

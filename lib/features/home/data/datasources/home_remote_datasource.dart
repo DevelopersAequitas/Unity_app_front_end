@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/brand_partner_model.dart';
+import '../models/post_comment_model.dart';
+import '../models/post_like_model.dart';
 import '../models/timeline_feed_response_model.dart';
 
 abstract class HomeRemoteDataSource {
@@ -18,6 +22,24 @@ abstract class HomeRemoteDataSource {
   Future<void> unlikePost(String postId);
 
   Future<void> toggleSavePost(String postId);
+
+  Future<List<PostLikeModel>> getPostLikes(String postId, {int page = 1});
+
+  Future<List<PostCommentModel>> getPostComments(String postId, {int page = 1});
+
+  Future<PostCommentModel> addPostComment(String postId, String content);
+
+  Future<String> uploadFile(File file, {void Function(double progress)? onProgress});
+
+  Future<void> createPost({
+    required String contentText,
+    String visibility = 'public',
+    List<Map<String, String>> media = const [],
+  });
+
+  Future<void> deletePost(String postId);
+
+  Future<void> updatePost(String postId, {required String contentText});
 }
 
 class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
@@ -99,5 +121,224 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   @override
   Future<void> toggleSavePost(String postId) async {
     await _dio.post(ApiEndpoints.postSave(postId));
+  }
+
+  @override
+  Future<List<PostLikeModel>> getPostLikes(String postId, {int page = 1}) async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.postLikes(postId),
+        queryParameters: {'page': page},
+      );
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300 &&
+          response.data != null) {
+        final data = response.data;
+        List? rawList;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'];
+          if (inner is List) {
+            rawList = inner;
+          } else if (inner is Map<String, dynamic>) {
+            rawList = (inner['items'] ?? inner['likes'] ?? inner['data']) as List?;
+          } else if (data['items'] is List) {
+            rawList = data['items'] as List?;
+          } else if (data['likes'] is List) {
+            rawList = data['likes'] as List?;
+          }
+        } else if (data is List) {
+          rawList = data;
+        }
+        if (rawList != null) {
+          return rawList
+              .whereType<Map<String, dynamic>>()
+              .map((e) => PostLikeModel.fromJson(e))
+              .toList();
+        }
+      }
+      return const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<List<PostCommentModel>> getPostComments(String postId, {int page = 1}) async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.postComments(postId),
+        queryParameters: {'page': page},
+      );
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300 &&
+          response.data != null) {
+        final data = response.data;
+        List? rawList;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'];
+          if (inner is List) {
+            rawList = inner;
+          } else if (inner is Map<String, dynamic>) {
+            rawList = (inner['items'] ?? inner['comments'] ?? inner['data']) as List?;
+          } else if (data['items'] is List) {
+            rawList = data['items'] as List?;
+          } else if (data['comments'] is List) {
+            rawList = data['comments'] as List?;
+          }
+        } else if (data is List) {
+          rawList = data;
+        }
+        if (rawList != null) {
+          return rawList
+              .whereType<Map<String, dynamic>>()
+              .map((e) => PostCommentModel.fromJson(e))
+              .toList();
+        }
+      }
+      return const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<PostCommentModel> addPostComment(String postId, String content) async {
+    final response = await _dio.post(
+      ApiEndpoints.postComments(postId),
+      data: {'content': content},
+    );
+    if (response.statusCode != null &&
+        response.statusCode! >= 200 &&
+        response.statusCode! < 300 &&
+        response.data != null) {
+      final data = response.data;
+      Map<String, dynamic>? commentMap;
+      if (data is Map<String, dynamic>) {
+        final inner = data['data'];
+        if (inner is Map<String, dynamic>) {
+          commentMap = inner;
+        } else {
+          commentMap = data;
+        }
+      }
+      if (commentMap != null) {
+        return PostCommentModel.fromJson(commentMap);
+      }
+    }
+    return PostCommentModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: '',
+      displayName: 'You',
+      content: content,
+      createdAt: DateTime.now().toIso8601String(),
+    );
+  }
+
+  @override
+  Future<String> uploadFile(File file, {void Function(double progress)? onProgress}) async {
+    try {
+      final fileName = file.path.split(RegExp(r'[/\\]')).last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: fileName,
+        ),
+      });
+
+      final response = await _dio.post(
+        ApiEndpoints.fileUpload,
+        data: formData,
+        options: Options(
+          sendTimeout: const Duration(minutes: 5),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+        onSendProgress: (sent, total) {
+          if (total > 0 && onProgress != null) {
+            onProgress(sent / total);
+          }
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          final fileId = data['data']?['id'] ?? data['id'] ?? data['file_id'] ?? data['data']?['file_id'];
+          if (fileId != null) {
+            return fileId.toString();
+          }
+        }
+        throw const ApiException(message: 'File uploaded but ID missing');
+      }
+      throw ApiException(
+        message: response.statusMessage ?? 'Failed to upload file',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<void> createPost({
+    required String contentText,
+    String visibility = 'public',
+    List<Map<String, String>> media = const [],
+  }) async {
+    final payload = <String, dynamic>{
+      'content_text': contentText,
+      'visibility': visibility,
+    };
+    if (media.isNotEmpty) {
+      payload['media'] = media;
+    }
+
+    final response = await _dio.post(
+      ApiEndpoints.createPost,
+      data: payload,
+    );
+
+    if (response.statusCode != null &&
+        response.statusCode! >= 200 &&
+        response.statusCode! < 300) {
+      return;
+    }
+    throw ApiException(
+      message: response.statusMessage ?? 'Failed to create post',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<void> deletePost(String postId) async {
+    final response = await _dio.delete(ApiEndpoints.postDetail(postId));
+    if (response.statusCode != null &&
+        response.statusCode! >= 200 &&
+        response.statusCode! < 300) {
+      return;
+    }
+    throw ApiException(
+      message: response.statusMessage ?? 'Failed to delete post',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<void> updatePost(String postId, {required String contentText}) async {
+    final response = await _dio.put(
+      ApiEndpoints.postDetail(postId),
+      data: {'content_text': contentText},
+    );
+    if (response.statusCode != null &&
+        response.statusCode! >= 200 &&
+        response.statusCode! < 300) {
+      return;
+    }
+    throw ApiException(
+      message: response.statusMessage ?? 'Failed to update post',
+      statusCode: response.statusCode,
+    );
   }
 }

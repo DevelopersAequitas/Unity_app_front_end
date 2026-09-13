@@ -19,4 +19,8 @@ class GetAllPeersUseCase {
       sort: sort,
     );
   }
+
+  Future<List<PeerEntity>> getCached() {
+    return repository.getCachedAllPeers();
+  }
 }

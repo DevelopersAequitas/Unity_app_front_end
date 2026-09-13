@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
-import '../../../../core/theme/app_typography.dart';
 
 class TimelineInteractionBar extends StatelessWidget {
   final int likesCount;
@@ -9,6 +8,7 @@ class TimelineInteractionBar extends StatelessWidget {
   final bool isLiked;
   final bool isSaved;
   final VoidCallback? onLikeTap;
+  final VoidCallback? onLikesCountTap;
   final VoidCallback? onCommentTap;
   final VoidCallback? onSaveTap;
   final VoidCallback? onShareTap;
@@ -21,6 +21,7 @@ class TimelineInteractionBar extends StatelessWidget {
     required this.isLiked,
     required this.isSaved,
     this.onLikeTap,
+    this.onLikesCountTap,
     this.onCommentTap,
     this.onSaveTap,
     this.onShareTap,
@@ -40,8 +41,9 @@ class TimelineInteractionBar extends StatelessWidget {
           defaultColor: defaultColor,
           isActive: isLiked,
           onTap: onLikeTap,
+          onCountTap: onLikesCountTap ?? (likesCount > 0 ? onLikesCountTap : null),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         _InteractionButton(
           icon: Icons.chat_bubble_outline_rounded,
           count: commentsCount,
@@ -59,13 +61,13 @@ class TimelineInteractionBar extends StatelessWidget {
           isActive: isSaved,
           onTap: onSaveTap,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         InkWell(
           onTap: onShareTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Icon(Icons.share_outlined, size: 20, color: defaultColor),
+            padding: const EdgeInsets.all(6),
+            child: Icon(Icons.share_outlined, size: 18, color: defaultColor),
           ),
         ),
       ],
@@ -80,6 +82,7 @@ class _InteractionButton extends StatelessWidget {
   final Color defaultColor;
   final bool isActive;
   final VoidCallback? onTap;
+  final VoidCallback? onCountTap;
 
   const _InteractionButton({
     required this.icon,
@@ -88,33 +91,44 @@ class _InteractionButton extends StatelessWidget {
     required this.defaultColor,
     required this.isActive,
     this.onTap,
+    this.onCountTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = isActive ? activeColor : defaultColor;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: color),
-            if (count != null) ...[
-              const SizedBox(width: 6),
-              Text(
-                count.toString(),
-                style: AppTypography.bodySmall.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(icon, size: 18, color: color),
+            ),
+          ),
+          if (count != null) ...[
+            const SizedBox(width: 2),
+            InkWell(
+              onTap: onCountTap ?? onTap,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                  ),
                 ),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

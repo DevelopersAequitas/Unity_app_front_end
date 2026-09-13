@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../home/presentation/bloc/home_bloc.dart';
+import '../../../home/presentation/bloc/home_event.dart';
+import '../../../home/presentation/widgets/post_comments_bottom_sheet.dart';
 import '../../../home/presentation/widgets/timeline_card.dart';
 import '../bloc/profile_posts_bloc.dart';
 import '../bloc/profile_posts_event.dart';
 import '../bloc/profile_posts_state.dart';
+import '../bloc/profile_saved_posts_bloc.dart';
+import '../bloc/profile_saved_posts_event.dart';
 
 class ProfilePostsTab extends StatelessWidget {
   final ScrollController? scrollController;
@@ -89,8 +94,67 @@ class ProfilePostsTab extends StatelessWidget {
             return TimelineCard(
               item: post,
               autoPlay: false,
-              onLikeTap: () => context.read<ProfilePostsBloc>().add(ProfilePostLikeToggled(post.id)),
-              onSaveTap: () => context.read<ProfilePostsBloc>().add(ProfilePostSaveToggled(post.id)),
+              onLikeTap: () {
+                final currentLiked = post.isLikedByMe;
+                final newLiked = !currentLiked;
+                final newCount = (post.likesCount + (newLiked ? 1 : -1)).clamp(0, 9999999);
+                context.read<ProfilePostsBloc>().add(ProfilePostLikeToggled(post.id));
+                try {
+                  context.read<HomeBloc>().add(
+                    HomePostLikeSyncRequested(
+                      postId: post.id,
+                      isLiked: newLiked,
+                      likesCount: newCount,
+                    ),
+                  );
+                } catch (_) {}
+                try {
+                  context.read<ProfileSavedPostsBloc>().add(
+                    ProfileSavedPostLikeSyncRequested(
+                      postId: post.id,
+                      isLiked: newLiked,
+                      likesCount: newCount,
+                    ),
+                  );
+                } catch (_) {}
+              },
+              onSaveTap: () {
+                final newSaved = !post.isSaved;
+                context.read<ProfilePostsBloc>().add(ProfilePostSaveToggled(post.id));
+                try {
+                  context.read<HomeBloc>().add(
+                    HomePostSaveSyncRequested(
+                      postId: post.id,
+                      isSaved: newSaved,
+                    ),
+                  );
+                } catch (_) {}
+                try {
+                  context.read<ProfileSavedPostsBloc>().add(
+                    ProfileSavedPostSaveSyncRequested(
+                      postId: post.id,
+                      isSaved: newSaved,
+                    ),
+                  );
+                } catch (_) {}
+              },
+              onCommentTap: () {
+                PostCommentsBottomSheet.show(
+                  context,
+                  postId: post.id,
+                  totalComments: post.commentsCount,
+                  onCommentAdded: () {
+                    context
+                        .read<ProfilePostsBloc>()
+                        .add(ProfilePostCommentCountIncremented(post.id));
+                    try {
+                      context
+                          .read<ProfileSavedPostsBloc>()
+                          .add(ProfileSavedPostCommentCountIncremented(post.id));
+                    } catch (_) {}
+                  },
+                );
+              },
             );
           },
         );

@@ -90,8 +90,13 @@ class PeerModel {
         json['is_following'] == true;
 
     final bool online = userMap['is_online'] == true ||
+        userMap['is_online'] == 1 ||
+        userMap['is_online'] == '1' ||
         userMap['online_status'] == 'online' ||
-        json['is_online'] == true;
+        json['is_online'] == true ||
+        json['is_online'] == 1 ||
+        json['is_online'] == '1' ||
+        json['online_status'] == 'online';
 
     String connStatus = 'none';
     if (json['is_connected'] == true ||

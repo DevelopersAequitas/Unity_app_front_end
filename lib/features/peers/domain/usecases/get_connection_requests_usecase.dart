@@ -9,4 +9,8 @@ class GetConnectionRequestsUseCase {
   Future<List<PeerRequestEntity>> call({int page = 1, int limit = 20}) {
     return repository.getConnectionRequests(page: page, limit: limit);
   }
+
+  Future<List<PeerRequestEntity>> getCached() {
+    return repository.getCachedConnectionRequests();
+  }
 }

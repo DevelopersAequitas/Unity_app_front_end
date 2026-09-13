@@ -6,6 +6,8 @@ class AppCacheBoxes {
   static const String appCacheBox = 'peers_offline_data_box';
   static const String homeFeedBox = 'peers_home_feed_box';
   static const String peersBox = 'peers_data_box';
+  static const String notificationsBox = 'peers_notifications_box';
+  static const String circlesBox = 'peers_circles_box';
 }
 
 class AppCacheKeys {
@@ -27,4 +29,11 @@ class AppCacheKeys {
   static const String connectionRequests = 'cached_connection_requests';
   static const String sentConnectionRequests = 'cached_sent_connection_requests';
   static const String matchPeers = 'cached_match_peers';
+
+  // Notifications Caching
+  static const String notifications = 'cached_notifications';
+
+  // Circles Caching
+  static const String myCircles = 'cached_my_circles';
+  static const String circleCategories = 'cached_circle_categories';
 }

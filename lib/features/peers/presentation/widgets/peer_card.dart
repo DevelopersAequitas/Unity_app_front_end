@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_color.dart';
-import '../../../../core/widgets/app_avatar.dart';
-import '../../domain/entities/peer_entity.dart';
+import 'package:unity_app/core/theme/app_color.dart';
+import 'package:unity_app/core/widgets/app_avatar.dart';
+import 'package:unity_app/core/widgets/app_gradient_text.dart';
+import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 
 class PeerCard extends StatelessWidget {
   final PeerEntity peer;
+  final bool isCurrentUser;
   final VoidCallback? onConnect;
   final VoidCallback onMessage;
   final VoidCallback onBookmark;
@@ -14,6 +16,7 @@ class PeerCard extends StatelessWidget {
   const PeerCard({
     super.key,
     required this.peer,
+    this.isCurrentUser = false,
     this.onConnect,
     required this.onMessage,
     required this.onBookmark,
@@ -49,8 +52,10 @@ class PeerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 6),
-                _buildActions(),
+                if (!isCurrentUser) ...[
+                  const SizedBox(height: 6),
+                  _buildActions(),
+                ],
               ],
             ),
           ),
@@ -95,6 +100,24 @@ class PeerCard extends StatelessWidget {
                       Icons.verified_rounded,
                       size: 13,
                       color: AppColor.primaryBlue,
+                    ),
+                  ],
+                  if (isCurrentUser) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColor.primaryBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'YOU',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w500,
+                          color: AppColor.primaryBlue,
+                        ),
+                      ),
                     ),
                   ],
                 ],
@@ -153,20 +176,43 @@ class PeerCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
                     color: AppColor.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    peer.category!,
-                    style: const TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.primaryBlue,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColor.primaryBlue.withValues(alpha: 0.15),
+                      width: 0.8,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback: (bounds) =>
+                            AppColor.brandGradient.createShader(
+                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                        ),
+                        child: const Icon(
+                          Icons.sell_outlined,
+                          size: 9,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: AppGradientText(
+                          peer.category!,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -212,7 +258,7 @@ class PeerCard extends StatelessWidget {
               '$count',
               style: const TextStyle(
                 fontSize: 11.5,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w500,
                 color: AppColor.white,
               ),
             ),

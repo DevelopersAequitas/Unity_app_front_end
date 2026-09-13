@@ -88,14 +88,53 @@ class AppEnvironment {
   static String get appDomain =>
       flavor == Flavor.dev ? 'dev.peersunity.com' : 'peersunity.com';
 
-  /// Universal deep link URL to navigate directly to the Join Circle/Chapter tab
+  /// 1. Peer Profile Deep Link
+  static String getPeerProfileDeepLink(String peerId) {
+    return Uri.https(appDomain, '/share', {
+      'type': 'peer_profile',
+      'id': peerId,
+    }).toString();
+  }
+
+  /// 2. Post / Recognition Deep Link
+  static String getPostDeepLink(String postId) {
+    return Uri.https(appDomain, '/share', {
+      'type': 'post',
+      'id': postId,
+    }).toString();
+  }
+
+  /// 3. Circle Deep Link
+  static String getCircleDeepLink(String circleId) {
+    return Uri.https(appDomain, '/share', {
+      'type': 'circle',
+      'id': circleId,
+    }).toString();
+  }
+
+  /// 4. Join Circle Deep Link
   static String get joinCircleDeepLink =>
       'https://$appDomain/share?type=join_circle';
 
-  /// Custom Scheme deep link to navigate directly to the Join Circle/Chapter tab
+  /// 5. Connections Deep Link
+  static String get connectionsDeepLink =>
+      'https://$appDomain/share?type=connections';
+
+  /// 6. Requests Deep Link
+  static String get requestsDeepLink =>
+      'https://$appDomain/share?type=requests';
+
+  /// 7. Referral / Register Deep Link
+  static String getRegisterDeepLink(String refCode) {
+    return Uri.https(appDomain, '/register', {
+      'ref': refCode,
+    }).toString();
+  }
+
+  /// 8. Custom Scheme deep link to navigate directly to the Join Circle/Chapter tab
   static String get joinCircleSchemeLink => '$appScheme://join_circle';
 
-  /// Universal deep link URL to navigate directly to an event pass / QR screen
+  /// 9. Universal deep link URL to navigate directly to an event pass / QR screen
   static String getEventQrDeepLink(
     String eventId, {
     String? occurrenceId,

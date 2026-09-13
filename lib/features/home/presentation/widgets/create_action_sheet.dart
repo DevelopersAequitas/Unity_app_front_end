@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 
@@ -57,7 +58,10 @@ class CreateActionSheet extends StatelessWidget {
               subtitle: 'Share insights or updates with peers',
               accentColor: AppColor.primaryBlue,
               isDark: isDark,
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRoutes.createPost);
+              },
             ),
             const SizedBox(height: 8),
             _ActionTile(

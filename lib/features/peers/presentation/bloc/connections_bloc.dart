@@ -57,9 +57,26 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
     ConnectionsFetchRequested event,
     Emitter<ConnectionsState> emit,
   ) async {
-    if (state.connections.isEmpty) {
+    final isDefaultQuery = state.searchQuery.isEmpty;
+
+    // 1. Instant Cache-first load if empty
+    if (state.connections.isEmpty && isDefaultQuery) {
+      final cached = await getMyConnectionsUseCase.getCached();
+      if (cached.isNotEmpty) {
+        emit(state.copyWith(
+          status: ConnectionsStatus.success,
+          connections: cached,
+          hasMore: cached.length >= 20,
+          page: 1,
+        ));
+      } else {
+        emit(state.copyWith(status: ConnectionsStatus.loading, page: 1));
+      }
+    } else if (state.connections.isEmpty) {
       emit(state.copyWith(status: ConnectionsStatus.loading, page: 1));
     }
+
+    // 2. Background fresh remote fetch
     try {
       final connections = await getMyConnectionsUseCase(
         page: 1,
@@ -70,6 +87,7 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
         connections: connections,
         hasMore: connections.length >= 20,
         page: 1,
+        errorMessage: null,
       ));
     } catch (e) {
       if (state.connections.isEmpty) {

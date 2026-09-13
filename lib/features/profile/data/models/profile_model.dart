@@ -110,6 +110,7 @@ class ProfileModel extends ProfileEntity {
     super.isConnected = false,
     super.isRequested = false,
     super.connectionStatus = 'none',
+    super.isOnline = false,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -463,6 +464,10 @@ class ProfileModel extends ProfileEntity {
               root['connection_state'] ??
               (root['is_connected'] == true ? 'connected' : (root['is_requested'] == true ? 'pending' : 'none')))
           .toString(),
+      isOnline: root['is_online'] == true ||
+          root['is_online'] == 1 ||
+          root['is_online'] == '1' ||
+          root['online_status'] == 'online',
     );
   }
 

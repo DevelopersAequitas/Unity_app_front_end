@@ -24,15 +24,22 @@ class ApiEndpoints {
 
   // Home & Timeline Feed
   static const String timelineFeed = '/posts/feed';
+  static const String createPost = '/posts';
+  static String postDetail(String id) => '/posts/$id';
   static const String brandPartners = '/brand-partners';
   static String postLike(String id) => '/posts/$id/like';
+  static String postLikes(String id) => '/posts/$id/likes';
+  static String postComments(String id) => '/posts/$id/comments';
   static String postSave(String id) => '/posts/$id/save';
+  static const String savedPosts = '/posts/saved';
 
   // Peers & Connections
   static const String membersLimited = '/members/limited';
   static String member(String id) => '/members/$id';
   static String followUser(String userId) => '/users/$userId/follow';
   static String unfollowUser(String userId) => '/users/$userId/unfollow';
+  static String memberFollow(String memberId) => '/members/$memberId/follow';
+  static String memberUnfollow(String memberId) => '/members/$memberId/unfollow';
   static const String connections = '/connections';
   static const String connectionRequests = '/me/connection-requests';
   static const String sentConnectionRequests = '/connections/sent';
@@ -43,9 +50,31 @@ class ApiEndpoints {
       '/connections/sent/$requestId';
   static String memberBookmark(String id) => '/members/$id/bookmark';
 
+  // Online & Presence Status
+  static const String onlineHeartbeat = '/members/online-heartbeat';
+  static const String onlineOffline = '/members/online-offline';
+  static const String updateOnlineStatus = '/members/update-online-status';
+  static const String membersOnlineStatus = '/members/online-status';
+  static const String connectionsOnlineStatus = '/members/my-connections-online-status';
+  static String memberOnlineStatus(String id) => '/members/$id/online-status';
+
   // Profile & Uploads
   static const String profile = '/profile';
   static const String profilePosts = '/profile/posts';
   static String userPosts(String userId) => '/users/$userId/posts';
   static const String fileUpload = '/files/upload';
+
+  // Notifications
+  static const String notifications = '/notifications';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
+  static const String markAllNotificationsRead = '/notifications/mark-all-read';
+
+  // Circles
+  static const String myCircles = '/circles/my';
+  static const String circleCategories = '/circle-categories';
+  static String circleDetail(String id) => '/circles/$id';
+  static String circleMembers(String id) => '/circles/$id/members';
+  static const String circleJoinRequests = '/circle-join-requests';
+  static const String myCircleJoinRequests = '/circle-join-requests/my';
 }
+

@@ -5,7 +5,7 @@ enum PeersStatus { initial, loading, success, failure }
 
 class PeersState extends Equatable {
   final PeersStatus status;
-  final List<PeerEntity> peers;
+  final List<PeerEntity> allPeers;
   final bool hasMore;
   final bool isLoadingMore;
   final int page;
@@ -15,7 +15,7 @@ class PeersState extends Equatable {
 
   const PeersState({
     this.status = PeersStatus.initial,
-    this.peers = const [],
+    this.allPeers = const [],
     this.hasMore = true,
     this.isLoadingMore = false,
     this.page = 1,
@@ -24,9 +24,44 @@ class PeersState extends Equatable {
     this.errorMessage,
   });
 
+  static bool _isNotConnected(PeerEntity p) {
+    final status = p.connectionStatus.toLowerCase();
+    return status != 'connected' &&
+        status != 'approved' &&
+        status != 'accepted' &&
+        status != 'is_connected';
+  }
+
+  /// Returns filtered peers based on searchQuery.
+  /// When not searching (browsing/scrolling), excludes already-connected peers so user discovers new peers.
+  /// When searching, includes all matching peers (both connected and non-connected) from the directory.
+  List<PeerEntity> get peers {
+    final q = searchQuery.trim().toLowerCase();
+    if (q.isEmpty) {
+      return allPeers.where(_isNotConnected).toList();
+    }
+    return allPeers.where((p) {
+      final name = p.displayName.toLowerCase();
+      final firstName = (p.firstName ?? '').toLowerCase();
+      final lastName = (p.lastName ?? '').toLowerCase();
+      final company = (p.companyName ?? '').toLowerCase();
+      final designation = (p.designation ?? '').toLowerCase();
+      final category = (p.category ?? '').toLowerCase();
+      final city = (p.city ?? '').toLowerCase();
+
+      return name.contains(q) ||
+          firstName.contains(q) ||
+          lastName.contains(q) ||
+          company.contains(q) ||
+          designation.contains(q) ||
+          category.contains(q) ||
+          city.contains(q);
+    }).toList();
+  }
+
   PeersState copyWith({
     PeersStatus? status,
-    List<PeerEntity>? peers,
+    List<PeerEntity>? allPeers,
     bool? hasMore,
     bool? isLoadingMore,
     int? page,
@@ -36,7 +71,7 @@ class PeersState extends Equatable {
   }) {
     return PeersState(
       status: status ?? this.status,
-      peers: peers ?? this.peers,
+      allPeers: allPeers ?? this.allPeers,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       page: page ?? this.page,
@@ -49,7 +84,7 @@ class PeersState extends Equatable {
   @override
   List<Object?> get props => [
         status,
-        peers,
+        allPeers,
         hasMore,
         isLoadingMore,
         page,

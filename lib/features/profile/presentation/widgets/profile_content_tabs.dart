@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 
-enum ProfileTab { posts, about }
+enum ProfileTab { posts, saved, about }
 
 class ProfileContentTabs extends StatelessWidget {
   final ProfileTab selectedTab;
@@ -33,7 +33,16 @@ class ProfileContentTabs extends StatelessWidget {
             Icons.grid_on_outlined,
             postCount > 0 ? '$postCount' : null,
           ),
-          _buildTab(ProfileTab.about, 'About', Icons.person_outline),
+          _buildTab(
+            ProfileTab.saved,
+            'Saved',
+            Icons.bookmark_outline_rounded,
+          ),
+          _buildTab(
+            ProfileTab.about,
+            'About',
+            Icons.person_outline,
+          ),
         ],
       ),
     );

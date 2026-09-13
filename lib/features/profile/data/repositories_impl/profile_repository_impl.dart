@@ -49,6 +49,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<List<TimelineItemEntity>> getSavedPosts({int page = 1}) async {
+    return remoteDataSource.getSavedPosts(page: page);
+  }
+
+  @override
   Future<String> uploadFile(File file, {void Function(double progress)? onProgress}) async {
     return remoteDataSource.uploadFile(file, onProgress: onProgress);
   }

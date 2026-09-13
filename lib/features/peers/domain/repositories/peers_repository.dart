@@ -13,21 +13,29 @@ abstract class PeersRepository {
     String? sort,
   });
 
+  Future<List<PeerEntity>> getCachedAllPeers();
+
   Future<List<PeerEntity>> getMyConnections({
     int page = 1,
     int limit = 20,
     String? search,
   });
 
+  Future<List<PeerEntity>> getCachedMyConnections();
+
   Future<List<PeerRequestEntity>> getConnectionRequests({
     int page = 1,
     int limit = 20,
   });
 
+  Future<List<PeerRequestEntity>> getCachedConnectionRequests();
+
   Future<List<PeerRequestEntity>> getSentConnectionRequests({
     int page = 1,
     int limit = 20,
   });
+
+  Future<List<PeerRequestEntity>> getCachedSentConnectionRequests();
 
   Future<List<GeoPeerEntity>> getNearbyPeers({
     int page = 1,
@@ -38,6 +46,8 @@ abstract class PeersRepository {
   });
 
   Future<List<MatchPeerEntity>> getMatchPeers();
+
+  Future<List<MatchPeerEntity>> getCachedMatches();
 
   Future<ProfileEntity> getMemberProfile(String memberId);
 

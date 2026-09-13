@@ -4,12 +4,15 @@ import '../../features/auth/presentation/screens/welcome_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/verify_otp_screen.dart';
+import '../../features/home/presentation/screens/create_post_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/peers/presentation/screens/connections_screen.dart';
 import '../../features/peers/presentation/screens/matches_screen.dart';
 import '../../features/peers/presentation/screens/near_me_screen.dart';
 import '../../features/peers/presentation/screens/peer_requests_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../features/home/domain/usecases/toggle_post_like_usecase.dart';
+import '../../features/home/domain/usecases/toggle_post_save_usecase.dart';
 import '../../features/peers/domain/usecases/cancel_sent_connection_request_usecase.dart';
 import '../../features/peers/domain/usecases/follow_user_usecase.dart';
 import '../../features/peers/domain/usecases/get_member_posts_usecase.dart';
@@ -20,7 +23,13 @@ import '../../features/peers/domain/usecases/toggle_peer_bookmark_usecase.dart';
 import '../../features/peers/domain/usecases/unfollow_user_usecase.dart';
 import '../../features/peers/presentation/bloc/peer_profile_bloc.dart';
 import '../../features/peers/presentation/screens/peer_profile_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/circles/domain/entities/circle_entity.dart';
+import '../../features/circles/presentation/screens/circle_detail_screen.dart';
+import '../../features/circles/presentation/screens/circle_join_screen.dart';
+import '../../features/circles/presentation/screens/circle_members_screen.dart';
+import '../../features/circles/presentation/screens/join_request_status_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -37,6 +46,25 @@ class AppRoutes {
   static const String matches = '/matches';
   static const String peerProfile = '/peer-profile';
   static const String profile = '/profile';
+  static const String createPost = '/create-post';
+  static const String notifications = '/notifications';
+
+  // Aliases & Future Feature Routes (Fallback to Home/Parent screen if UI pending)
+  static const String connectionRequests = '/peer-requests';
+  static const String pendingRequests = '/peer-requests';
+  static const String postDetails = '/post-details';
+  static const String p2pMeetings = '/p2p-meetings';
+  static const String circleDetails = '/circle-details';
+  static const String circleMembers = '/circle-members';
+  static const String circleJoin = '/circle-join';
+  static const String joinRequestStatus = '/join-request-status';
+  static const String circleChat = '/circle-chat';
+  static const String businessDeals = '/business-deals';
+  static const String wallet = '/wallet';
+  static const String brandPartnerDetails = '/brand-partner-details';
+  static const String lifeImpact = '/life-impact';
+  static const String circulars = '/circulars';
+  static const String supportTicketDetails = '/support-ticket-details';
 }
 
 class AppRouter {
@@ -116,6 +144,8 @@ class AppRouter {
               cancelSentConnectionRequestUseCase: ctx.read<CancelSentConnectionRequestUseCase>(),
               togglePeerBookmarkUseCase: ctx.read<TogglePeerBookmarkUseCase>(),
               removeConnectionUseCase: ctx.read<RemoveConnectionUseCase>(),
+              togglePostLikeUseCase: ctx.read<TogglePostLikeUseCase>(),
+              togglePostSaveUseCase: ctx.read<TogglePostSaveUseCase>(),
             ),
             child: PeerProfileScreen(peerId: peerId),
           ),
@@ -124,6 +154,47 @@ class AppRouter {
       case AppRoutes.profile:
         return MaterialPageRoute(
           builder: (_) => const ProfileScreen(),
+          settings: settings,
+        );
+      case AppRoutes.createPost:
+        return MaterialPageRoute(
+          builder: (_) => const CreatePostScreen(),
+          settings: settings,
+        );
+      case AppRoutes.notifications:
+        return MaterialPageRoute(
+          builder: (_) => const NotificationsScreen(),
+          settings: settings,
+        );
+      case AppRoutes.circleDetails:
+        final circle = settings.arguments as CircleEntity?;
+        return MaterialPageRoute(
+          builder: (_) => CircleDetailScreen(circle: circle),
+          settings: settings,
+        );
+      case AppRoutes.circleMembers:
+        final circle = settings.arguments as CircleEntity;
+        return MaterialPageRoute(
+          builder: (_) => CircleMembersScreen(circle: circle),
+          settings: settings,
+        );
+      case AppRoutes.circleJoin:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) => CircleJoinScreen(
+            circleId: args['circleId']?.toString() ?? '',
+            defaultSectorName: args['defaultSectorName']?.toString(),
+            defaultSectorId: args['defaultSectorId']?.toString(),
+          ),
+          settings: settings,
+        );
+      case AppRoutes.joinRequestStatus:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) => JoinRequestStatusScreen(
+            requestId: args['requestId']?.toString() ?? '',
+            circleName: args['circleName']?.toString() ?? 'Circle',
+          ),
           settings: settings,
         );
       default:

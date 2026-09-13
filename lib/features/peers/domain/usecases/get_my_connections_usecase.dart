@@ -17,4 +17,8 @@ class GetMyConnectionsUseCase {
       search: search,
     );
   }
+
+  Future<List<PeerEntity>> getCached() {
+    return repository.getCachedMyConnections();
+  }
 }

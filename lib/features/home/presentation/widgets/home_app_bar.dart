@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/peers_logo.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../notifications/presentation/bloc/notifications_bloc.dart';
+import '../../../notifications/presentation/bloc/notifications_state.dart';
 
 /// A proper AppBar that uses Flutter's native [AppBar] under the hood so that
 /// status bar safe-area, system overlay style, and elevation are all handled
@@ -137,31 +140,54 @@ class _NotificationIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: SizedBox(
-        width: 44,
-        height: kToolbarHeight,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(Icons.notifications_none_rounded, size: 24, color: iconColor),
-            Positioned(
-              top: 12,
-              right: 8,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColor.primaryPink,
-                  shape: BoxShape.circle,
-                ),
+    return BlocSelector<NotificationsBloc, NotificationsState, int>(
+      selector: (state) => state.unreadCount,
+      builder: (context, unreadCount) {
+        final badgeText = unreadCount > 99 ? '99+' : '$unreadCount';
+        return Semantics(
+          label: unreadCount > 0 ? '$unreadCount unread notifications' : 'Notifications',
+          button: true,
+          child: InkWell(
+            onTap: onTap ?? () => Navigator.of(context).pushNamed(AppRoutes.notifications),
+            borderRadius: BorderRadius.circular(24),
+            child: SizedBox(
+              width: 44,
+              height: kToolbarHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(Icons.notifications_none_rounded, size: 24, color: iconColor),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: 10,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: AppColor.primaryPink,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Center(
+                          child: Text(
+                            badgeText,
+                            style: AppTypography.labelSmall.copyWith(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

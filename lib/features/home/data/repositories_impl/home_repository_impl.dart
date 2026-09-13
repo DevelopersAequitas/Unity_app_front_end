@@ -1,4 +1,7 @@
+import 'dart:io';
 import '../../domain/entities/brand_partner_entity.dart';
+import '../../domain/entities/post_comment_entity.dart';
+import '../../domain/entities/post_like_entity.dart';
 import '../../domain/entities/timeline_item_entity.dart';
 import '../../domain/entities/timeline_pagination_entity.dart';
 import '../../domain/repositories/home_repository.dart';
@@ -49,9 +52,26 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   @override
+  Future<({List<TimelineItemEntity> items, TimelinePaginationEntity pagination})?>
+  getCachedTimelineFeed() async {
+    if (localDataSource == null) return null;
+    final cached = await localDataSource!.getCachedTimelineFeed();
+    if (cached != null && cached.items.isNotEmpty) {
+      return (
+        items: cached.items.map((m) => m.toEntity()).toList(),
+        pagination: cached.toPaginationEntity(),
+      );
+    }
+    return null;
+  }
+
+  @override
   Future<List<BrandPartnerEntity>> getBrandPartners() async {
     try {
       final list = await remoteDataSource.getBrandPartners();
+      if (localDataSource != null) {
+        await localDataSource!.cacheBrandPartners(list.map((m) => m.toJson()).toList());
+      }
       return list.map((m) => m.toEntity()).toList();
     } catch (_) {
       if (localDataSource != null) {
@@ -60,6 +80,13 @@ class HomeRepositoryImpl implements HomeRepository {
       }
       return [];
     }
+  }
+
+  @override
+  Future<List<BrandPartnerEntity>> getCachedBrandPartners() async {
+    if (localDataSource == null) return [];
+    final cached = await localDataSource!.getCachedBrandPartners();
+    return cached.map((m) => m.toEntity()).toList();
   }
 
   @override
@@ -77,5 +104,51 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<bool> toggleSave(String postId, {required bool isCurrentlySaved}) async {
     await remoteDataSource.toggleSavePost(postId);
     return !isCurrentlySaved;
+  }
+
+  @override
+  Future<List<PostLikeEntity>> getPostLikes(String postId, {int page = 1}) async {
+    final list = await remoteDataSource.getPostLikes(postId, page: page);
+    return list.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<List<PostCommentEntity>> getPostComments(String postId, {int page = 1}) async {
+    final list = await remoteDataSource.getPostComments(postId, page: page);
+    return list.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<PostCommentEntity> addPostComment(String postId, String content) async {
+    final model = await remoteDataSource.addPostComment(postId, content);
+    return model.toEntity();
+  }
+
+  @override
+  Future<String> uploadFile(File file, {void Function(double progress)? onProgress}) {
+    return remoteDataSource.uploadFile(file, onProgress: onProgress);
+  }
+
+  @override
+  Future<void> createPost({
+    required String contentText,
+    String visibility = 'public',
+    List<Map<String, String>> media = const [],
+  }) {
+    return remoteDataSource.createPost(
+      contentText: contentText,
+      visibility: visibility,
+      media: media,
+    );
+  }
+
+  @override
+  Future<void> deletePost(String postId) {
+    return remoteDataSource.deletePost(postId);
+  }
+
+  @override
+  Future<void> updatePost(String postId, {required String contentText}) {
+    return remoteDataSource.updatePost(postId, contentText: contentText);
   }
 }

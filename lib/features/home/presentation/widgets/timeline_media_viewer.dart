@@ -16,11 +16,13 @@ import '../../domain/entities/timeline_media_entity.dart';
 class TimelineMediaViewer extends StatefulWidget {
   final TimelineMediaEntity media;
   final bool autoPlay;
+  final VoidCallback? onDoubleTap;
 
   const TimelineMediaViewer({
     super.key,
     required this.media,
     this.autoPlay = true,
+    this.onDoubleTap,
   });
 
   @override
@@ -57,10 +59,10 @@ class _TimelineMediaViewerState extends State<TimelineMediaViewer> {
     _visibleFraction = fraction;
     if (!mounted || !widget.media.isVideo) return;
 
-    if (fraction >= 0.6 && widget.autoPlay) {
+    if (fraction >= 0.6) {
       if (_controller == null && !_isInitializing && !_videoError) {
         _initVideo();
-      } else if (_controller != null && _videoReady && !_controller!.value.isPlaying) {
+      } else if (_controller != null && _videoReady && widget.autoPlay && !_controller!.value.isPlaying) {
         _controller!.play();
       }
     } else if (fraction < 0.4) {
@@ -130,6 +132,7 @@ class _TimelineMediaViewerState extends State<TimelineMediaViewer> {
   Widget build(BuildContext context) {
     final mediaContent = GestureDetector(
       onTap: _openPreview,
+      onDoubleTap: widget.onDoubleTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: AspectRatio(
@@ -164,10 +167,8 @@ class _TimelineMediaViewerState extends State<TimelineMediaViewer> {
   }
 
   Widget _buildVideo() {
-    if (_videoError) return _errorBox();
-
-    if (!_videoReady || _controller == null) {
-      return _loadingBox();
+    if (!_videoReady || _controller == null || _videoError) {
+      return _buildVideoPlaceholder();
     }
 
     return Stack(
@@ -221,13 +222,88 @@ class _TimelineMediaViewerState extends State<TimelineMediaViewer> {
     );
   }
 
+  Widget _buildVideoPlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Center(
+            child: Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                gradient: AppColor.brandGradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 34,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 12,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 0.8,
+                ),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.videocam_outlined, size: 14, color: Colors.white),
+                  SizedBox(width: 5),
+                  Text(
+                    'Watch Video',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _loadingBox() {
     return Container(
       color: const Color(0xFF1E222D),
       child: const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: AppColor.primaryBlue,
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColor.primaryBlue,
+          ),
         ),
       ),
     );

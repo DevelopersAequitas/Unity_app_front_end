@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/location_sync_service.dart';
+import '../../../../core/services/user_presence_service.dart';
 import '../../../../core/utils/app_error_handler.dart';
 import '../../domain/usecases/get_cached_auth_usecase.dart';
 import '../../domain/usecases/request_otp_usecase.dart';
@@ -30,11 +32,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final cached = await getCachedAuthUseCase();
       if (cached.user != null && cached.token != null) {
+        UserPresenceService.instance.markOnlineAndStart();
+        LocationSyncService.instance.syncLocationIfPermitted();
         emit(AuthAuthenticated(user: cached.user!, token: cached.token!));
       } else {
+        UserPresenceService.instance.markOfflineAndStop();
         emit(const AuthUnauthenticated());
       }
     } catch (_) {
+      UserPresenceService.instance.markOfflineAndStop();
       emit(const AuthUnauthenticated());
     }
   }
@@ -83,6 +89,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         otp: cleanOtp,
         deviceName: event.deviceName,
       );
+      UserPresenceService.instance.markOnlineAndStart();
+      LocationSyncService.instance.syncLocationIfPermitted();
       emit(AuthVerifySuccess(user: result.user, token: result.token));
     } catch (e, stackTrace) {
       final friendlyMsg = AppErrorHandler.toUserFriendlyMessage(e, stackTrace);

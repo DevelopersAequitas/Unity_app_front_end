@@ -4,6 +4,7 @@ import '../../../../core/constants/app_environment.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_avatar.dart';
+import '../../../../core/widgets/app_gradient_text.dart';
 import '../../domain/entities/profile_entity.dart';
 import 'intro_video_player_dialog.dart';
 
@@ -33,12 +34,17 @@ class ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subCat =
+    final categoryText =
         (profile.isOtherCategory ? profile.otherCategoryName : null) ??
         profile.businessSubCategory ??
+        profile.businessCategory ??
+        profile.mainBusinessCategory ??
         profile.otherCategoryName ??
         (profile.categories.isNotEmpty
-            ? profile.categories.first.level4
+            ? (profile.categories.first.level4 ??
+                profile.categories.first.level3 ??
+                profile.categories.first.level2 ??
+                profile.categories.first.level1)
             : null);
 
     final workList = [
@@ -297,47 +303,35 @@ class ProfileHeaderCard extends StatelessWidget {
                     ],
                   ),
                 ],
-                if (subCat != null && subCat.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: AppColor.brandGradient,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColor.primaryPink.withValues(alpha: 0.22),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
+                if (categoryText != null && categoryText.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback: (bounds) =>
+                            AppColor.brandGradient.createShader(
+                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.local_offer_outlined,
-                          size: 11.5,
+                        child: const Icon(
+                          Icons.sell_outlined,
+                          size: 13,
                           color: Colors.white,
                         ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            subCat,
-                            style: AppTypography.labelSmall.copyWith(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: AppGradientText(
+                          categoryText,
+                          style: AppTypography.labelSmall.copyWith(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
                 if (location.isNotEmpty ||
@@ -447,12 +441,25 @@ class ProfileHeaderCard extends StatelessWidget {
 
   Widget _buildDefaultCover() {
     return Container(
-      color: AppColor.primaryBlue.withValues(alpha: 0.12),
-      child: const Center(
-        child: Icon(
-          Icons.landscape_outlined,
-          size: 32,
-          color: AppColor.primaryBlue,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1D4ED8).withValues(alpha: 0.15),
+            const Color(0xFFE11D48).withValues(alpha: 0.12),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Opacity(
+          opacity: 0.85,
+          child: Image.asset(
+            'assets/images/icon-bg.png',
+            width: 50,
+            height: 50,
+            fit: BoxFit.contain,
+          ),
         ),
       ),
     );

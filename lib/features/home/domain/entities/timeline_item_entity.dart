@@ -57,6 +57,7 @@ class TimelineItemEntity extends Equatable {
   }
 
   TimelineItemEntity copyWith({
+    String? contentText,
     int? likesCount,
     int? commentsCount,
     int? savesCount,
@@ -67,7 +68,7 @@ class TimelineItemEntity extends Equatable {
       id: id,
       type: type,
       postType: postType,
-      contentText: contentText,
+      contentText: contentText ?? this.contentText,
       isVerified: isVerified,
       media: media,
       tags: tags,

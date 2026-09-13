@@ -45,7 +45,6 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     if (widget.media.isVideo) _initVideo();
   }
 
@@ -58,7 +57,7 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
       videoPlayerController: _vpController!,
       autoPlay: true,
       looping: true,
-      allowFullScreen: true,
+      allowFullScreen: false,
       allowMuting: true,
       showControlsOnInitialize: true,
       deviceOrientationsAfterFullScreen: [DeviceOrientation.portraitUp],
@@ -74,7 +73,6 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _chewieController?.dispose();
     _vpController?.dispose();
     super.dispose();

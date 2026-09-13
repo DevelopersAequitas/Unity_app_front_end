@@ -47,6 +47,13 @@ class PeersRepositoryImpl implements PeersRepository {
   }
 
   @override
+  Future<List<PeerEntity>> getCachedAllPeers() async {
+    if (localDataSource == null) return [];
+    final cached = await localDataSource!.getCachedAllPeers();
+    return cached.map((m) => m.toEntity()).toList();
+  }
+
+  @override
   Future<List<PeerEntity>> getMyConnections({
     int page = 1,
     int limit = 20,
@@ -71,6 +78,13 @@ class PeersRepositoryImpl implements PeersRepository {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<List<PeerEntity>> getCachedMyConnections() async {
+    if (localDataSource == null) return [];
+    final cached = await localDataSource!.getCachedMyConnections();
+    return cached.map((m) => m.toEntity()).toList();
   }
 
   @override
@@ -99,6 +113,13 @@ class PeersRepositoryImpl implements PeersRepository {
   }
 
   @override
+  Future<List<PeerRequestEntity>> getCachedConnectionRequests() async {
+    if (localDataSource == null) return [];
+    final cached = await localDataSource!.getCachedConnectionRequests();
+    return cached.map((m) => m.toEntity()).toList();
+  }
+
+  @override
   Future<List<PeerRequestEntity>> getSentConnectionRequests({
     int page = 1,
     int limit = 20,
@@ -121,6 +142,13 @@ class PeersRepositoryImpl implements PeersRepository {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<List<PeerRequestEntity>> getCachedSentConnectionRequests() async {
+    if (localDataSource == null) return [];
+    final cached = await localDataSource!.getCachedSentConnectionRequests();
+    return cached.map((m) => m.toEntity()).toList();
   }
 
   @override
@@ -158,6 +186,13 @@ class PeersRepositoryImpl implements PeersRepository {
       }
       return [];
     }
+  }
+
+  @override
+  Future<List<MatchPeerEntity>> getCachedMatches() async {
+    if (localDataSource == null) return [];
+    final cached = await localDataSource!.getCachedMatches();
+    return cached.map((m) => m.toEntity()).toList();
   }
 
   @override

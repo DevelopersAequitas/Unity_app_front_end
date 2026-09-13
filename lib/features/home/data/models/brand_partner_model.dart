@@ -66,4 +66,22 @@ class BrandPartnerModel {
       isSponsored: isSponsored,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'logo_url': logoUrl,
+      'cover_image_url': coverImageUrl,
+      'offer_title': offerTitle,
+      'offer_description': offerDescription,
+      'short_description': shortDescription,
+      'website_url': websiteUrl,
+      'coupon_code': couponCode,
+      'discount_value': discountValue,
+      'valid_to': validTo,
+      'is_featured': isFeatured,
+      'is_sponsored': isSponsored,
+    };
+  }
 }

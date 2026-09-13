@@ -81,10 +81,12 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
     final queryParams = <String, dynamic>{
       'page': page,
       'per_page': limit,
-      'is_connected': false,
     };
     if (search != null && search.trim().isNotEmpty) {
       queryParams['search'] = search.trim();
+      queryParams['q'] = search.trim();
+    } else {
+      queryParams['is_connected'] = false;
     }
     if (sort != null && sort.isNotEmpty) {
       queryParams['sort'] = sort;
@@ -227,25 +229,12 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
         }
       } catch (_) {}
 
-      // 2. Fallback: /members/{memberId}/posts
-      if (data == null || (data is Map && data['data'] == null && data['items'] == null && data['posts'] == null)) {
+      // 2. Fallback only if primary failed: /members/{memberId}/posts
+      if (data == null) {
         try {
           final response = await _dio.get(
             '/members/$memberId/posts',
             queryParameters: {'page': page, 'per_page': 10},
-          );
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            data = response.data;
-          }
-        } catch (_) {}
-      }
-
-      // 3. Fallback: /posts?user_id={memberId}
-      if (data == null || (data is Map && data['data'] == null && data['items'] == null && data['posts'] == null)) {
-        try {
-          final response = await _dio.get(
-            '/posts',
-            queryParameters: {'user_id': memberId, 'page': page, 'per_page': 10},
           );
           if (response.statusCode == 200 || response.statusCode == 201) {
             data = response.data;
@@ -285,18 +274,38 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
 
   @override
   Future<void> followUser(String userId) async {
-    await _dio.post(ApiEndpoints.followUser(userId));
+    try {
+      await _dio.post(ApiEndpoints.followUser(userId));
+    } catch (_) {
+      try {
+        await _dio.post(ApiEndpoints.memberFollow(userId));
+      } catch (e) {
+        rethrow;
+      }
+    }
   }
 
   @override
   Future<void> unfollowUser(String userId) async {
     try {
+      final res = await _dio.post(ApiEndpoints.unfollowUser(userId));
+      if (res.data is Map && res.data['status'] == true) return;
+    } catch (_) {}
+    try {
       await _dio.delete(ApiEndpoints.unfollowUser(userId));
     } catch (_) {
       try {
-        await _dio.post(ApiEndpoints.unfollowUser(userId));
-      } catch (e) {
-        rethrow;
+        await _dio.delete(ApiEndpoints.followUser(userId));
+      } catch (_) {
+        try {
+          await _dio.delete(ApiEndpoints.memberUnfollow(userId));
+        } catch (_) {
+          try {
+            await _dio.delete(ApiEndpoints.memberFollow(userId));
+          } catch (e) {
+            rethrow;
+          }
+        }
       }
     }
   }

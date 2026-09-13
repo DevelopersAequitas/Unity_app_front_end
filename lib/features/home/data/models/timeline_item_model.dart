@@ -1,3 +1,4 @@
+import '../../../../core/constants/app_environment.dart';
 import '../../domain/entities/timeline_item_entity.dart';
 import '../../domain/entities/timeline_media_entity.dart';
 import 'timeline_author_model.dart';
@@ -50,16 +51,44 @@ class TimelineItemModel {
     final impactMap = json['impact'] as Map<String, dynamic>?;
 
     final actCreative = json['activity_creative'] as Map<String, dynamic>?;
+    var directImageUrl = (json['image'] ?? json['image_url'] ?? json['imageUrl'] ?? json['file_url'])?.toString().trim();
+    if (directImageUrl != null && directImageUrl.isNotEmpty && directImageUrl.startsWith('/')) {
+      directImageUrl = '${AppEnvironment.baseUrl}$directImageUrl';
+    }
+    var directVideoUrl = (json['video_url'] ?? json['videoUrl'] ?? json['video'])?.toString().trim();
+    if (directVideoUrl != null && directVideoUrl.isNotEmpty && directVideoUrl.startsWith('/')) {
+      directVideoUrl = '${AppEnvironment.baseUrl}$directVideoUrl';
+    }
+
     List<TimelineMediaModel> parsedMedia = [];
     if (mediaList != null) {
       parsedMedia = mediaList
           .whereType<Map<String, dynamic>>()
-          .map((m) => TimelineMediaModel.fromJson(m))
+          .map((m) {
+            final model = TimelineMediaModel.fromJson(m);
+            if (directImageUrl != null &&
+                directImageUrl.isNotEmpty &&
+                model.type == MediaType.image &&
+                (model.url.contains('/files/') || model.url.isEmpty)) {
+              return TimelineMediaModel(
+                url: directImageUrl,
+                type: MediaType.image,
+                mimeType: model.mimeType,
+                fileId: model.fileId,
+                width: model.width,
+                height: model.height,
+              );
+            }
+            return model;
+          })
           .toList();
     }
     if (parsedMedia.isEmpty && actCreative != null) {
-      final creativeUrl = actCreative['creative_url'] as String?;
+      var creativeUrl = actCreative['creative_url'] as String?;
       if (creativeUrl != null && creativeUrl.isNotEmpty) {
+        if (creativeUrl.startsWith('/')) {
+          creativeUrl = '${AppEnvironment.baseUrl}$creativeUrl';
+        }
         parsedMedia.add(
           TimelineMediaModel(
             url: creativeUrl,
@@ -69,8 +98,6 @@ class TimelineItemModel {
       }
     }
     if (parsedMedia.isEmpty) {
-      final directImageUrl = (json['image_url'] ?? json['imageUrl'] ?? json['image'] ?? json['file_url'])?.toString();
-      final directVideoUrl = (json['video_url'] ?? json['videoUrl'] ?? json['video'])?.toString();
       if (directImageUrl != null && directImageUrl.isNotEmpty) {
         parsedMedia.add(TimelineMediaModel(url: directImageUrl, type: MediaType.image));
       } else if (directVideoUrl != null && directVideoUrl.isNotEmpty) {
@@ -86,12 +113,24 @@ class TimelineItemModel {
       isVerified: json['is_verified'] as bool? ?? false,
       media: parsedMedia,
       tags: tagsList?.map((t) => t.toString()).toList() ?? const [],
-      author: authorMap != null ? TimelineAuthorModel.fromJson(authorMap) : null,
-      likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
-      commentsCount: (json['comments_count'] as num?)?.toInt() ?? 0,
-      savesCount: (json['saves_count'] as num?)?.toInt() ?? 0,
-      isLikedByMe: json['is_liked_by_me'] as bool? ?? false,
-      isSaved: (json['is_saved'] ?? json['is_saved_by_me']) as bool? ?? false,
+      author: authorMap != null
+          ? TimelineAuthorModel.fromJson({
+              'is_verified': json['is_verified'],
+              ...authorMap,
+            })
+          : null,
+      likesCount: (json['likes_count'] ?? json['like_count'] ?? json['likes'] ?? json['total_likes'] as num?)?.toInt() ?? 0,
+      commentsCount: (json['comments_count'] ?? json['comment_count'] ?? json['comments'] ?? json['total_comments'] as num?)?.toInt() ?? 0,
+      savesCount: (json['saves_count'] ?? json['save_count'] ?? json['saves'] ?? json['bookmarks_count'] as num?)?.toInt() ?? 0,
+      isLikedByMe: (json['is_liked_by_me'] == true ||
+          json['is_liked'] == true ||
+          json['isLiked'] == true ||
+          json['isLikedByMe'] == true ||
+          json['is_like'] == true),
+      isSaved: (json['is_saved'] == true ||
+          json['is_saved_by_me'] == true ||
+          json['isSaved'] == true ||
+          json['is_bookmark'] == true),
       createdAt: (json['created_at'] ?? json['createdAt'] ?? json['date'] ?? json['posted_at'] ?? '').toString(),
       acceptedBy: acceptedMap != null ? TimelineCollaborationModel.fromJson(acceptedMap) : null,
       impact: impactMap != null ? TimelineImpactModel.fromJson(impactMap) : null,

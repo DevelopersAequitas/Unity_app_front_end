@@ -6,6 +6,13 @@ import '../../../peers/presentation/bloc/peers_bloc.dart';
 import '../../../peers/presentation/bloc/peers_event.dart';
 import '../../../peers/presentation/bloc/peers_state.dart';
 import '../../../peers/presentation/screens/my_peers_screen.dart';
+import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
+import '../../../profile/presentation/bloc/profile_posts_event.dart';
+import '../../../circles/presentation/bloc/circles_bloc.dart';
+import '../../../circles/presentation/bloc/circles_event.dart';
+import '../../../circles/presentation/bloc/circles_state.dart';
+import '../../../circles/presentation/screens/circles_screen.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
@@ -77,8 +84,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;
-      if (_currentNavIndex == 1) {
+      if (_currentNavIndex == 0) {
+        context.read<HomeBloc>().add(HomeSearchChanged(query));
+      } else if (_currentNavIndex == 1) {
         context.read<PeersBloc>().add(PeersSearchChanged(query));
+      } else if (_currentNavIndex == 3) {
+        context.read<CirclesBloc>().add(CirclesSearchChanged(query));
       }
     });
   }
@@ -87,8 +98,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _debounceTimer?.cancel();
     _searchController.clear();
     setState(() => _isSearching = false);
-    if (_currentNavIndex == 1) {
+    // Clear search in current tab
+    if (_currentNavIndex == 0) {
+      context.read<HomeBloc>().add(const HomeSearchChanged(''));
+    } else if (_currentNavIndex == 1) { 
       context.read<PeersBloc>().add(const PeersSearchChanged(''));
+    } else if (_currentNavIndex == 3) {
+      context.read<CirclesBloc>().add(const CirclesSearchChanged(''));
     }
   }
 
@@ -110,11 +126,15 @@ class _HomeScreenState extends State<HomeScreen> {
         searchController: _searchController,
         searchHint: _currentNavIndex == 1
             ? 'Search peers by name, company, city...'
-            : 'Search...',
+            : (_currentNavIndex == 3
+                ? 'Search circles by name, category, city...'
+                : 'Search posts by name, content, category...'),
         onSearchTap: () => setState(() => _isSearching = true),
         onSearchChanged: _onSearchChanged,
         onSearchClose: _onSearchClose,
-        onNotificationsTap: () {},
+        onNotificationsTap: () {
+          Navigator.of(context).pushNamed(AppRoutes.notifications);
+        },
         onProfileTap: () {
           Navigator.of(context).pushNamed(AppRoutes.profile);
         },
@@ -122,8 +142,27 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: HomeBottomNavBar(
         selectedIndex: _currentNavIndex,
         onItemSelected: (index) {
-          if (_isSearching) {
-            _onSearchClose();
+          // Don't close search on tab switch — clear search query for old tab first
+          if (_isSearching && index != _currentNavIndex) {
+            _debounceTimer?.cancel();
+            _searchController.clear();
+            // Clear old tab's search
+            if (_currentNavIndex == 0) {
+              context.read<HomeBloc>().add(const HomeSearchChanged(''));
+            } else if (_currentNavIndex == 1) {
+              context.read<PeersBloc>().add(const PeersSearchChanged(''));
+            } else if (_currentNavIndex == 3) {
+              context.read<CirclesBloc>().add(const CirclesSearchChanged(''));
+            }
+          }
+          if (index == 0 && _currentNavIndex == 0) {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOutCubic,
+              );
+            }
           }
           setState(() => _currentNavIndex = index);
           if (index == 1) {
@@ -131,10 +170,18 @@ class _HomeScreenState extends State<HomeScreen> {
             if (peersBloc.state.status == PeersStatus.initial) {
               peersBloc.add(const PeersFetchRequested());
             }
+          } else if (index == 3) {
+            final circlesBloc = context.read<CirclesBloc>();
+            if (circlesBloc.state.status == CirclesStatus.initial) {
+              circlesBloc.add(const CirclesFetchRequested());
+            }
           }
         },
         onCreateTap: () => CreateActionSheet.show(context),
       ),
+      floatingActionButton: _currentNavIndex == 0
+          ? _buildCreatePostFloatingButton(context)
+          : null,
       body: AppGradientBackground(
         child: ResponsiveContainer(
           child: IndexedStack(
@@ -143,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildHomeFeedTab(),
               const MyPeersScreen(),
               const SizedBox.shrink(),
-              _buildComingSoonTab('Circles'),
+              const CirclesScreen(),
               _buildComingSoonTab('Highlights'),
             ],
           ),
@@ -202,9 +249,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              if (state.status == HomeFeedStatus.loading && state.items.isEmpty)
+              if (state.status == HomeFeedStatus.loading && state.allItems.isEmpty)
                 const SliverToBoxAdapter(
                   child: HomeSkeletonLoader(),
+                )
+              else if (state.items.isEmpty && state.searchQuery.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildSearchEmptyState(state.searchQuery),
                 )
               else if (state.items.isEmpty)
                 SliverToBoxAdapter(
@@ -233,21 +284,64 @@ class _HomeScreenState extends State<HomeScreen> {
                       return TimelineCard(
                         item: item,
                         autoPlay: _currentNavIndex == 0,
+                        onAuthorTap: () {
+                          final author = item.author;
+                          final authorId = author?.id ?? '';
+                          if (authorId.isEmpty) return;
+                          // Skip system/org accounts (no company, designation or category)
+                          final isSystemAccount = (author?.companyName == null || author!.companyName!.isEmpty) &&
+                              (author!.designation == null || author.designation!.isEmpty) &&
+                              (author.level4Category == null || author.level4Category!.isEmpty);
+                          if (isSystemAccount) return;
+                          // Determine if this is the current logged-in user
+                          final authUser = context.read<AuthBloc>().state.user;
+                          final myId = authUser?.id ?? '';
+                          if (myId.isNotEmpty && authorId == myId) {
+                            Navigator.of(context).pushNamed(AppRoutes.profile);
+                          } else {
+                            Navigator.of(context).pushNamed(
+                              AppRoutes.peerProfile,
+                              arguments: authorId,
+                            );
+                          }
+                        },
                         onLikeTap: () {
+                          final currentLiked = item.isLikedByMe;
+                          final newLiked = !currentLiked;
+                          final newCount = (item.likesCount + (newLiked ? 1 : -1)).clamp(0, 9999999);
                           context.read<HomeBloc>().add(
                             HomePostLikeToggled(
                               postId: item.id,
-                              isCurrentlyLiked: item.isLikedByMe,
+                              isCurrentlyLiked: currentLiked,
                             ),
                           );
+                          try {
+                            context.read<ProfilePostsBloc>().add(
+                              ProfilePostLikeSyncRequested(
+                                postId: item.id,
+                                isLiked: newLiked,
+                                likesCount: newCount,
+                              ),
+                            );
+                          } catch (_) {}
                         },
                         onSaveTap: () {
+                          final currentSaved = item.isSaved;
+                          final newSaved = !currentSaved;
                           context.read<HomeBloc>().add(
                             HomePostSaveToggled(
                               postId: item.id,
-                              isCurrentlySaved: item.isSaved,
+                              isCurrentlySaved: currentSaved,
                             ),
                           );
+                          try {
+                            context.read<ProfilePostsBloc>().add(
+                              ProfilePostSaveSyncRequested(
+                                postId: item.id,
+                                isSaved: newSaved,
+                              ),
+                            );
+                          } catch (_) {}
                         },
                       );
                     },
@@ -265,7 +359,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildSearchEmptyState(String query) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 36,
+              color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No results for "$query"',
+              style: AppTypography.titleMedium.copyWith(
+                color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () {
+                _searchController.clear();
+                context.read<HomeBloc>().add(const HomeSearchChanged(''));
+              },
+              child: const Text('Clear search'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyFeedState() {
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
@@ -299,6 +429,39 @@ class _HomeScreenState extends State<HomeScreen> {
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColor.lightTextSecondary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreatePostFloatingButton(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppColor.brandGradient,
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.primaryBlue.withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: () => Navigator.of(context).pushNamed(AppRoutes.createPost),
+          customBorder: const CircleBorder(),
+          child: const Center(
+            child: Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
         ),
       ),
     );

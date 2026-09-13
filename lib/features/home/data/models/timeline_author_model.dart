@@ -7,6 +7,9 @@ class TimelineAuthorModel {
   final String? lastName;
   final String? profilePhotoUrl;
   final bool isVerified;
+  final String? designation;
+  final String? companyName;
+  final String? level4Category;
 
   const TimelineAuthorModel({
     required this.id,
@@ -15,6 +18,9 @@ class TimelineAuthorModel {
     this.lastName,
     this.profilePhotoUrl,
     this.isVerified = false,
+    this.designation,
+    this.companyName,
+    this.level4Category,
   });
 
   factory TimelineAuthorModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +39,9 @@ class TimelineAuthorModel {
       lastName: last,
       profilePhotoUrl: (json['profile_photo_url'] ?? json['avatar_url']) as String?,
       isVerified: json['is_verified'] as bool? ?? false,
+      designation: json['designation'] as String?,
+      companyName: json['company_name'] as String?,
+      level4Category: (json['level4_category'] ?? json['business_sub_category']) as String?,
     );
   }
 
@@ -44,6 +53,9 @@ class TimelineAuthorModel {
       lastName: lastName,
       profilePhotoUrl: profilePhotoUrl,
       isVerified: isVerified,
+      designation: designation,
+      companyName: companyName,
+      level4Category: level4Category,
     );
   }
 }

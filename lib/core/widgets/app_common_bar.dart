@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../router/app_router.dart';
 import '../theme/app_color.dart';
 import '../theme/app_typography.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
+import '../../features/notifications/presentation/bloc/notifications_bloc.dart';
+import '../../features/notifications/presentation/bloc/notifications_state.dart';
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/profile/presentation/bloc/profile_state.dart';
 
 /// A reusable AppBar for all tabs and screens in the app.
 ///
@@ -131,6 +136,8 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       toolbarHeight: kToolbarHeight,
       automaticallyImplyLeading: false,
+      leading: null,
+      titleSpacing: 0,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
@@ -143,40 +150,62 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
           color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
         ),
       ),
-      leading: showBack
-          ? IconButton(
-              icon: Icon(Icons.chevron_left_rounded, size: 24, color: iconColor),
-              onPressed: onBackTap ?? () => Navigator.of(context).pop(),
-              padding: EdgeInsets.zero,
-            )
-          : null,
-      titleSpacing: showBack ? 0 : 16,
-      title: showLogo
-          ? _LogoTitle(isDark: isDark)
-          : Text(
-              title,
-              style: AppTypography.titleMedium.copyWith(
-                color: primaryTextColor,
-                fontWeight: FontWeight.w500,
+      // Build entire row ourselves for exact 16px alignment on both sides
+      title: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            // Back button (uses negative margin to keep visual at edge of 16px zone)
+            if (showBack) ...[
+              GestureDetector(
+                onTap: onBackTap ?? () => Navigator.of(context).pop(),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Icon(Icons.chevron_left_rounded, size: 26, color: iconColor),
+                ),
               ),
+            ],
+            // Title / Logo
+            Expanded(
+              child: showLogo
+                  ? _LogoTitle(isDark: isDark)
+                  : Text(
+                      title,
+                      style: AppTypography.titleMedium.copyWith(
+                        color: primaryTextColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ),
-      actions: [
-        ...?actions,
-        if (showSearch)
-          _IconBtn(icon: Icons.search_rounded, color: iconColor, onTap: onSearchTap),
-        if (showNotifications)
-          _NotificationBtn(iconColor: iconColor, onTap: onNotificationsTap),
-        if (showProfile)
-          BlocBuilder<AuthBloc, AuthState>(
-            buildWhen: (prev, curr) => prev.user != curr.user,
-            builder: (context, state) => _ProfileAvatar(
-              user: state.user,
-              isDark: isDark,
-              onTap: onProfileTap,
-            ),
-          ),
-        const SizedBox(width: 8),
-      ],
+            // Actions
+            ...?actions,
+            if (showSearch)
+              _IconBtn(icon: Icons.search_rounded, color: iconColor, onTap: onSearchTap),
+            if (showNotifications)
+              _NotificationBtn(iconColor: iconColor, onTap: onNotificationsTap),
+            if (showProfile)
+              BlocBuilder<AuthBloc, AuthState>(
+                buildWhen: (prev, curr) => prev.user != curr.user,
+                builder: (context, authState) => BlocBuilder<ProfileBloc, ProfileState>(
+                  buildWhen: (prev, curr) =>
+                      prev.profile?.profilePhotoUrl != curr.profile?.profilePhotoUrl ||
+                      prev.profile?.firstName != curr.profile?.firstName ||
+                      prev.profile?.lastName != curr.profile?.lastName,
+                  builder: (context, profileState) => _ProfileAvatar(
+                    photoUrl: profileState.profile?.profilePhotoUrl ?? authState.user?.avatarUrl,
+                    firstName: profileState.profile?.firstName ?? authState.user?.firstName,
+                    lastName: profileState.profile?.lastName ?? authState.user?.lastName,
+                    displayName: profileState.profile?.displayName ?? authState.user?.effectiveDisplayName,
+                    isDark: isDark,
+                    onTap: onProfileTap,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -235,47 +264,89 @@ class _NotificationBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: SizedBox(
-        width: 40,
-        height: kToolbarHeight,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(Icons.notifications_none_rounded, size: 22, color: iconColor),
-            Positioned(
-              top: 13,
-              right: 8,
-              child: Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: AppColor.primaryPink,
-                  shape: BoxShape.circle,
-                ),
+    return BlocSelector<NotificationsBloc, NotificationsState, int>(
+      selector: (state) => state.unreadCount,
+      builder: (context, unreadCount) {
+        final badgeText = unreadCount > 99 ? '99+' : '$unreadCount';
+        return Semantics(
+          label: unreadCount > 0 ? '$unreadCount unread notifications' : 'Notifications',
+          button: true,
+          child: InkWell(
+            onTap: onTap ?? () => Navigator.of(context).pushNamed(AppRoutes.notifications),
+            borderRadius: BorderRadius.circular(24),
+            child: SizedBox(
+              width: 40,
+              height: kToolbarHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(Icons.notifications_none_rounded, size: 22, color: iconColor),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: 10,
+                      right: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: AppColor.primaryPink,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Center(
+                          child: Text(
+                            badgeText,
+                            style: AppTypography.labelSmall.copyWith(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
 class _ProfileAvatar extends StatelessWidget {
-  final dynamic user;
+  final String? photoUrl;
+  final String? firstName;
+  final String? lastName;
+  final String? displayName;
   final bool isDark;
   final VoidCallback? onTap;
-  const _ProfileAvatar({this.user, required this.isDark, this.onTap});
+
+  const _ProfileAvatar({
+    this.photoUrl,
+    this.firstName,
+    this.lastName,
+    this.displayName,
+    required this.isDark,
+    this.onTap,
+  });
+
+  /// Returns first + last initials e.g. "CM" for "Chirag Mali"
+  String get _initials {
+    final first = (firstName?.trim().isNotEmpty == true) ? firstName![0].toUpperCase() : null;
+    final last = (lastName?.trim().isNotEmpty == true) ? lastName![0].toUpperCase() : null;
+    if (first != null && last != null) return '$first$last';
+    if (first != null) return first;
+    // fallback: first char of displayName
+    final dn = displayName?.trim() ?? '';
+    return dn.isNotEmpty ? dn[0].toUpperCase() : 'U';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final initials = (user?.effectiveDisplayName?.isNotEmpty == true)
-        ? user!.effectiveDisplayName[0].toUpperCase()
-        : 'U';
-    final photoUrl = user?.avatarUrl as String?;
+    final url = photoUrl;
 
     return GestureDetector(
       onTap: onTap,
@@ -288,28 +359,29 @@ class _ProfileAvatar extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(1.5),
         child: ClipOval(
-          child: photoUrl != null && photoUrl.isNotEmpty
+          child: url != null && url.isNotEmpty
               ? Image.network(
-                  photoUrl,
+                  url,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _initials(initials, isDark),
+                  errorBuilder: (_, _, _) => _initialsWidget(context),
                 )
-              : _initials(initials, isDark),
+              : _initialsWidget(context),
         ),
       ),
     );
   }
 
-  Widget _initials(String text, bool isDark) {
+  Widget _initialsWidget(BuildContext context) {
     return Container(
       color: isDark ? AppColor.darkSurface : const Color(0xFFEFF3FF),
       child: Center(
         child: Text(
-          text,
+          _initials,
           style: AppTypography.labelSmall.copyWith(
             color: AppColor.primaryBlue,
             fontWeight: FontWeight.w500,
             letterSpacing: 0,
+            fontSize: _initials.length > 1 ? 9 : 11,
           ),
         ),
       ),
