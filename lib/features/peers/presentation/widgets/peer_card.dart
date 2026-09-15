@@ -8,6 +8,7 @@ class PeerCard extends StatelessWidget {
   final PeerEntity peer;
   final bool isCurrentUser;
   final VoidCallback? onConnect;
+  final VoidCallback? onFollow;
   final VoidCallback onMessage;
   final VoidCallback onBookmark;
   final VoidCallback? onScheduleP2P;
@@ -18,6 +19,7 @@ class PeerCard extends StatelessWidget {
     required this.peer,
     this.isCurrentUser = false,
     this.onConnect,
+    this.onFollow,
     required this.onMessage,
     required this.onBookmark,
     this.onScheduleP2P,
@@ -54,7 +56,7 @@ class PeerCard extends StatelessWidget {
                 _buildHeader(),
                 if (!isCurrentUser) ...[
                   const SizedBox(height: 6),
-                  _buildActions(),
+                  _buildActions(context),
                 ],
               ],
             ),
@@ -65,6 +67,12 @@ class PeerCard extends StatelessWidget {
   }
 
   Widget _buildHeader() {
+    final hasDesignationOrCompany =
+        (peer.designation != null && peer.designation!.trim().isNotEmpty) ||
+        (peer.companyName != null && peer.companyName!.trim().isNotEmpty);
+    final hasCity = peer.city != null && peer.city!.trim().isNotEmpty;
+    final hasCategory = peer.category != null && peer.category!.trim().isNotEmpty;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -74,12 +82,14 @@ class PeerCard extends StatelessWidget {
           size: 38,
           showOnlineBadge: true,
           isOnline: peer.isOnline,
+          isPro: peer.isPro,
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Row 1: Name + verified + YOU
               Row(
                 children: [
                   Flexible(
@@ -87,7 +97,7 @@ class PeerCard extends StatelessWidget {
                       peer.displayName.toUpperCase(),
                       style: const TextStyle(
                         fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                         color: AppColor.lightTextPrimary,
                       ),
                       maxLines: 1,
@@ -102,10 +112,44 @@ class PeerCard extends StatelessWidget {
                       color: AppColor.primaryBlue,
                     ),
                   ],
-                  if (isCurrentUser) ...[
-                    const SizedBox(width: 6),
+                  if (peer.isPro) ...[
+                    const SizedBox(width: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                            color: const Color(0xFFFDE68A), width: 0.8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.workspace_premium_outlined,
+                            size: 9.5,
+                            color: Color(0xFF92400E),
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            'PRO',
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF92400E),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (isCurrentUser) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: AppColor.primaryBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -113,7 +157,7 @@ class PeerCard extends StatelessWidget {
                       child: const Text(
                         'YOU',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w500,
                           color: AppColor.primaryBlue,
                         ),
@@ -122,31 +166,10 @@ class PeerCard extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 1.5),
-              if (peer.city != null && peer.city!.isNotEmpty) ...[
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_rounded,
-                      size: 10,
-                      color: AppColor.lightTextSecondary,
-                    ),
-                    const SizedBox(width: 2),
-                    Expanded(
-                      child: Text(
-                        peer.city!,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: AppColor.lightTextSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              if (peer.designation != null || peer.companyName != null) ...[
+
+              // Row 2: Designation · Company
+              if (hasDesignationOrCompany) ...[
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     const Icon(
@@ -154,12 +177,14 @@ class PeerCard extends StatelessWidget {
                       size: 10,
                       color: AppColor.lightTextSecondary,
                     ),
-                    const SizedBox(width: 2),
+                    const SizedBox(width: 3),
                     Expanded(
                       child: Text(
                         [
-                          if (peer.designation != null) peer.designation!,
-                          if (peer.companyName != null) peer.companyName!,
+                          if (peer.designation != null && peer.designation!.trim().isNotEmpty)
+                            peer.designation!.trim(),
+                          if (peer.companyName != null && peer.companyName!.trim().isNotEmpty)
+                            peer.companyName!.trim(),
                         ].join(' · '),
                         style: const TextStyle(
                           fontSize: 10.5,
@@ -172,53 +197,94 @@ class PeerCard extends StatelessWidget {
                   ],
                 ),
               ],
-              if (peer.category != null && peer.category!.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                  decoration: BoxDecoration(
-                    color: AppColor.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppColor.primaryBlue.withValues(alpha: 0.15),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ShaderMask(
-                        blendMode: BlendMode.srcIn,
-                        shaderCallback: (bounds) =>
-                            AppColor.brandGradient.createShader(
-                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                        ),
-                        child: const Icon(
-                          Icons.sell_outlined,
-                          size: 9,
-                          color: Colors.white,
-                        ),
+
+              // Row 3: City · Category
+              if (hasCity || hasCategory) ...[
+                const SizedBox(height: 2.5),
+                Row(
+                  children: [
+                    if (hasCity) ...[
+                      const Icon(
+                        Icons.location_on_rounded,
+                        size: 10,
+                        color: AppColor.lightTextSecondary,
                       ),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: AppGradientText(
-                          peer.category!,
-                          style: const TextStyle(
-                            fontSize: 9.5,
+                      const SizedBox(width: 2),
+                      Text(
+                        peer.city!.trim(),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: AppColor.lightTextSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (hasCity && hasCategory) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          '·',
+                          style: TextStyle(
+                            fontSize: 10.5,
                             fontWeight: FontWeight.w500,
+                            color: AppColor.lightTextSecondary,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
-                  ),
+                    if (hasCategory) ...[
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColor.badgeBlueBg,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: AppColor.primaryBlue.withValues(alpha: 0.15),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ShaderMask(
+                                blendMode: BlendMode.srcIn,
+                                shaderCallback: (bounds) =>
+                                    AppColor.brandGradient.createShader(
+                                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                                ),
+                                child: const Icon(
+                                  Icons.sell_outlined,
+                                  size: 8.5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 2.5),
+                              Flexible(
+                                child: AppGradientText(
+                                  peer.category!.trim(),
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ],
           ),
         ),
+
+        // Right Corner: Impact Badge
         if (peer.lifeImpactedCount != null) ...[
           const SizedBox(width: 6),
           _buildImpactBadge(peer.lifeImpactedCount!),
@@ -268,31 +334,29 @@ class PeerCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActions() {
+  Widget _buildActions(BuildContext context) {
     final statusLower = peer.connectionStatus.toLowerCase();
-    final isPending = statusLower == 'pending' ||
+    final isPending = peer.isRequested ||
+        statusLower == 'pending' ||
         statusLower == 'pending_sent' ||
         statusLower == 'requested';
-    final isConnected = statusLower == 'connected' ||
+    final isConnected = peer.isConnected ||
+        statusLower == 'connected' ||
         statusLower == 'approved' ||
-        statusLower == 'accepted' ||
-        onScheduleP2P != null;
-    final hasScheduleP2P = onScheduleP2P != null;
+        statusLower == 'accepted';
+    final hasScheduleP2P = isConnected && onScheduleP2P != null;
 
     return Row(
       children: [
+        // 1. Left Button: CONNECT / REQUESTED / SCHEDULE P2P
         Expanded(
-          flex: 4,
           child: Container(
             height: 28,
             decoration: BoxDecoration(
-              gradient: (!isPending && (!isConnected || hasScheduleP2P))
-                  ? AppColor.brandGradient
-                  : null,
-              color: (isPending || (isConnected && !hasScheduleP2P))
-                  ? AppColor.lightSurfaceSubtle
-                  : null,
+              gradient: (!isPending) ? AppColor.brandGradient : null,
+              color: isPending ? AppColor.lightSurfaceSubtle : null,
               borderRadius: BorderRadius.circular(7),
+              border: isPending ? Border.all(color: AppColor.lightBorder) : null,
             ),
             child: Material(
               color: AppColor.transparent,
@@ -309,38 +373,44 @@ class PeerCard extends StatelessWidget {
                         const Icon(
                           Icons.calendar_month_rounded,
                           color: AppColor.white,
-                          size: 12,
+                          size: 11.5,
                         ),
-                        const SizedBox(width: 3),
-                        const Text(
-                          'SCHEDULE P2P',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.2,
-                            color: AppColor.white,
+                        const SizedBox(width: 2.5),
+                        const Flexible(
+                          child: Text(
+                            'SCHEDULE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                              color: AppColor.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ] else ...[
-                        if (!isPending && !isConnected) ...[
+                        if (!isPending) ...[
                           const Icon(
-                            Icons.add_rounded,
+                            Icons.person_add_outlined,
                             color: AppColor.white,
-                            size: 13,
+                            size: 11.5,
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 2.5),
                         ],
-                        Text(
-                          isPending
-                              ? 'REQUESTED'
-                              : (isConnected ? 'CONNECTED' : 'CONNECT'),
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.2,
-                            color: (!isPending && !isConnected)
-                                ? AppColor.white
-                                : AppColor.lightTextSecondary,
+                        Flexible(
+                          child: Text(
+                            isPending ? 'REQUESTED' : 'CONNECT',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                              color: (!isPending)
+                                  ? AppColor.white
+                                  : AppColor.lightTextSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -351,9 +421,73 @@ class PeerCard extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
+
+        // 2. Middle Button: FOLLOW / FOLLOWING (Gradient Border)
         Expanded(
-          flex: 4,
+          child: Container(
+            height: 28,
+            decoration: BoxDecoration(
+              gradient: AppColor.brandGradient,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            padding: const EdgeInsets.all(1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: peer.isFollowing
+                    ? const Color(0xFFEFF4FF)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Material(
+                color: AppColor.transparent,
+                child: InkWell(
+                  onTap: onFollow,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Center(
+                    child: ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) =>
+                          AppColor.brandGradient.createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            peer.isFollowing
+                                ? Icons.check_rounded
+                                : Icons.person_add_alt_1_outlined,
+                            size: 11.5,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 2.5),
+                          Flexible(
+                            child: Text(
+                              peer.isFollowing ? 'FOLLOWING' : 'FOLLOW',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.1,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+
+        // 3. Right Button: MESSAGE
+        Expanded(
           child: Container(
             height: 28,
             decoration: BoxDecoration(
@@ -372,17 +506,21 @@ class PeerCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.chat_bubble_outline_rounded,
-                        size: 12,
+                        size: 11.5,
                         color: AppColor.lightTextPrimary,
                       ),
-                      SizedBox(width: 3),
-                      Text(
-                        'MESSAGE',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.2,
-                          color: AppColor.lightTextPrimary,
+                      SizedBox(width: 2.5),
+                      Flexible(
+                        child: Text(
+                          'MESSAGE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.1,
+                            color: AppColor.lightTextPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -392,7 +530,9 @@ class PeerCard extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
+
+        // 4. Bookmark Button
         Container(
           width: 28,
           height: 28,

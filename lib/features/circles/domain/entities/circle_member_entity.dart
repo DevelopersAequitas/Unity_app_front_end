@@ -17,6 +17,12 @@ class CircleMemberEntity extends Equatable {
   final String? level4Category;
   final String? membershipStatus;
   final int? lifeImpactedCount;
+  final bool isPro;
+  final bool isFollowing;
+  final bool isConnected;
+  final String connectionStatus;
+  final bool isRequested;
+  final bool isBookmark;
 
   const CircleMemberEntity({
     required this.id,
@@ -34,6 +40,12 @@ class CircleMemberEntity extends Equatable {
     this.level4Category,
     this.membershipStatus,
     this.lifeImpactedCount,
+    this.isPro = false,
+    this.isFollowing = false,
+    this.isConnected = false,
+    this.connectionStatus = 'none',
+    this.isRequested = false,
+    this.isBookmark = false,
   });
 
   String get effectiveName {
@@ -76,7 +88,58 @@ class CircleMemberEntity extends Equatable {
       category: effectiveCategoryTag,
       lifeImpactedCount: lifeImpactedCount,
       isVerified: isLeader,
-      connectionStatus: 'none',
+      isPro: isPro,
+      isFollowing: isFollowing,
+      connectionStatus: connectionStatus,
+      isBookmarked: isBookmark,
+    );
+  }
+
+  CircleMemberEntity copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? displayName,
+    String? role,
+    String? designation,
+    String? companyName,
+    String? avatarUrl,
+    bool? isLeader,
+    String? city,
+    String? businessCategory,
+    String? businessSubCategory,
+    String? level4Category,
+    String? membershipStatus,
+    int? lifeImpactedCount,
+    bool? isPro,
+    bool? isFollowing,
+    bool? isConnected,
+    String? connectionStatus,
+    bool? isRequested,
+    bool? isBookmark,
+  }) {
+    return CircleMemberEntity(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      displayName: displayName ?? this.displayName,
+      role: role ?? this.role,
+      designation: designation ?? this.designation,
+      companyName: companyName ?? this.companyName,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      isLeader: isLeader ?? this.isLeader,
+      city: city ?? this.city,
+      businessCategory: businessCategory ?? this.businessCategory,
+      businessSubCategory: businessSubCategory ?? this.businessSubCategory,
+      level4Category: level4Category ?? this.level4Category,
+      membershipStatus: membershipStatus ?? this.membershipStatus,
+      lifeImpactedCount: lifeImpactedCount ?? this.lifeImpactedCount,
+      isPro: isPro ?? this.isPro,
+      isFollowing: isFollowing ?? this.isFollowing,
+      isConnected: isConnected ?? this.isConnected,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      isRequested: isRequested ?? this.isRequested,
+      isBookmark: isBookmark ?? this.isBookmark,
     );
   }
 
@@ -97,5 +160,12 @@ class CircleMemberEntity extends Equatable {
         level4Category,
         membershipStatus,
         lifeImpactedCount,
+        isPro,
+        isFollowing,
+        isConnected,
+        connectionStatus,
+        isRequested,
+        isBookmark,
       ];
 }
+

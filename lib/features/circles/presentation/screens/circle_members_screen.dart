@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/events/peers_event_bus.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
@@ -31,15 +33,94 @@ class _CircleMembersScreenState extends State<CircleMembersScreen> {
   bool _isLoading = true;
   bool _isSearching = false;
   String? _errorMessage;
+  StreamSubscription<PeerBusEvent>? _busSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadMembers();
+    _setupBusSubscription();
+  }
+
+  void _setupBusSubscription() {
+    _busSubscription = PeersEventBus.instance.stream.listen((event) {
+      if (!mounted) return;
+      if (event is PeerConnectionRequestedEvent) {
+        _updateMemberStatus(event.peerId,
+            connectionStatus: 'pending',
+            isRequested: true,
+            isConnected: false);
+      } else if (event is PeerConnectionAcceptedEvent) {
+        _updateMemberStatus(event.peerId,
+            connectionStatus: 'connected',
+            isRequested: false,
+            isConnected: true);
+      } else if (event is PeerConnectionDeclinedEvent) {
+        _updateMemberStatus(event.peerId,
+            connectionStatus: 'none',
+            isRequested: false,
+            isConnected: false);
+      } else if (event is PeerConnectionCancelledEvent) {
+        _updateMemberStatus(event.peerId,
+            connectionStatus: 'none',
+            isRequested: false,
+            isConnected: false);
+      } else if (event is PeerFollowToggledEvent) {
+        _updateMemberFollow(event.peerId, event.isFollowing);
+      } else if (event is PeerBookmarkToggledEvent) {
+        _updateMemberBookmark(event.peerId, event.isBookmarked);
+      }
+    });
+  }
+
+  void _updateMemberStatus(
+    String peerId, {
+    required String connectionStatus,
+    required bool isRequested,
+    required bool isConnected,
+  }) {
+    setState(() {
+      _allMembers = _allMembers.map((m) {
+        if (m.id == peerId || m.userId == peerId) {
+          return m.copyWith(
+            connectionStatus: connectionStatus,
+            isRequested: isRequested,
+            isConnected: isConnected,
+          );
+        }
+        return m;
+      }).toList();
+      _filterMembers();
+    });
+  }
+
+  void _updateMemberFollow(String peerId, bool isFollowing) {
+    setState(() {
+      _allMembers = _allMembers.map((m) {
+        if (m.id == peerId || m.userId == peerId) {
+          return m.copyWith(isFollowing: isFollowing);
+        }
+        return m;
+      }).toList();
+      _filterMembers();
+    });
+  }
+
+  void _updateMemberBookmark(String peerId, bool isBookmarked) {
+    setState(() {
+      _allMembers = _allMembers.map((m) {
+        if (m.id == peerId || m.userId == peerId) {
+          return m.copyWith(isBookmark: isBookmarked);
+        }
+        return m;
+      }).toList();
+      _filterMembers();
+    });
   }
 
   @override
   void dispose() {
+    _busSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -198,9 +279,23 @@ class _CircleMembersScreenState extends State<CircleMembersScreen> {
                                         context.read<PeersBloc>().add(
                                               PeerConnectRequested(peer.id),
                                             );
-                                        AppSnackBar.showSuccess(
+                                      },
+                                onFollow: isCurrentUser
+                                    ? null
+                                    : () {
+                                        context.read<PeersBloc>().add(
+                                              PeerFollowToggled(
+                                                peerId: peer.id,
+                                                isCurrentlyFollowing: peer.isFollowing,
+                                              ),
+                                            );
+                                      },
+                                onScheduleP2P: isCurrentUser
+                                    ? null
+                                    : () {
+                                        AppSnackBar.showInfo(
                                           context,
-                                          'Connection request sent to ${peer.displayName}',
+                                          'Scheduling P2P with ${peer.displayName}',
                                         );
                                       },
                                 onMessage: isCurrentUser

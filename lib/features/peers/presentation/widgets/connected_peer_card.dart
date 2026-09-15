@@ -5,6 +5,7 @@ import 'peer_card.dart';
 class ConnectedPeerCard extends StatelessWidget {
   final PeerEntity peer;
   final VoidCallback onScheduleP2P;
+  final VoidCallback? onFollow;
   final VoidCallback onMessage;
   final VoidCallback onBookmark;
   final VoidCallback? onTap;
@@ -13,6 +14,7 @@ class ConnectedPeerCard extends StatelessWidget {
     super.key,
     required this.peer,
     required this.onScheduleP2P,
+    this.onFollow,
     required this.onMessage,
     required this.onBookmark,
     this.onTap,
@@ -23,6 +25,7 @@ class ConnectedPeerCard extends StatelessWidget {
     return PeerCard(
       peer: peer.copyWith(connectionStatus: 'connected'),
       onScheduleP2P: onScheduleP2P,
+      onFollow: onFollow,
       onMessage: onMessage,
       onBookmark: onBookmark,
       onTap: onTap,

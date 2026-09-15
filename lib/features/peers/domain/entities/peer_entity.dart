@@ -14,6 +14,7 @@ class PeerEntity extends Equatable {
   final bool isVerified;
   final bool isBookmarked;
   final bool isFollowing;
+  final bool isPro;
   final bool isOnline;
   final String connectionStatus; // 'none', 'pending', 'connected'
 
@@ -31,9 +32,20 @@ class PeerEntity extends Equatable {
     this.isVerified = false,
     this.isBookmarked = false,
     this.isFollowing = false,
+    this.isPro = false,
     this.isOnline = false,
     this.connectionStatus = 'none',
   });
+
+  bool get isConnected {
+    final s = connectionStatus.toLowerCase();
+    return s == 'connected' || s == 'approved' || s == 'accepted';
+  }
+
+  bool get isRequested {
+    final s = connectionStatus.toLowerCase();
+    return s == 'pending' || s == 'pending_sent' || s == 'requested';
+  }
 
   PeerEntity copyWith({
     String? id,
@@ -49,6 +61,7 @@ class PeerEntity extends Equatable {
     bool? isVerified,
     bool? isBookmarked,
     bool? isFollowing,
+    bool? isPro,
     bool? isOnline,
     String? connectionStatus,
   }) {
@@ -66,6 +79,7 @@ class PeerEntity extends Equatable {
       isVerified: isVerified ?? this.isVerified,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       isFollowing: isFollowing ?? this.isFollowing,
+      isPro: isPro ?? this.isPro,
       isOnline: isOnline ?? this.isOnline,
       connectionStatus: connectionStatus ?? this.connectionStatus,
     );
@@ -86,6 +100,7 @@ class PeerEntity extends Equatable {
         isVerified,
         isBookmarked,
         isFollowing,
+        isPro,
         isOnline,
         connectionStatus,
       ];

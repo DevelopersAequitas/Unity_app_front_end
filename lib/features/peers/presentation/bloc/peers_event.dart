@@ -56,6 +56,19 @@ class PeerBookmarkToggled extends PeersEvent {
   List<Object?> get props => [peerId, isCurrentlyBookmarked];
 }
 
+class PeerFollowToggled extends PeersEvent {
+  final String peerId;
+  final bool isCurrentlyFollowing;
+
+  const PeerFollowToggled({
+    required this.peerId,
+    required this.isCurrentlyFollowing,
+  });
+
+  @override
+  List<Object?> get props => [peerId, isCurrentlyFollowing];
+}
+
 class PeerStatusUpdated extends PeersEvent {
   final String peerId;
   final String status;

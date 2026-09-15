@@ -39,11 +39,14 @@ import '../../features/notifications/presentation/bloc/notifications_event.dart'
 import '../../features/circles/domain/usecases/get_cached_circles_usecase.dart';
 import '../../features/circles/domain/usecases/get_category_subcategories_usecase.dart';
 import '../../features/circles/domain/usecases/get_circle_categories_usecase.dart';
+import '../../features/circles/domain/usecases/get_circle_closed_categories_usecase.dart';
 import '../../features/circles/domain/usecases/get_circle_detail_usecase.dart';
 import '../../features/circles/domain/usecases/get_circle_members_usecase.dart';
+import '../../features/circles/domain/usecases/get_circle_open_categories_usecase.dart';
 import '../../features/circles/domain/usecases/get_my_circles_usecase.dart';
 import '../../features/circles/domain/usecases/get_my_join_requests_usecase.dart';
 import '../../features/circles/domain/usecases/submit_circle_join_usecase.dart';
+
 import '../../features/circles/presentation/bloc/circles_bloc.dart';
 import 'app_dependencies.dart';
 
@@ -142,9 +145,16 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<GetCategorySubcategoriesUseCase>.value(
           value: dependencies.getCategorySubcategoriesUseCase,
         ),
+        RepositoryProvider<GetCircleOpenCategoriesUseCase>.value(
+          value: dependencies.getCircleOpenCategoriesUseCase,
+        ),
+        RepositoryProvider<GetCircleClosedCategoriesUseCase>.value(
+          value: dependencies.getCircleClosedCategoriesUseCase,
+        ),
         RepositoryProvider<SubmitCircleJoinUseCase>.value(
           value: dependencies.submitCircleJoinUseCase,
         ),
+
         RepositoryProvider<GetMyJoinRequestsUseCase>.value(
           value: dependencies.getMyJoinRequestsUseCase,
         ),
@@ -201,12 +211,16 @@ class AppProviders extends StatelessWidget {
               getAllPeersUseCase: dependencies.getAllPeersUseCase,
               sendConnectionRequestUseCase: dependencies.sendConnectionRequestUseCase,
               togglePeerBookmarkUseCase: dependencies.togglePeerBookmarkUseCase,
+              followUserUseCase: dependencies.followUserUseCase,
+              unfollowUserUseCase: dependencies.unfollowUserUseCase,
             ),
           ),
           BlocProvider<ConnectionsBloc>(
             create: (_) => ConnectionsBloc(
               getMyConnectionsUseCase: dependencies.getMyConnectionsUseCase,
               togglePeerBookmarkUseCase: dependencies.togglePeerBookmarkUseCase,
+              followUserUseCase: dependencies.followUserUseCase,
+              unfollowUserUseCase: dependencies.unfollowUserUseCase,
             ),
           ),
           BlocProvider<PeerRequestsBloc>(
@@ -221,6 +235,10 @@ class AppProviders extends StatelessWidget {
           BlocProvider<NearMeBloc>(
             create: (_) => NearMeBloc(
               getNearbyPeersUseCase: dependencies.getNearbyPeersUseCase,
+              followUserUseCase: dependencies.followUserUseCase,
+              unfollowUserUseCase: dependencies.unfollowUserUseCase,
+              sendConnectionRequestUseCase: dependencies.sendConnectionRequestUseCase,
+              togglePeerBookmarkUseCase: dependencies.togglePeerBookmarkUseCase,
             ),
           ),
           BlocProvider<MatchesBloc>(

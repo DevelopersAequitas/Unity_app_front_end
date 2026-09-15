@@ -7,7 +7,9 @@ import '../../domain/entities/geo_peer_entity.dart';
 class NearMePeerCard extends StatelessWidget {
   final GeoPeerEntity peer;
   final VoidCallback onConnect;
+  final VoidCallback? onFollow;
   final VoidCallback onMessage;
+  final VoidCallback? onScheduleP2P;
   final VoidCallback? onBookmark;
   final VoidCallback? onTap;
 
@@ -15,7 +17,9 @@ class NearMePeerCard extends StatelessWidget {
     super.key,
     required this.peer,
     required this.onConnect,
+    this.onFollow,
     required this.onMessage,
+    this.onScheduleP2P,
     this.onBookmark,
     this.onTap,
   });
@@ -68,6 +72,7 @@ class NearMePeerCard extends StatelessWidget {
           size: 38,
           showOnlineBadge: true,
           isOnline: peer.isOnline,
+          isPro: peer.isPro,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -81,7 +86,7 @@ class NearMePeerCard extends StatelessWidget {
                       peer.displayName.toUpperCase(),
                       style: const TextStyle(
                         fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                         color: AppColor.lightTextPrimary,
                       ),
                       maxLines: 1,
@@ -94,6 +99,39 @@ class NearMePeerCard extends StatelessWidget {
                       Icons.verified_rounded,
                       size: 13,
                       color: AppColor.primaryBlue,
+                    ),
+                  ],
+                  if (peer.isPro) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                            color: const Color(0xFFFDE68A), width: 0.8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.workspace_premium_outlined,
+                            size: 9.5,
+                            color: Color(0xFF92400E),
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            'PRO',
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF92400E),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],
@@ -248,56 +286,84 @@ class NearMePeerCard extends StatelessWidget {
 
   Widget _buildActions() {
     final statusLower = peer.connectionStatus.toLowerCase();
-    final isPending = statusLower == 'pending' ||
+    final isPending = peer.isRequested ||
+        statusLower == 'pending' ||
         statusLower == 'pending_sent' ||
         statusLower == 'requested';
-    final isConnected = statusLower == 'connected' ||
+    final isConnected = peer.isConnected ||
+        statusLower == 'connected' ||
         statusLower == 'approved' ||
         statusLower == 'accepted';
+    final hasScheduleP2P = isConnected && onScheduleP2P != null;
 
     return Row(
       children: [
+        // 1. Left Button: CONNECT / REQUESTED / SCHEDULE P2P
         Expanded(
-          flex: 4,
           child: Container(
             height: 28,
             decoration: BoxDecoration(
-              gradient:
-                  (!isPending && !isConnected) ? AppColor.brandGradient : null,
-              color: (isPending || isConnected)
-                  ? AppColor.lightSurfaceSubtle
-                  : null,
+              gradient: (!isPending) ? AppColor.brandGradient : null,
+              color: isPending ? AppColor.lightSurfaceSubtle : null,
               borderRadius: BorderRadius.circular(7),
+              border: isPending ? Border.all(color: AppColor.lightBorder) : null,
             ),
             child: Material(
               color: AppColor.transparent,
               child: InkWell(
-                onTap: (!isPending && !isConnected) ? onConnect : null,
+                onTap: hasScheduleP2P
+                    ? onScheduleP2P
+                    : ((!isPending && !isConnected) ? onConnect : null),
                 borderRadius: BorderRadius.circular(7),
                 child: Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (!isPending && !isConnected)
+                      if (hasScheduleP2P) ...[
                         const Icon(
-                          Icons.add_rounded,
+                          Icons.calendar_month_rounded,
                           color: AppColor.white,
-                          size: 13,
+                          size: 11.5,
                         ),
-                      const SizedBox(width: 2),
-                      Text(
-                        isPending
-                            ? 'REQUESTED'
-                            : (isConnected ? 'CONNECTED' : 'CONNECT'),
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                          color: (!isPending && !isConnected)
-                              ? AppColor.white
-                              : AppColor.lightTextSecondary,
+                        const SizedBox(width: 2.5),
+                        const Flexible(
+                          child: Text(
+                            'SCHEDULE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                              color: AppColor.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
+                      ] else ...[
+                        if (!isPending) ...[
+                          const Icon(
+                            Icons.person_add_outlined,
+                            color: AppColor.white,
+                            size: 11.5,
+                          ),
+                          const SizedBox(width: 2.5),
+                        ],
+                        Flexible(
+                          child: Text(
+                            isPending ? 'REQUESTED' : 'CONNECT',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                              color: (!isPending)
+                                  ? AppColor.white
+                                  : AppColor.lightTextSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -305,9 +371,73 @@ class NearMePeerCard extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
+
+        // 2. Middle Button: FOLLOW / FOLLOWING (Gradient Border)
         Expanded(
-          flex: 4,
+          child: Container(
+            height: 28,
+            decoration: BoxDecoration(
+              gradient: AppColor.brandGradient,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            padding: const EdgeInsets.all(1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: peer.isFollowing
+                    ? const Color(0xFFEFF4FF)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Material(
+                color: AppColor.transparent,
+                child: InkWell(
+                  onTap: onFollow,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Center(
+                    child: ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) =>
+                          AppColor.brandGradient.createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            peer.isFollowing
+                                ? Icons.check_rounded
+                                : Icons.person_add_alt_1_outlined,
+                            size: 11.5,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 2.5),
+                          Flexible(
+                            child: Text(
+                              peer.isFollowing ? 'FOLLOWING' : 'FOLLOW',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.1,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+
+        // 3. Right Button: MESSAGE
+        Expanded(
           child: Container(
             height: 28,
             decoration: BoxDecoration(
@@ -326,17 +456,21 @@ class NearMePeerCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.chat_bubble_outline_rounded,
-                        size: 12,
+                        size: 11.5,
                         color: AppColor.lightTextPrimary,
                       ),
-                      SizedBox(width: 3),
-                      Text(
-                        'MESSAGE',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                          color: AppColor.lightTextPrimary,
+                      SizedBox(width: 2.5),
+                      Flexible(
+                        child: Text(
+                          'MESSAGE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.1,
+                            color: AppColor.lightTextPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -347,7 +481,7 @@ class NearMePeerCard extends StatelessWidget {
           ),
         ),
         if (onBookmark != null) ...[
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
           Container(
             width: 28,
             height: 28,
@@ -361,10 +495,14 @@ class NearMePeerCard extends StatelessWidget {
               child: InkWell(
                 onTap: onBookmark,
                 borderRadius: BorderRadius.circular(7),
-                child: const Icon(
-                  Icons.bookmark_border_rounded,
+                child: Icon(
+                  peer.isBookmarked
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
                   size: 15,
-                  color: AppColor.lightTextPrimary,
+                  color: peer.isBookmarked
+                      ? AppColor.primaryBlue
+                      : AppColor.lightTextPrimary,
                 ),
               ),
             ),

@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:unity_app/core/events/peers_event_bus.dart';
+import 'package:unity_app/core/widgets/app_snack_bar.dart';
 import '../../../../../core/router/app_router.dart';
 import '../../../../../core/theme/app_color.dart';
 import '../../../../../core/theme/app_typography.dart';
@@ -25,11 +28,77 @@ class CircleDetailPeersPreview extends StatefulWidget {
 class _CircleDetailPeersPreviewState extends State<CircleDetailPeersPreview> {
   List<CircleMemberEntity> _members = [];
   bool _isLoading = true;
+  StreamSubscription<PeerBusEvent>? _busSubscription;
 
   @override
   void initState() {
     super.initState();
     _fetchPreviewMembers();
+    _setupBusSubscription();
+  }
+
+  void _setupBusSubscription() {
+    _busSubscription = PeersEventBus.instance.stream.listen((event) {
+      if (!mounted) return;
+      if (event is PeerConnectionRequestedEvent) {
+        _updateMemberStatus(event.peerId,
+            connectionStatus: 'pending', isRequested: true, isConnected: false);
+      } else if (event is PeerConnectionAcceptedEvent) {
+        _updateMemberStatus(event.peerId,
+            connectionStatus: 'connected', isRequested: false, isConnected: true);
+      } else if (event is PeerConnectionDeclinedEvent ||
+          event is PeerConnectionCancelledEvent) {
+        final peerId = event is PeerConnectionDeclinedEvent
+            ? event.peerId
+            : (event as PeerConnectionCancelledEvent).peerId;
+        _updateMemberStatus(peerId,
+            connectionStatus: 'none', isRequested: false, isConnected: false);
+      } else if (event is PeerFollowToggledEvent) {
+        setState(() {
+          _members = _members.map((m) {
+            if (m.id == event.peerId || m.userId == event.peerId) {
+              return m.copyWith(isFollowing: event.isFollowing);
+            }
+            return m;
+          }).toList();
+        });
+      } else if (event is PeerBookmarkToggledEvent) {
+        setState(() {
+          _members = _members.map((m) {
+            if (m.id == event.peerId || m.userId == event.peerId) {
+              return m.copyWith(isBookmark: event.isBookmarked);
+            }
+            return m;
+          }).toList();
+        });
+      }
+    });
+  }
+
+  void _updateMemberStatus(
+    String peerId, {
+    required String connectionStatus,
+    required bool isRequested,
+    required bool isConnected,
+  }) {
+    setState(() {
+      _members = _members.map((m) {
+        if (m.id == peerId || m.userId == peerId) {
+          return m.copyWith(
+            connectionStatus: connectionStatus,
+            isRequested: isRequested,
+            isConnected: isConnected,
+          );
+        }
+        return m;
+      }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _busSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchPreviewMembers() async {
@@ -165,7 +234,30 @@ class _CircleDetailPeersPreviewState extends State<CircleDetailPeersPreview> {
                   : () {
                       context.read<PeersBloc>().add(PeerConnectRequested(peer.id));
                     },
-              onMessage: () {},
+              onFollow: isCurrentUser
+                  ? null
+                  : () {
+                      context.read<PeersBloc>().add(
+                            PeerFollowToggled(
+                              peerId: peer.id,
+                              isCurrentlyFollowing: peer.isFollowing,
+                            ),
+                          );
+                    },
+              onScheduleP2P: isCurrentUser
+                  ? null
+                  : () {
+                      AppSnackBar.showInfo(
+                        context,
+                        'Scheduling P2P with ${peer.displayName}',
+                      );
+                    },
+              onMessage: () {
+                AppSnackBar.showInfo(
+                  context,
+                  'Messaging ${peer.displayName}',
+                );
+              },
               onBookmark: () {
                 if (!isCurrentUser) {
                   context.read<PeersBloc>().add(

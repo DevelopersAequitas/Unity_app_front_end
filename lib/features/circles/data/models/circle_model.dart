@@ -206,38 +206,6 @@ class CircleModel extends CircleEntity {
       );
     }
 
-    String? parseImageUrl(dynamic val, [List<dynamic> fallbacks = const []]) {
-      String? extract(dynamic v) {
-        if (v == null) return null;
-        if (v is String) {
-          final s = v.trim();
-          if (s.isEmpty) return null;
-          if (s.startsWith('http://') || s.startsWith('https://')) return s;
-          if (s.length >= 20 && !s.contains('/')) {
-            return 'https://dev.peersunity.com/api/v1/files/$s';
-          }
-          return s;
-        }
-        if (v is Map<String, dynamic>) {
-          final url = v['url']?.toString();
-          if (url != null && url.isNotEmpty) return url;
-          final fileId = v['file_id']?.toString() ?? v['id']?.toString();
-          if (fileId != null && fileId.isNotEmpty) {
-            return 'https://dev.peersunity.com/api/v1/files/$fileId';
-          }
-        }
-        return null;
-      }
-
-      final primary = extract(val);
-      if (primary != null) return primary;
-      for (final fb in fallbacks) {
-        final res = extract(fb);
-        if (res != null) return res;
-      }
-      return null;
-    }
-
     final calendarMap = json['calendar'] is Map<String, dynamic> ? json['calendar'] as Map<String, dynamic> : null;
 
     final cLeaders = parseCircleLeaders(
@@ -247,6 +215,7 @@ class CircleModel extends CircleEntity {
       json['regional_leaders'],
       json,
     );
+
 
     return CircleModel(
       id: json['id']?.toString() ?? json['circle_id']?.toString() ?? '',
@@ -351,4 +320,37 @@ class CircleModel extends CircleEntity {
       'type': type,
     };
   }
+
+  static String? parseImageUrl(dynamic val, [List<dynamic> fallbacks = const []]) {
+    String? extract(dynamic v) {
+      if (v == null) return null;
+      if (v is String) {
+        final s = v.trim();
+        if (s.isEmpty) return null;
+        if (s.startsWith('http://') || s.startsWith('https://')) return s;
+        if (s.length >= 20 && !s.contains('/')) {
+          return 'https://dev.peersunity.com/api/v1/files/$s';
+        }
+        return s;
+      }
+      if (v is Map<String, dynamic>) {
+        final url = v['url']?.toString();
+        if (url != null && url.isNotEmpty) return url;
+        final fileId = v['file_id']?.toString() ?? v['id']?.toString();
+        if (fileId != null && fileId.isNotEmpty) {
+          return 'https://dev.peersunity.com/api/v1/files/$fileId';
+        }
+      }
+      return null;
+    }
+
+    final primary = extract(val);
+    if (primary != null) return primary;
+    for (final fb in fallbacks) {
+      final res = extract(fb);
+      if (res != null) return res;
+    }
+    return null;
+  }
 }
+

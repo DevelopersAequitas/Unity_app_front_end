@@ -2,7 +2,9 @@ import 'package:unity_app/features/circles/domain/entities/circle_join_request_e
 import 'package:unity_app/features/circles/domain/entities/circle_member_entity.dart';
 
 import '../../domain/entities/circle_category_entity.dart';
+import '../../domain/entities/circle_closed_category_entity.dart';
 import '../../domain/entities/circle_entity.dart';
+import '../../domain/entities/circle_open_category_entity.dart';
 import '../../domain/repositories/circles_repository.dart';
 import '../datasources/circles_local_datasource.dart';
 import '../datasources/circles_remote_datasource.dart';
@@ -58,6 +60,16 @@ class CirclesRepositoryImpl implements CirclesRepository {
   }
 
   @override
+  Future<List<CircleOpenCategoryEntity>> getCircleOpenCategories(String circleId) async {
+    return await remoteDataSource.getCircleOpenCategories(circleId);
+  }
+
+  @override
+  Future<List<CircleClosedCategoryEntity>> getCircleClosedCategories(String circleId) async {
+    return await remoteDataSource.getCircleClosedCategories(circleId);
+  }
+
+  @override
   Future<CircleJoinRequestEntity> submitJoinRequest({
     required String circleId,
     required String reason,
@@ -87,3 +99,4 @@ class CirclesRepositoryImpl implements CirclesRepository {
   Future<List<CircleCategoryEntity>> getCachedCircleCategories() =>
       localDataSource.getCachedCircleCategories();
 }
+

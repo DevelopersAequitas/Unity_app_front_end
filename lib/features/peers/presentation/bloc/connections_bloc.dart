@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/events/peers_event_bus.dart';
+import '../../domain/usecases/follow_user_usecase.dart';
+import '../../domain/usecases/unfollow_user_usecase.dart';
 import '../../domain/usecases/get_my_connections_usecase.dart';
 import '../../domain/usecases/toggle_peer_bookmark_usecase.dart';
 import 'connections_event.dart';
@@ -9,18 +11,25 @@ import 'connections_state.dart';
 class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
   final GetMyConnectionsUseCase getMyConnectionsUseCase;
   final TogglePeerBookmarkUseCase togglePeerBookmarkUseCase;
+  final FollowUserUseCase followUserUseCase;
+  final UnfollowUserUseCase unfollowUserUseCase;
   StreamSubscription<PeerBusEvent>? _busSubscription;
 
   ConnectionsBloc({
     required this.getMyConnectionsUseCase,
     required this.togglePeerBookmarkUseCase,
+    required this.followUserUseCase,
+    required this.unfollowUserUseCase,
   }) : super(const ConnectionsState()) {
     on<ConnectionsFetchRequested>(_onFetch);
     on<ConnectionsRefreshRequested>(_onRefresh);
     on<ConnectionsLoadMoreRequested>(_onLoadMore);
     on<ConnectionsSearchChanged>(_onSearchChanged);
     on<ConnectionBookmarkToggled>(_onBookmark);
+    on<ConnectionFollowToggled>(_onFollow);
     on<ConnectionAdded>(_onConnectionAdded);
+    on<ConnectionPeerFollowUpdated>(_onPeerFollowUpdated);
+    on<ConnectionPeerBookmarkUpdated>(_onPeerBookmarkUpdated);
 
     _busSubscription = PeersEventBus.instance.stream.listen((event) {
       if (event is PeerConnectionAcceptedEvent) {
@@ -32,8 +41,38 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
           event is PeerConnectionCancelledEvent ||
           event is PeersSyncNeededEvent) {
         add(const ConnectionsRefreshRequested());
+      } else if (event is PeerFollowToggledEvent) {
+        add(ConnectionPeerFollowUpdated(
+          peerId: event.peerId,
+          isFollowing: event.isFollowing,
+        ));
+      } else if (event is PeerBookmarkToggledEvent) {
+        add(ConnectionPeerBookmarkUpdated(
+          peerId: event.peerId,
+          isBookmarked: event.isBookmarked,
+        ));
       }
     });
+  }
+
+  void _onPeerFollowUpdated(
+    ConnectionPeerFollowUpdated event,
+    Emitter<ConnectionsState> emit,
+  ) {
+    final updated = state.connections.map((p) {
+      return p.id == event.peerId ? p.copyWith(isFollowing: event.isFollowing) : p;
+    }).toList();
+    emit(state.copyWith(connections: updated));
+  }
+
+  void _onPeerBookmarkUpdated(
+    ConnectionPeerBookmarkUpdated event,
+    Emitter<ConnectionsState> emit,
+  ) {
+    final updated = state.connections.map((p) {
+      return p.id == event.peerId ? p.copyWith(isBookmarked: event.isBookmarked) : p;
+    }).toList();
+    emit(state.copyWith(connections: updated));
   }
 
   void _onConnectionAdded(
@@ -152,18 +191,59 @@ class ConnectionsBloc extends Bloc<ConnectionsEvent, ConnectionsState> {
     ConnectionBookmarkToggled event,
     Emitter<ConnectionsState> emit,
   ) async {
+    final nextBookmark = !event.isCurrentlyBookmarked;
     final updated = state.connections.map((p) {
       if (p.id == event.peerId) {
-        return p.copyWith(isBookmarked: !event.isCurrentlyBookmarked);
+        return p.copyWith(isBookmarked: nextBookmark);
       }
       return p;
     }).toList();
     emit(state.copyWith(connections: updated));
+    PeersEventBus.instance.emit(
+      PeerBookmarkToggledEvent(peerId: event.peerId, isBookmarked: nextBookmark),
+    );
     try {
       await togglePeerBookmarkUseCase(
         event.peerId,
         event.isCurrentlyBookmarked,
       );
     } catch (_) {}
+  }
+
+  Future<void> _onFollow(
+    ConnectionFollowToggled event,
+    Emitter<ConnectionsState> emit,
+  ) async {
+    final nextFollowing = !event.isCurrentlyFollowing;
+    final updated = state.connections.map((p) {
+      if (p.id == event.peerId) {
+        return p.copyWith(isFollowing: nextFollowing);
+      }
+      return p;
+    }).toList();
+    emit(state.copyWith(connections: updated));
+    PeersEventBus.instance.emit(
+      PeerFollowToggledEvent(peerId: event.peerId, isFollowing: nextFollowing),
+    );
+
+    try {
+      if (event.isCurrentlyFollowing) {
+        await unfollowUserUseCase(event.peerId);
+      } else {
+        await followUserUseCase(event.peerId);
+      }
+    } catch (_) {
+      // Rollback on failure
+      final rollback = state.connections.map((p) {
+        if (p.id == event.peerId) {
+          return p.copyWith(isFollowing: event.isCurrentlyFollowing);
+        }
+        return p;
+      }).toList();
+      emit(state.copyWith(connections: rollback));
+      PeersEventBus.instance.emit(
+        PeerFollowToggledEvent(peerId: event.peerId, isFollowing: event.isCurrentlyFollowing),
+      );
+    }
   }
 }

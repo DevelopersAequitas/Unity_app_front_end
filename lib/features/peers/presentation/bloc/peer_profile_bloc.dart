@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/events/peers_event_bus.dart';
 import '../../../home/domain/usecases/toggle_post_like_usecase.dart';
@@ -24,6 +25,7 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
   final TogglePeerBookmarkUseCase togglePeerBookmarkUseCase;
   final TogglePostLikeUseCase? togglePostLikeUseCase;
   final TogglePostSaveUseCase? togglePostSaveUseCase;
+  StreamSubscription<PeerBusEvent>? _busSubscription;
 
   PeerProfileBloc({
     required this.getMemberProfileUseCase,
@@ -47,7 +49,90 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     on<PeerProfilePostLikeToggled>(_onPostLikeToggled);
     on<PeerProfilePostSaveToggled>(_onPostSaveToggled);
     on<PeerProfilePostCommentCountIncremented>(_onPostCommentCountIncremented);
+    on<PeerProfileEventBusUpdateReceived>(_onEventBusUpdateReceived);
+
+    _busSubscription = PeersEventBus.instance.stream.listen((event) {
+      if (event is PeerConnectionAcceptedEvent) {
+        add(PeerProfileEventBusUpdateReceived(
+          peerId: event.peerId,
+          connectionStatus: 'connected',
+          isConnected: true,
+          isRequested: false,
+        ));
+      } else if (event is PeerConnectionRequestedEvent) {
+        add(PeerProfileEventBusUpdateReceived(
+          peerId: event.peerId,
+          connectionStatus: 'pending',
+          isConnected: false,
+          isRequested: true,
+        ));
+      } else if (event is PeerConnectionDeclinedEvent ||
+          event is PeerConnectionCancelledEvent) {
+        final peerId = event is PeerConnectionDeclinedEvent
+            ? event.peerId
+            : (event as PeerConnectionCancelledEvent).peerId;
+        add(PeerProfileEventBusUpdateReceived(
+          peerId: peerId,
+          connectionStatus: 'none',
+          isConnected: false,
+          isRequested: false,
+        ));
+      } else if (event is PeerFollowToggledEvent) {
+        add(PeerProfileEventBusUpdateReceived(
+          peerId: event.peerId,
+          isFollowing: event.isFollowing,
+        ));
+      } else if (event is PeerBookmarkToggledEvent) {
+        add(PeerProfileEventBusUpdateReceived(
+          peerId: event.peerId,
+          isBookmarked: event.isBookmarked,
+        ));
+      }
+    });
   }
+
+  void _onEventBusUpdateReceived(
+    PeerProfileEventBusUpdateReceived event,
+    Emitter<PeerProfileState> emit,
+  ) {
+    final profile = state.profile;
+    if (profile == null) return;
+    final matches = profile.id == event.peerId ||
+        profile.userId == event.peerId ||
+        profile.peerId == event.peerId;
+    if (!matches) return;
+
+    var updated = profile;
+    if (event.isFollowing != null) {
+      final nextCount = event.isFollowing!
+          ? (profile.isFollowing ? profile.followersCount : profile.followersCount + 1)
+          : (profile.isFollowing ? (profile.followersCount > 0 ? profile.followersCount - 1 : 0) : profile.followersCount);
+      updated = updated.copyWith(
+        isFollowing: event.isFollowing,
+        followersCount: nextCount,
+      );
+    }
+    if (event.isBookmarked != null) {
+      updated = updated.copyWith(isBookmark: event.isBookmarked);
+    }
+    if (event.connectionStatus != null) {
+      updated = updated.copyWith(connectionStatus: event.connectionStatus);
+    }
+    if (event.isConnected != null) {
+      updated = updated.copyWith(isConnected: event.isConnected);
+    }
+    if (event.isRequested != null) {
+      updated = updated.copyWith(isRequested: event.isRequested);
+    }
+    emit(state.copyWith(profile: updated));
+  }
+
+  @override
+  Future<void> close() {
+    _busSubscription?.cancel();
+    return super.close();
+  }
+
 
   void _onPostCommentCountIncremented(
     PeerProfilePostCommentCountIncremented event,
@@ -216,6 +301,9 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
       followersCount: nextCount,
     );
     emit(state.copyWith(profile: updated));
+    PeersEventBus.instance.emit(
+      PeerFollowToggledEvent(peerId: profile.id, isFollowing: nextFollowing),
+    );
 
     try {
       final targetUserId = (profile.userId != null && profile.userId!.isNotEmpty)
@@ -228,6 +316,9 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
       }
     } catch (_) {
       emit(state.copyWith(profile: profile));
+      PeersEventBus.instance.emit(
+        PeerFollowToggledEvent(peerId: profile.id, isFollowing: currentlyFollowing),
+      );
     }
   }
 
@@ -314,11 +405,17 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     final currentlyBookmarked = profile.isBookmark;
     final updated = profile.copyWith(isBookmark: !currentlyBookmarked);
     emit(state.copyWith(profile: updated));
+    PeersEventBus.instance.emit(
+      PeerBookmarkToggledEvent(peerId: profile.id, isBookmarked: !currentlyBookmarked),
+    );
 
     try {
       await togglePeerBookmarkUseCase(profile.id, currentlyBookmarked);
     } catch (_) {
       emit(state.copyWith(profile: profile));
+      PeersEventBus.instance.emit(
+        PeerBookmarkToggledEvent(peerId: profile.id, isBookmarked: currentlyBookmarked),
+      );
     }
   }
 }

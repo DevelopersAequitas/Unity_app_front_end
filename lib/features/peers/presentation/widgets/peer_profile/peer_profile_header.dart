@@ -200,6 +200,7 @@ class PeerProfileHeader extends StatelessWidget {
                       size: 68,
                       showOnlineBadge: true,
                       isOnline: profile.isOnline,
+                      isPro: profile.isPro,
                     ),
                   ),
                 ),
@@ -228,6 +229,39 @@ class PeerProfileHeader extends StatelessWidget {
                   Icons.verified_rounded,
                   size: 16,
                   color: AppColor.primaryBlue,
+                ),
+              ],
+              if (profile.isPro) ...[
+                const SizedBox(width: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                        color: const Color(0xFFFDE68A), width: 0.8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.workspace_premium_outlined,
+                        size: 10,
+                        color: Color(0xFF92400E),
+                      ),
+                      SizedBox(width: 2.5),
+                      Text(
+                        'PRO',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF92400E),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ],

@@ -17,6 +17,12 @@ class CircleMemberModel extends CircleMemberEntity {
     super.level4Category,
     super.membershipStatus,
     super.lifeImpactedCount,
+    super.isPro = false,
+    super.isFollowing = false,
+    super.isConnected = false,
+    super.connectionStatus = 'none',
+    super.isRequested = false,
+    super.isBookmark = false,
   });
 
   factory CircleMemberModel.fromJson(Map<String, dynamic> json) {
@@ -67,7 +73,9 @@ class CircleMemberModel extends CircleMemberEntity {
     final photoUrl = userMap['profile_photo_url']?.toString() ??
         userMap['avatar_url']?.toString() ??
         userMap['photo_url']?.toString() ??
+        userMap['profile_photo_image']?.toString() ??
         json['profile_photo_url']?.toString() ??
+        json['profile_photo_image']?.toString() ??
         json['avatar_url']?.toString();
 
     final designation = userMap['designation']?.toString() ?? userMap['title']?.toString() ?? json['designation']?.toString();
@@ -82,6 +90,39 @@ class CircleMemberModel extends CircleMemberEntity {
     } else if (userMap['life_impacted_count'] != null) {
       lifeImpact = int.tryParse(userMap['life_impacted_count'].toString());
     }
+
+    final bool isPro = json['is_pro'] == true ||
+        json['is_pro'] == 1 ||
+        json['is_pro']?.toString() == '1' ||
+        userMap['is_pro'] == true ||
+        userMap['is_pro'] == 1 ||
+        userMap['is_pro']?.toString() == '1';
+
+    final bool isFollowing = json['is_following'] == true ||
+        json['is_following'] == 1 ||
+        json['is_following']?.toString() == '1' ||
+        userMap['is_following'] == true ||
+        userMap['is_following'] == 1 ||
+        userMap['is_following']?.toString() == '1';
+
+    final bool isConnected = json['is_connected'] == true ||
+        json['is_connected'] == 1 ||
+        userMap['is_connected'] == true ||
+        userMap['is_connected'] == 1;
+
+    final String connectionStatus = json['connection_status']?.toString() ??
+        userMap['connection_status']?.toString() ??
+        (isConnected ? 'connected' : 'none');
+
+    final bool isRequested = json['is_requested'] == true ||
+        json['is_requested'] == 1 ||
+        userMap['is_requested'] == true ||
+        userMap['is_requested'] == 1;
+
+    final bool isBookmark = json['is_bookmark'] == true ||
+        json['is_bookmarked'] == true ||
+        userMap['is_bookmark'] == true ||
+        userMap['is_bookmarked'] == true;
 
     return CircleMemberModel(
       id: json['id']?.toString() ?? userMap['id']?.toString() ?? '',
@@ -99,6 +140,12 @@ class CircleMemberModel extends CircleMemberEntity {
       level4Category: lvl4,
       membershipStatus: membershipStat,
       lifeImpactedCount: lifeImpact,
+      isPro: isPro,
+      isFollowing: isFollowing,
+      isConnected: isConnected,
+      connectionStatus: connectionStatus,
+      isRequested: isRequested,
+      isBookmark: isBookmark,
     );
   }
 
@@ -119,6 +166,12 @@ class CircleMemberModel extends CircleMemberEntity {
       'level4_category': level4Category,
       'membership_status': membershipStatus,
       'life_impacted_count': lifeImpactedCount,
+      'is_pro': isPro,
+      'is_following': isFollowing,
+      'is_connected': isConnected,
+      'connection_status': connectionStatus,
+      'is_requested': isRequested,
+      'is_bookmark': isBookmark,
     };
   }
 }

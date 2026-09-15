@@ -41,6 +41,19 @@ class ConnectionBookmarkToggled extends ConnectionsEvent {
   List<Object?> get props => [peerId, isCurrentlyBookmarked];
 }
 
+class ConnectionFollowToggled extends ConnectionsEvent {
+  final String peerId;
+  final bool isCurrentlyFollowing;
+
+  const ConnectionFollowToggled({
+    required this.peerId,
+    required this.isCurrentlyFollowing,
+  });
+
+  @override
+  List<Object?> get props => [peerId, isCurrentlyFollowing];
+}
+
 class ConnectionAdded extends ConnectionsEvent {
   final PeerEntity peer;
   const ConnectionAdded(this.peer);
@@ -48,3 +61,30 @@ class ConnectionAdded extends ConnectionsEvent {
   @override
   List<Object?> get props => [peer];
 }
+
+class ConnectionPeerFollowUpdated extends ConnectionsEvent {
+  final String peerId;
+  final bool isFollowing;
+
+  const ConnectionPeerFollowUpdated({
+    required this.peerId,
+    required this.isFollowing,
+  });
+
+  @override
+  List<Object?> get props => [peerId, isFollowing];
+}
+
+class ConnectionPeerBookmarkUpdated extends ConnectionsEvent {
+  final String peerId;
+  final bool isBookmarked;
+
+  const ConnectionPeerBookmarkUpdated({
+    required this.peerId,
+    required this.isBookmarked,
+  });
+
+  @override
+  List<Object?> get props => [peerId, isBookmarked];
+}
+

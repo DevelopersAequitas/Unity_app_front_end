@@ -5,7 +5,6 @@ import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/widgets/app_avatar.dart';
 import '../../../domain/entities/circle_entity.dart';
 import '../../../domain/entities/circle_leader_entity.dart';
-import '../circle_icon_helper.dart';
 
 class CircleDetailLeadership extends StatelessWidget {
   final CircleEntity circle;
@@ -15,16 +14,14 @@ class CircleDetailLeadership extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final config = CircleIconHelper.getCategoryConfig(circle.category, circle.circleKey);
     final cardBg = isDark ? AppColor.darkSurface : Colors.white;
     final borderColor = isDark
         ? AppColor.darkBorder
-        : config.tintColor.withValues(alpha: 0.18);
+        : const Color(0xFFE5E7EB);
 
     final circleLeaders = circle.circleLeaders;
     final regionalLeaders = circle.regionalLeaders;
 
-    // If both empty, fallback to leadership
     final hasStructuredLeaders = circleLeaders.isNotEmpty || regionalLeaders.isNotEmpty;
     final fallbackLeaders = !hasStructuredLeaders ? circle.leadership : const <CircleLeaderEntity>[];
 
@@ -35,15 +32,15 @@ class CircleDetailLeadership extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: borderColor, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-              blurRadius: 10,
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
@@ -51,32 +48,32 @@ class CircleDetailLeadership extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // Section Header
             Row(
               children: [
                 Container(
-                  width: 28,
-                  height: 28,
+                  width: 24,
+                  height: 24,
                   decoration: BoxDecoration(
-                    gradient: AppColor.brandGradient,
-                    borderRadius: BorderRadius.circular(8),
+                    color: isDark ? AppColor.darkSurfaceSubtle : const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Center(
-                    child: Icon(Icons.workspace_premium_outlined, size: 16, color: Colors.white),
+                    child: Icon(Icons.workspace_premium_outlined, size: 14, color: AppColor.primaryBlue),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 7),
                 Text(
                   'Circle Leadership & Mentors',
                   style: AppTypography.titleSmall.copyWith(
-                    fontSize: 14.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
             // 1. Circle Leaders (First)
             if (circleLeaders.isNotEmpty) ...[
@@ -84,12 +81,12 @@ class CircleDetailLeadership extends StatelessWidget {
                 title: 'Circle Leaders',
                 count: circleLeaders.length,
                 isDark: isDark,
-                icon: Icons.star_rounded,
+                icon: Icons.stars_rounded,
                 accentColor: AppColor.primaryBlue,
               ),
-              const SizedBox(height: 8),
-              ...circleLeaders.map((leader) => _buildLeaderRow(context, leader, isDark, config)),
-              if (regionalLeaders.isNotEmpty) const SizedBox(height: 12),
+              const SizedBox(height: 6),
+              _buildLeaderHorizontalList(context, circleLeaders, isDark),
+              if (regionalLeaders.isNotEmpty) const SizedBox(height: 10),
             ],
 
             // 2. Regional Leaders (Second)
@@ -101,13 +98,13 @@ class CircleDetailLeadership extends StatelessWidget {
                 icon: Icons.public_rounded,
                 accentColor: const Color(0xFFD97706),
               ),
-              const SizedBox(height: 8),
-              ...regionalLeaders.map((leader) => _buildLeaderRow(context, leader, isDark, config)),
+              const SizedBox(height: 6),
+              _buildLeaderHorizontalList(context, regionalLeaders, isDark),
             ],
 
             // 3. Fallback if unstructured
             if (!hasStructuredLeaders && fallbackLeaders.isNotEmpty) ...[
-              ...fallbackLeaders.map((leader) => _buildLeaderRow(context, leader, isDark, config)),
+              _buildLeaderHorizontalList(context, fallbackLeaders, isDark),
             ],
           ],
         ),
@@ -124,17 +121,17 @@ class CircleDetailLeadership extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: accentColor),
+        Icon(icon, size: 12, color: accentColor),
         const SizedBox(width: 4),
         Text(
           title,
           style: AppTypography.labelSmall.copyWith(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
             color: isDark ? AppColor.darkTextSecondary : const Color(0xFF4B5563),
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 5),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
@@ -143,30 +140,62 @@ class CircleDetailLeadership extends StatelessWidget {
           ),
           child: Text(
             '$count',
-            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500, color: accentColor),
+            style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w500, color: accentColor),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildLeaderRow(
+  Widget _buildLeaderHorizontalList(
+    BuildContext context,
+    List<CircleLeaderEntity> leaders,
+    bool isDark,
+  ) {
+    return SizedBox(
+      height: 78,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: leaders.length,
+        itemBuilder: (context, index) {
+          final leader = leaders[index];
+          return _buildCompactLeaderCard(context, leader, isDark);
+        },
+      ),
+    );
+  }
+
+  Widget _buildCompactLeaderCard(
     BuildContext context,
     CircleLeaderEntity leader,
     bool isDark,
-    CircleIconConfig config,
   ) {
-    final roleName = leader.effectiveRole;
-    final hasCompany = leader.companyName != null && leader.companyName!.isNotEmpty;
-    final hasRegion = leader.region != null && leader.region!.isNotEmpty;
+    final isCircleLeader = leader.leaderType == 'circle';
+    final roleColor = isCircleLeader ? AppColor.primaryBlue : const Color(0xFFD97706);
+    final roleBg = isCircleLeader
+        ? (isDark ? AppColor.primaryBlue.withValues(alpha: 0.12) : const Color(0xFFEFF6FF))
+        : (isDark ? const Color(0xFFD97706).withValues(alpha: 0.12) : const Color(0xFFFFFBEB));
+    final roleBorder = isCircleLeader
+        ? (isDark ? AppColor.primaryBlue.withValues(alpha: 0.25) : const Color(0xFFDBEAFE))
+        : (isDark ? const Color(0xFFD97706).withValues(alpha: 0.25) : const Color(0xFFFDE68A));
+
+    final hasCompany = leader.companyName != null && leader.companyName!.trim().isNotEmpty;
+    final hasRegion = leader.region != null && leader.region!.trim().isNotEmpty;
+    final metaText = [
+      if (hasCompany) leader.companyName!.trim(),
+      if (hasRegion) leader.region!.trim(),
+    ].join(' • ');
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      width: 215,
+      margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
         color: isDark ? AppColor.darkSurfaceSubtle : const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? AppColor.darkBorder : config.tintColor.withValues(alpha: 0.15),
+          color: isDark ? AppColor.darkBorder : const Color(0xFFE5E7EB),
+          width: 0.8,
         ),
       ),
       child: Material(
@@ -180,122 +209,85 @@ class CircleDetailLeadership extends StatelessWidget {
                     arguments: leader.id,
                   );
                 }
-              : null,
-          borderRadius: BorderRadius.circular(14),
+            : null,
+          borderRadius: BorderRadius.circular(10),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 1. Role name on TOP
+                // 1. Role name on TOP (Subtle pill badge, no green gradient)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        config.tintColor.withValues(alpha: 0.12),
-                        config.bgTint,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: config.tintColor.withValues(alpha: 0.25),
-                      width: 0.8,
-                    ),
+                    color: roleBg,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: roleBorder, width: 0.6),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        leader.leaderType == 'circle' ? Icons.stars_rounded : Icons.public_rounded,
-                        size: 11,
-                        color: config.tintColor,
+                        isCircleLeader ? Icons.stars_rounded : Icons.public_rounded,
+                        size: 9.5,
+                        color: roleColor,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        roleName,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: config.tintColor,
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          leader.effectiveRole,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                            color: roleColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 5),
 
-                // 2. Profile Details: Avatar + Name + Company + City/Region
+                // 2. Profile details: Avatar + Name + Company/Region
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     AppAvatar(
                       imageUrl: leader.avatarUrl,
                       name: leader.name,
-                      size: 44,
+                      size: 28,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 7),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             leader.name,
-                            style: AppTypography.titleSmall.copyWith(
-                              fontSize: 13.5,
+                            style: AppTypography.labelSmall.copyWith(
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w500,
                               color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (hasCompany) ...[
-                            const SizedBox(height: 2),
+                          if (metaText.isNotEmpty)
                             Text(
-                              leader.companyName!,
-                              style: AppTypography.bodySmall.copyWith(
-                                fontSize: 11.5,
-                                color: isDark ? AppColor.darkTextSecondary : const Color(0xFF4B5563),
+                              metaText,
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                color: isDark ? AppColor.darkTextSecondary : const Color(0xFF6B7280),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                          if (hasRegion) ...[
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 11.5,
-                                  color: AppColor.primaryBlue,
-                                ),
-                                const SizedBox(width: 2),
-                                Expanded(
-                                  child: Text(
-                                    leader.region!,
-                                    style: AppTypography.labelSmall.copyWith(
-                                      fontSize: 10.5,
-                                      color: isDark ? AppColor.darkTextSecondary : const Color(0xFF6B7280),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                         ],
                       ),
                     ),
-                    if (leader.id.isNotEmpty) ...[
-                      const SizedBox(width: 6),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 18,
-                        color: isDark ? AppColor.darkTextDisabled : const Color(0xFF9CA3AF),
-                      ),
-                    ],
                   ],
                 ),
               ],
@@ -306,4 +298,5 @@ class CircleDetailLeadership extends StatelessWidget {
     );
   }
 }
+
 

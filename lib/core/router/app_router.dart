@@ -25,7 +25,10 @@ import '../../features/peers/presentation/bloc/peer_profile_bloc.dart';
 import '../../features/peers/presentation/screens/peer_profile_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/circles/domain/entities/circle_closed_category_entity.dart';
 import '../../features/circles/domain/entities/circle_entity.dart';
+import '../../features/circles/domain/entities/circle_open_category_entity.dart';
+import '../../features/circles/presentation/screens/circle_categories_screen.dart';
 import '../../features/circles/presentation/screens/circle_detail_screen.dart';
 import '../../features/circles/presentation/screens/circle_join_screen.dart';
 import '../../features/circles/presentation/screens/circle_members_screen.dart';
@@ -56,6 +59,7 @@ class AppRoutes {
   static const String p2pMeetings = '/p2p-meetings';
   static const String circleDetails = '/circle-details';
   static const String circleMembers = '/circle-members';
+  static const String circleCategories = '/circle-categories';
   static const String circleJoin = '/circle-join';
   static const String joinRequestStatus = '/join-request-status';
   static const String circleChat = '/circle-chat';
@@ -66,6 +70,7 @@ class AppRoutes {
   static const String circulars = '/circulars';
   static const String supportTicketDetails = '/support-ticket-details';
 }
+
 
 class AppRouter {
   AppRouter._();
@@ -178,7 +183,29 @@ class AppRouter {
           builder: (_) => CircleMembersScreen(circle: circle),
           settings: settings,
         );
+      case AppRoutes.circleCategories:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final circle = args['circle'] as CircleEntity?;
+        final initialTab = (args['initialTab'] is int) ? args['initialTab'] as int : 0;
+        final preloadedOpen = args['openCategories'] as List<CircleOpenCategoryEntity>?;
+        final preloadedClosed = args['closedCategories'] as List<CircleClosedCategoryEntity>?;
+        if (circle != null) {
+          return MaterialPageRoute(
+            builder: (_) => CircleCategoriesScreen(
+              circle: circle,
+              initialTabIndex: initialTab,
+              preloadedOpen: preloadedOpen,
+              preloadedClosed: preloadedClosed,
+            ),
+            settings: settings,
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => const WelcomeScreen(),
+          settings: settings,
+        );
       case AppRoutes.circleJoin:
+
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         return MaterialPageRoute(
           builder: (_) => CircleJoinScreen(

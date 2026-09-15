@@ -5,6 +5,7 @@ import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/entities/circle_entity.dart';
 import '../widgets/circle_detail/circle_detail_about.dart';
+import '../widgets/circle_detail/circle_detail_category_status.dart';
 import '../widgets/circle_detail/circle_detail_focus_areas.dart';
 import '../widgets/circle_detail/circle_detail_header.dart';
 import '../widgets/circle_detail/circle_detail_leadership.dart';
@@ -70,6 +71,8 @@ class CircleDetailScreen extends StatelessWidget {
                 const SizedBox(height: 14),
                 CircleDetailFocusAreas(circle: entity),
                 const SizedBox(height: 14),
+                CircleDetailCategoryStatus(circle: entity),
+                const SizedBox(height: 14),
                 CircleDetailLeadership(circle: entity),
                 const SizedBox(height: 14),
                 CircleDetailPeersPreview(circle: entity),
@@ -84,3 +87,4 @@ class CircleDetailScreen extends StatelessWidget {
     );
   }
 }
+

@@ -74,7 +74,10 @@ class ApiEndpoints {
   static const String circleCategories = '/circle-categories';
   static String circleDetail(String id) => '/circles/$id';
   static String circleMembers(String id) => '/circles/$id/members';
+  static String circleOpenCategories(String circleId) => '/circles/$circleId/open-categories';
+  static String circleClosedCategories(String circleId) => '/circles/$circleId/closed-categories';
   static const String circleJoinRequests = '/circle-join-requests';
   static const String myCircleJoinRequests = '/circle-join-requests/my';
 }
+
 

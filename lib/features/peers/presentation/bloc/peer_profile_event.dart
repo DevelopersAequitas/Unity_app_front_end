@@ -63,3 +63,32 @@ class PeerProfilePostCommentCountIncremented extends PeerProfileEvent {
   @override
   List<Object?> get props => [postId];
 }
+
+class PeerProfileEventBusUpdateReceived extends PeerProfileEvent {
+  final String peerId;
+  final bool? isFollowing;
+  final bool? isBookmarked;
+  final String? connectionStatus;
+  final bool? isConnected;
+  final bool? isRequested;
+
+  const PeerProfileEventBusUpdateReceived({
+    required this.peerId,
+    this.isFollowing,
+    this.isBookmarked,
+    this.connectionStatus,
+    this.isConnected,
+    this.isRequested,
+  });
+
+  @override
+  List<Object?> get props => [
+        peerId,
+        isFollowing,
+        isBookmarked,
+        connectionStatus,
+        isConnected,
+        isRequested,
+      ];
+}
+

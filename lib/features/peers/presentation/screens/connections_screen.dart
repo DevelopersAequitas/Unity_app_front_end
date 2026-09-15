@@ -134,6 +134,15 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                                 arguments: peer.id,
                               );
                             },
+                            onFollow: () {
+                              context.read<ConnectionsBloc>().add(
+                                    ConnectionFollowToggled(
+                                      peerId: peer.id,
+                                      isCurrentlyFollowing:
+                                          peer.isFollowing,
+                                    ),
+                                  );
+                            },
                             onScheduleP2P: () {
                               AppSnackBar.showInfo(
                                 context,

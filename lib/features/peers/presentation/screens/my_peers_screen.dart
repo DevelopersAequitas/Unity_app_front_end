@@ -178,6 +178,14 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
                           PeerConnectRequested(peer.id),
                         );
                       },
+                      onFollow: () {
+                        context.read<PeersBloc>().add(
+                          PeerFollowToggled(
+                            peerId: peer.id,
+                            isCurrentlyFollowing: peer.isFollowing,
+                          ),
+                        );
+                      },
                       onScheduleP2P: isConnected
                           ? () {
                               AppSnackBar.showInfo(

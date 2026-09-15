@@ -14,6 +14,7 @@ class PeerModel {
   final bool isVerified;
   final bool isBookmarked;
   final bool isFollowing;
+  final bool isPro;
   final bool isOnline;
   final String connectionStatus;
 
@@ -31,6 +32,7 @@ class PeerModel {
     this.isVerified = false,
     this.isBookmarked = false,
     this.isFollowing = false,
+    this.isPro = false,
     this.isOnline = false,
     this.connectionStatus = 'none',
   });
@@ -87,7 +89,28 @@ class PeerModel {
         json['is_bookmarked'] == true;
 
     final bool following = userMap['is_following'] == true ||
-        json['is_following'] == true;
+        userMap['is_following'] == 1 ||
+        userMap['is_following'] == '1' ||
+        userMap['is_following'] == 'true' ||
+        userMap['is_followed'] == true ||
+        userMap['is_followed'] == 1 ||
+        userMap['is_follow'] == true ||
+        json['is_following'] == true ||
+        json['is_following'] == 1 ||
+        json['is_following'] == '1' ||
+        json['is_following'] == 'true' ||
+        json['is_followed'] == true ||
+        json['is_followed'] == 1 ||
+        json['is_follow'] == true;
+
+    final bool pro = userMap['is_pro'] == true ||
+        userMap['is_pro'] == 1 ||
+        userMap['is_pro'] == '1' ||
+        userMap['is_pro'] == 'true' ||
+        json['is_pro'] == true ||
+        json['is_pro'] == 1 ||
+        json['is_pro'] == '1' ||
+        json['is_pro'] == 'true';
 
     final bool online = userMap['is_online'] == true ||
         userMap['is_online'] == 1 ||
@@ -138,6 +161,7 @@ class PeerModel {
       isVerified: verified,
       isBookmarked: bookmarked,
       isFollowing: following,
+      isPro: pro,
       isOnline: online,
       connectionStatus: connStatus,
     );
@@ -157,6 +181,7 @@ class PeerModel {
     bool? isVerified,
     bool? isBookmarked,
     bool? isFollowing,
+    bool? isPro,
     bool? isOnline,
     String? connectionStatus,
   }) {
@@ -174,6 +199,7 @@ class PeerModel {
       isVerified: isVerified ?? this.isVerified,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       isFollowing: isFollowing ?? this.isFollowing,
+      isPro: isPro ?? this.isPro,
       isOnline: isOnline ?? this.isOnline,
       connectionStatus: connectionStatus ?? this.connectionStatus,
     );
@@ -194,6 +220,7 @@ class PeerModel {
       'is_verified': isVerified,
       'is_bookmarked': isBookmarked,
       'is_following': isFollowing,
+      'is_pro': isPro,
       'is_online': isOnline,
       'connection_status': connectionStatus,
     };
@@ -214,6 +241,7 @@ class PeerModel {
       isVerified: isVerified,
       isBookmarked: isBookmarked,
       isFollowing: isFollowing,
+      isPro: isPro,
       isOnline: isOnline,
       connectionStatus: connectionStatus,
     );

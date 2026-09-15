@@ -105,6 +105,7 @@ class ProfileModel extends ProfileEntity {
     super.businessCategoryId,
     super.isOtherCategory = false,
     super.introducedByUser,
+    super.isPro = false,
     super.isFollowing = false,
     super.isBookmark = false,
     super.isConnected = false,
@@ -456,6 +457,9 @@ class ProfileModel extends ProfileEntity {
               : null),
       isOtherCategory: root['is_other_category'] == true,
       introducedByUser: introducedEntity,
+      isPro: root['is_pro'] == true ||
+          root['is_pro'] == 1 ||
+          root['is_pro']?.toString() == '1',
       isFollowing: root['is_following'] == true,
       isBookmark: root['is_bookmark'] == true,
       isConnected: root['is_connected'] == true || root['connection_status'] == 'connected',

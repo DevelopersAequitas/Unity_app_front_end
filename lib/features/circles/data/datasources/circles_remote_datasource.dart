@@ -1,9 +1,12 @@
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/circle_category_model.dart';
+import '../models/circle_closed_category_model.dart';
 import '../models/circle_join_request_model.dart';
 import '../models/circle_member_model.dart';
 import '../models/circle_model.dart';
+import '../models/circle_open_category_model.dart';
+
 
 abstract class CirclesRemoteDataSource {
   Future<List<CircleModel>> getMyCircles();
@@ -11,6 +14,8 @@ abstract class CirclesRemoteDataSource {
   Future<CircleModel> getCircleDetail(String id);
   Future<List<CircleMemberModel>> getCircleMembers(String circleId);
   Future<List<CircleCategoryModel>> getCategorySubcategories(String categoryId);
+  Future<List<CircleOpenCategoryModel>> getCircleOpenCategories(String circleId);
+  Future<List<CircleClosedCategoryModel>> getCircleClosedCategories(String circleId);
   Future<CircleJoinRequestModel> submitJoinRequest({
     required String circleId,
     required String reason,
@@ -143,6 +148,53 @@ class CirclesRemoteDataSourceImpl implements CirclesRemoteDataSource {
         .map((json) => CircleCategoryModel.fromJson(json))
         .toList();
   }
+
+  @override
+  Future<List<CircleOpenCategoryModel>> getCircleOpenCategories(String circleId) async {
+    final response = await dioClient.dio.get(ApiEndpoints.circleOpenCategories(circleId));
+    final data = response.data;
+    List<dynamic> list = [];
+    if (data is Map<String, dynamic>) {
+      if (data['data'] is Map<String, dynamic>) {
+        final nested = data['data'] as Map<String, dynamic>;
+        list = nested['open_categories'] ?? nested['categories'] ?? nested['items'] ?? [];
+      } else if (data['data'] is List) {
+        list = data['data'] as List;
+      } else if (data['open_categories'] is List) {
+        list = data['open_categories'] as List;
+      }
+    } else if (data is List) {
+      list = data;
+    }
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map((json) => CircleOpenCategoryModel.fromJson(json))
+        .toList();
+  }
+
+  @override
+  Future<List<CircleClosedCategoryModel>> getCircleClosedCategories(String circleId) async {
+    final response = await dioClient.dio.get(ApiEndpoints.circleClosedCategories(circleId));
+    final data = response.data;
+    List<dynamic> list = [];
+    if (data is Map<String, dynamic>) {
+      if (data['data'] is Map<String, dynamic>) {
+        final nested = data['data'] as Map<String, dynamic>;
+        list = nested['closed_categories'] ?? nested['categories'] ?? nested['items'] ?? [];
+      } else if (data['data'] is List) {
+        list = data['data'] as List;
+      } else if (data['closed_categories'] is List) {
+        list = data['closed_categories'] as List;
+      }
+    } else if (data is List) {
+      list = data;
+    }
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map((json) => CircleClosedCategoryModel.fromJson(json))
+        .toList();
+  }
+
 
   @override
   Future<CircleJoinRequestModel> submitJoinRequest({

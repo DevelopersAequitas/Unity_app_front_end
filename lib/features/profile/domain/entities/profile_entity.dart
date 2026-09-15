@@ -104,6 +104,7 @@ class ProfileEntity extends Equatable {
   final int? businessCategoryId;
   final bool isOtherCategory;
   final IntroducedByUserEntity? introducedByUser;
+  final bool isPro;
   final bool isFollowing;
   final bool isBookmark;
   final bool isConnected;
@@ -215,6 +216,7 @@ class ProfileEntity extends Equatable {
     this.businessCategoryId,
     this.isOtherCategory = false,
     this.introducedByUser,
+    this.isPro = false,
     this.isFollowing = false,
     this.isBookmark = false,
     this.isConnected = false,
@@ -327,6 +329,7 @@ class ProfileEntity extends Equatable {
     int? businessCategoryId,
     bool? isOtherCategory,
     IntroducedByUserEntity? introducedByUser,
+    bool? isPro,
     bool? isFollowing,
     bool? isBookmark,
     bool? isConnected,
@@ -438,6 +441,7 @@ class ProfileEntity extends Equatable {
       businessCategoryId: businessCategoryId ?? this.businessCategoryId,
       isOtherCategory: isOtherCategory ?? this.isOtherCategory,
       introducedByUser: introducedByUser ?? this.introducedByUser,
+      isPro: isPro ?? this.isPro,
       isFollowing: isFollowing ?? this.isFollowing,
       isBookmark: isBookmark ?? this.isBookmark,
       isConnected: isConnected ?? this.isConnected,
@@ -483,6 +487,7 @@ class ProfileEntity extends Equatable {
         interests,
         socialLinks,
         isVerified,
+        isPro,
         isFollowing,
         isBookmark,
         connectionStatus,

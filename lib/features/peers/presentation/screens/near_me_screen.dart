@@ -295,16 +295,33 @@ class _NearMeScreenState extends State<NearMeScreen> {
                               return NearMePeerCard(
                                 peer: peer,
                                 onConnect: () {
-                                  AppSnackBar.showSuccess(
-                                    context,
-                                    'Connected with ${peer.displayName}',
-                                  );
+                                  context.read<NearMeBloc>().add(
+                                        NearMeConnectRequested(peer.id),
+                                      );
+                                },
+                                onFollow: () {
+                                  context.read<NearMeBloc>().add(
+                                        NearMeFollowToggled(
+                                          peerId: peer.id,
+                                          isCurrentlyFollowing:
+                                              peer.isFollowing,
+                                        ),
+                                      );
+                                },
+                                onScheduleP2P: () {
+                                  // Navigate to P2P scheduling
+                                },
+                                onBookmark: () {
+                                  context.read<NearMeBloc>().add(
+                                        NearMeBookmarkToggled(
+                                          peerId: peer.id,
+                                          isCurrentlyBookmarked:
+                                              peer.isBookmarked,
+                                        ),
+                                      );
                                 },
                                 onMessage: () {
-                                  AppSnackBar.showInfo(
-                                    context,
-                                    'Messaging ${peer.displayName}',
-                                  );
+                                  // Open message thread
                                 },
                                 onTap: () {
                                   Navigator.pushNamed(

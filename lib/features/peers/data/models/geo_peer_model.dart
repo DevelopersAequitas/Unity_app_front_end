@@ -49,6 +49,8 @@ class GeoPeerModel {
       lifeImpactedCount: base.lifeImpactedCount,
       isVerified: base.isVerified,
       isBookmarked: base.isBookmarked,
+      isFollowing: base.isFollowing,
+      isPro: base.isPro,
       isOnline: base.isOnline,
       connectionStatus: base.connectionStatus,
       latitude: latitude,

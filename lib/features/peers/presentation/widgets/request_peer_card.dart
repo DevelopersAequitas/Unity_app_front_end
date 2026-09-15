@@ -72,6 +72,7 @@ class RequestPeerCard extends StatelessWidget {
           size: 38,
           showOnlineBadge: true,
           isOnline: peer.isOnline,
+          isPro: peer.isPro,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -85,7 +86,7 @@ class RequestPeerCard extends StatelessWidget {
                       peer.displayName.toUpperCase(),
                       style: const TextStyle(
                         fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                         color: AppColor.lightTextPrimary,
                       ),
                       maxLines: 1,
@@ -98,6 +99,39 @@ class RequestPeerCard extends StatelessWidget {
                       Icons.verified_rounded,
                       size: 13,
                       color: AppColor.primaryBlue,
+                    ),
+                  ],
+                  if (peer.isPro) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                            color: const Color(0xFFFDE68A), width: 0.8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.workspace_premium_outlined,
+                            size: 9.5,
+                            color: Color(0xFF92400E),
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            'PRO',
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF92400E),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],
@@ -211,7 +245,7 @@ class RequestPeerCard extends StatelessWidget {
                           'CANCEL REQUEST',
                           style: TextStyle(
                             fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             letterSpacing: 0.2,
                             color: AppColor.error,
                           ),
@@ -255,7 +289,7 @@ class RequestPeerCard extends StatelessWidget {
                         'ACCEPT',
                         style: TextStyle(
                           fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w500,
                           letterSpacing: 0.2,
                           color: Colors.white,
                         ),
@@ -296,7 +330,7 @@ class RequestPeerCard extends StatelessWidget {
                         'DECLINE',
                         style: TextStyle(
                           fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w500,
                           letterSpacing: 0.2,
                           color: AppColor.lightTextPrimary,
                         ),

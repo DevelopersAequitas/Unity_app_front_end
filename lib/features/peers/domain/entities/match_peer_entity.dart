@@ -17,6 +17,8 @@ class MatchPeerEntity extends PeerEntity {
     super.lifeImpactedCount,
     super.isVerified = false,
     super.isBookmarked = false,
+    super.isFollowing = false,
+    super.isPro = false,
     super.isOnline = false,
     super.connectionStatus = 'none',
     required this.matchPercentage,

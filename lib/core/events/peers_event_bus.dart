@@ -30,6 +30,20 @@ class PeerConnectionCancelledEvent extends PeerBusEvent {
   const PeerConnectionCancelledEvent({required this.peerId});
 }
 
+class PeerFollowToggledEvent extends PeerBusEvent {
+  final String peerId;
+  final bool isFollowing;
+
+  const PeerFollowToggledEvent({required this.peerId, required this.isFollowing});
+}
+
+class PeerBookmarkToggledEvent extends PeerBusEvent {
+  final String peerId;
+  final bool isBookmarked;
+
+  const PeerBookmarkToggledEvent({required this.peerId, required this.isBookmarked});
+}
+
 class PeersSyncNeededEvent extends PeerBusEvent {
   const PeersSyncNeededEvent();
 }

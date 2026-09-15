@@ -8,6 +8,7 @@ class AppAvatar extends StatelessWidget {
   final double size;
   final bool showOnlineBadge;
   final bool isOnline;
+  final bool isPro;
 
   const AppAvatar({
     super.key,
@@ -16,6 +17,7 @@ class AppAvatar extends StatelessWidget {
     this.size = 52,
     this.showOnlineBadge = false,
     this.isOnline = false,
+    this.isPro = false,
   });
 
   static final List<LinearGradient> _avatarGradients = [
@@ -111,35 +113,42 @@ class AppAvatar extends StatelessWidget {
 
     final gradient = getGradientForName(name);
 
-    return Stack(
-      children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColor.white.withValues(alpha: 0.9),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
+    final avatarBorder = isPro
+        ? Border.all(color: const Color(0xFFF59E0B), width: 1.6)
+        : Border.all(
+            color: AppColor.white.withValues(alpha: 0.9),
+            width: 1.2,
+          );
+
+    final avatarImage = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: avatarBorder,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: hasValidUrl
-              ? CachedNetworkImage(
-                  imageUrl: imageUrl!,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => _buildInitials(initials, gradient),
-                  errorWidget: (_, _, _) => _buildInitials(initials, gradient),
-                )
-              : _buildInitials(initials, gradient),
-        ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: hasValidUrl
+          ? CachedNetworkImage(
+              imageUrl: imageUrl!,
+              fit: BoxFit.cover,
+              placeholder: (_, _) => _buildInitials(initials, gradient),
+              errorWidget: (_, _, _) => _buildInitials(initials, gradient),
+            )
+          : _buildInitials(initials, gradient),
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        avatarImage,
         if (showOnlineBadge)
           Positioned(
             bottom: 0,
@@ -149,10 +158,10 @@ class AppAvatar extends StatelessWidget {
               height: size * 0.26,
               decoration: BoxDecoration(
                 color: isOnline
-                    ? const Color(0xFF22C55E)
+                    ? const Color(0xFF10B981)
                     : const Color(0xFF94A3B8),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.8),
+                border: Border.all(color: Colors.white, width: 1.6),
               ),
             ),
           ),
@@ -173,7 +182,7 @@ class AppAvatar extends StatelessWidget {
           initials,
           style: TextStyle(
             fontSize: size * 0.38,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w500,
             color: Colors.white,
             letterSpacing: -0.2,
           ),
@@ -182,3 +191,4 @@ class AppAvatar extends StatelessWidget {
     );
   }
 }
+

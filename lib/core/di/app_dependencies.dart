@@ -1,8 +1,11 @@
 import 'package:lottie/lottie.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_category_subcategories_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_closed_categories_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_members_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_open_categories_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_my_join_requests_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/submit_circle_join_usecase.dart';
+
 import '../../core/cache/hive_cache_store.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/services/contacts_sync_service.dart';
@@ -106,8 +109,11 @@ class AppDependencies {
   final GetCachedCirclesUseCase getCachedCirclesUseCase;
   final GetCircleMembersUseCase getCircleMembersUseCase;
   final GetCategorySubcategoriesUseCase getCategorySubcategoriesUseCase;
+  final GetCircleOpenCategoriesUseCase getCircleOpenCategoriesUseCase;
+  final GetCircleClosedCategoriesUseCase getCircleClosedCategoriesUseCase;
   final SubmitCircleJoinUseCase submitCircleJoinUseCase;
   final GetMyJoinRequestsUseCase getMyJoinRequestsUseCase;
+
 
   // Notifications UseCases
   final GetNotificationsUseCase getNotificationsUseCase;
@@ -180,9 +186,12 @@ class AppDependencies {
     required this.getCachedCirclesUseCase,
     required this.getCircleMembersUseCase,
     required this.getCategorySubcategoriesUseCase,
+    required this.getCircleOpenCategoriesUseCase,
+    required this.getCircleClosedCategoriesUseCase,
     required this.submitCircleJoinUseCase,
     required this.getMyJoinRequestsUseCase,
     required this.getNotificationsUseCase,
+
     required this.markNotificationReadUseCase,
     required this.markAllNotificationsReadUseCase,
     required this.getCachedNotificationsUseCase,
@@ -328,10 +337,17 @@ class AppDependencies {
     final getCategorySubcategoriesUseCase = GetCategorySubcategoriesUseCase(
       circlesRepository,
     );
+    final getCircleOpenCategoriesUseCase = GetCircleOpenCategoriesUseCase(
+      circlesRepository,
+    );
+    final getCircleClosedCategoriesUseCase = GetCircleClosedCategoriesUseCase(
+      circlesRepository,
+    );
     final submitCircleJoinUseCase = SubmitCircleJoinUseCase(circlesRepository);
     final getMyJoinRequestsUseCase = GetMyJoinRequestsUseCase(
       circlesRepository,
     );
+
 
     // Notifications UseCases
     final getNotificationsUseCase = GetNotificationsUseCase(
@@ -455,9 +471,12 @@ class AppDependencies {
       getCachedCirclesUseCase: getCachedCirclesUseCase,
       getCircleMembersUseCase: getCircleMembersUseCase,
       getCategorySubcategoriesUseCase: getCategorySubcategoriesUseCase,
+      getCircleOpenCategoriesUseCase: getCircleOpenCategoriesUseCase,
+      getCircleClosedCategoriesUseCase: getCircleClosedCategoriesUseCase,
       submitCircleJoinUseCase: submitCircleJoinUseCase,
       getMyJoinRequestsUseCase: getMyJoinRequestsUseCase,
       getNotificationsUseCase: getNotificationsUseCase,
+
       markNotificationReadUseCase: markNotificationReadUseCase,
       markAllNotificationsReadUseCase: markAllNotificationsReadUseCase,
       getCachedNotificationsUseCase: getCachedNotificationsUseCase,
