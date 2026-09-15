@@ -5,28 +5,34 @@ import '../../../../core/theme/app_typography.dart';
 class CirclesTabBar extends StatelessWidget {
   final int activeTab;
   final int myCirclesCount;
+  final int myRequestsCount;
   final ValueChanged<int> onTabSelected;
 
   const CirclesTabBar({
     super.key,
     required this.activeTab,
     required this.myCirclesCount,
+    this.myRequestsCount = 0,
     required this.onTabSelected,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColor.darkSurfaceSubtle : AppColor.lightSurfaceMuted;
+    final bg = isDark ? AppColor.darkSurface : const Color(0xFFF1F5F9);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.all(3),
+        height: 44,
+        padding: const EdgeInsets.all(3.5),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? AppColor.darkBorder : const Color(0xFFE2E8F0),
+            width: 0.8,
+          ),
         ),
         child: Row(
           children: [
@@ -41,9 +47,18 @@ class CirclesTabBar extends StatelessWidget {
             const SizedBox(width: 4),
             Expanded(
               child: _TabButton(
-                title: 'Join a Circle',
+                title: 'Join Circle',
                 isSelected: activeTab == 1,
                 onTap: () => onTabSelected(1),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _TabButton(
+                title: 'My Requests',
+                count: myRequestsCount,
+                isSelected: activeTab == 2,
+                onTap: () => onTabSelected(2),
               ),
             ),
           ],
@@ -75,12 +90,21 @@ class _TabButton extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColor.brandGradient : null,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColor.primaryPink.withValues(alpha: 0.28),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: Row(
@@ -93,14 +117,16 @@ class _TabButton extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                   color: textColor,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               if (count != null && count! > 0) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? Colors.white.withValues(alpha: 0.25)
+                        ? Colors.white.withValues(alpha: 0.28)
                         : (isDark ? AppColor.darkBorder : AppColor.lightBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -108,7 +134,7 @@ class _TabButton extends StatelessWidget {
                     '$count',
                     style: TextStyle(
                       fontSize: 10,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: isSelected ? Colors.white : AppColor.primaryPink,
                       height: 1.1,
                     ),

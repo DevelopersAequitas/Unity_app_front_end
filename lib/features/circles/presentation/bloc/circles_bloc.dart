@@ -1,8 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/entities/circle_category_entity.dart';
+import '../../domain/entities/circle_entity.dart';
+import '../../domain/entities/circle_join_request_entity.dart';
 import '../../domain/usecases/get_cached_circles_usecase.dart';
 import '../../domain/usecases/get_circle_categories_usecase.dart';
 import '../../domain/usecases/get_circle_detail_usecase.dart';
 import '../../domain/usecases/get_my_circles_usecase.dart';
+import '../../domain/usecases/get_my_join_requests_usecase.dart';
 import 'circles_event.dart';
 import 'circles_state.dart';
 
@@ -11,12 +15,14 @@ class CirclesBloc extends Bloc<CirclesEvent, CirclesState> {
   final GetCircleCategoriesUseCase getCircleCategoriesUseCase;
   final GetCircleDetailUseCase getCircleDetailUseCase;
   final GetCachedCirclesUseCase getCachedCirclesUseCase;
+  final GetMyJoinRequestsUseCase getMyJoinRequestsUseCase;
 
   CirclesBloc({
     required this.getMyCirclesUseCase,
     required this.getCircleCategoriesUseCase,
     required this.getCircleDetailUseCase,
     required this.getCachedCirclesUseCase,
+    required this.getMyJoinRequestsUseCase,
   }) : super(const CirclesState()) {
     on<CirclesFetchRequested>(_onFetchRequested);
     on<CirclesRefreshRequested>(_onRefreshRequested);
@@ -46,11 +52,13 @@ class CirclesBloc extends Bloc<CirclesEvent, CirclesState> {
       final results = await Future.wait([
         getMyCirclesUseCase(),
         getCircleCategoriesUseCase(),
+        getMyJoinRequestsUseCase(),
       ]);
       emit(state.copyWith(
         status: CirclesStatus.success,
-        myCircles: results[0] as dynamic,
-        categories: results[1] as dynamic,
+        myCircles: results[0] as List<CircleEntity>,
+        categories: results[1] as List<CircleCategoryEntity>,
+        myJoinRequests: results[2] as List<CircleJoinRequestEntity>,
         clearError: true,
       ));
     } catch (e) {
@@ -71,11 +79,13 @@ class CirclesBloc extends Bloc<CirclesEvent, CirclesState> {
       final results = await Future.wait([
         getMyCirclesUseCase(),
         getCircleCategoriesUseCase(),
+        getMyJoinRequestsUseCase(),
       ]);
       emit(state.copyWith(
         status: CirclesStatus.success,
-        myCircles: results[0] as dynamic,
-        categories: results[1] as dynamic,
+        myCircles: results[0] as List<CircleEntity>,
+        categories: results[1] as List<CircleCategoryEntity>,
+        myJoinRequests: results[2] as List<CircleJoinRequestEntity>,
         clearError: true,
       ));
     } catch (e) {

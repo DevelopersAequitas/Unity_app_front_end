@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/widgets/app_avatar.dart';
-import 'package:unity_app/core/widgets/app_gradient_text.dart';
 import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 
 class PeerCard extends StatelessWidget {
@@ -248,25 +247,19 @@ class PeerCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              ShaderMask(
-                                blendMode: BlendMode.srcIn,
-                                shaderCallback: (bounds) =>
-                                    AppColor.brandGradient.createShader(
-                                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                                ),
-                                child: const Icon(
-                                  Icons.sell_outlined,
-                                  size: 8.5,
-                                  color: Colors.white,
-                                ),
+                              const Icon(
+                                Icons.sell_outlined,
+                                size: 8.5,
+                                color: AppColor.primaryBlue,
                               ),
                               const SizedBox(width: 2.5),
                               Flexible(
-                                child: AppGradientText(
+                                child: Text(
                                   peer.category!.trim(),
                                   style: const TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w500,
+                                    color: AppColor.primaryBlue,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -307,26 +300,18 @@ class PeerCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ShaderMask(
-            shaderCallback: (bounds) =>
-                AppColor.brandGradient.createShader(bounds),
-            child: const Icon(
-              Icons.auto_awesome_rounded,
-              size: 13,
-              color: AppColor.white,
-            ),
+          const Icon(
+            Icons.auto_awesome_rounded,
+            size: 13,
+            color: Color(0xFFD946EF),
           ),
           const SizedBox(width: 3),
-          ShaderMask(
-            shaderCallback: (bounds) =>
-                AppColor.brandGradient.createShader(bounds),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                color: AppColor.white,
-              ),
+          Text(
+            '$count',
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFD946EF),
             ),
           ),
         ],
@@ -445,38 +430,31 @@ class PeerCard extends StatelessWidget {
                   onTap: onFollow,
                   borderRadius: BorderRadius.circular(6),
                   child: Center(
-                    child: ShaderMask(
-                      blendMode: BlendMode.srcIn,
-                      shaderCallback: (bounds) =>
-                          AppColor.brandGradient.createShader(
-                        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            peer.isFollowing
-                                ? Icons.check_rounded
-                                : Icons.person_add_alt_1_outlined,
-                            size: 11.5,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 2.5),
-                          Flexible(
-                            child: Text(
-                              peer.isFollowing ? 'FOLLOWING' : 'FOLLOW',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 0.1,
-                                color: Colors.white,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          peer.isFollowing
+                              ? Icons.check_rounded
+                              : Icons.person_add_alt_1_outlined,
+                          size: 11.5,
+                          color: AppColor.primaryBlue,
+                        ),
+                        const SizedBox(width: 2.5),
+                        Flexible(
+                          child: Text(
+                            peer.isFollowing ? 'FOLLOWING' : 'FOLLOW',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.1,
+                              color: AppColor.primaryBlue,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

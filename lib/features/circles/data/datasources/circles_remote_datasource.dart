@@ -24,6 +24,8 @@ abstract class CirclesRemoteDataSource {
     String? customCategoryName,
   });
   Future<List<CircleJoinRequestModel>> getMyJoinRequests();
+  Future<CircleJoinRequestModel> getCircleJoinRequestStatus(String requestId);
+  Future<bool> cancelCircleJoinRequest(String requestId);
 }
 
 class CirclesRemoteDataSourceImpl implements CirclesRemoteDataSource {
@@ -126,22 +128,23 @@ class CirclesRemoteDataSourceImpl implements CirclesRemoteDataSource {
 
   @override
   Future<List<CircleCategoryModel>> getCategorySubcategories(String categoryId) async {
-    final response = await dioClient.dio.get(
-      '${ApiEndpoints.circleCategories}?circle_id=$categoryId',
-    );
+    final response = await dioClient.dio.get('${ApiEndpoints.circleCategories}/$categoryId');
     final data = response.data;
     List<dynamic> list = [];
-    if (data is List) {
-      list = data;
-    } else if (data is Map<String, dynamic>) {
-      if (data['data'] is List) {
-        list = data['data'] as List;
-      } else if (data['data'] is Map<String, dynamic>) {
+    if (data is Map<String, dynamic>) {
+      if (data['data'] is Map<String, dynamic>) {
         final nested = data['data'] as Map<String, dynamic>;
-        list = nested['items'] ?? nested['categories'] ?? nested['level4_categories'] ?? [];
-      } else {
-        list = data['items'] ?? data['categories'] ?? [];
+        list = nested['level4_categories'] ??
+            nested['categories'] ??
+            nested['items'] ??
+            [];
+      } else if (data['data'] is List) {
+        list = data['data'] as List;
+      } else if (data['level4_categories'] is List) {
+        list = data['level4_categories'] as List;
       }
+    } else if (data is List) {
+      list = data;
     }
     return list
         .whereType<Map<String, dynamic>>()
@@ -204,16 +207,20 @@ class CirclesRemoteDataSourceImpl implements CirclesRemoteDataSource {
     dynamic level4CategoryId,
     String? customCategoryName,
   }) async {
+    final effectiveCategoryId = categoryId ?? circleId;
+    final parsedCatId = int.tryParse(effectiveCategoryId.toString()) ?? effectiveCategoryId;
+
     final body = <String, dynamic>{
-      'circle_id': circleId,
+      'category_id': parsedCatId,
+      'reason': reason,
       'reason_for_joining': reason,
     };
+
     if (level4CategoryId != null) {
-      body['category_id'] = level4CategoryId;
-      body['level4_category_id'] = level4CategoryId;
-    } else if (categoryId != null) {
-      body['category_id'] = categoryId;
+      final parsedL4 = int.tryParse(level4CategoryId.toString()) ?? level4CategoryId;
+      body['level4_category_id'] = parsedL4;
     }
+
     if (customCategoryName != null && customCategoryName.trim().isNotEmpty) {
       body['is_other_category'] = true;
       body['other_category_name'] = customCategoryName.trim();
@@ -253,5 +260,22 @@ class CirclesRemoteDataSourceImpl implements CirclesRemoteDataSource {
         .whereType<Map<String, dynamic>>()
         .map((json) => CircleJoinRequestModel.fromJson(json))
         .toList();
+  }
+
+  @override
+  Future<CircleJoinRequestModel> getCircleJoinRequestStatus(String requestId) async {
+    final response = await dioClient.dio.get(ApiEndpoints.circleJoinRequestStatus(requestId));
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      final json = data['data'] is Map<String, dynamic> ? data['data'] : data;
+      return CircleJoinRequestModel.fromJson(json as Map<String, dynamic>);
+    }
+    throw Exception('Failed to check join request status');
+  }
+
+  @override
+  Future<bool> cancelCircleJoinRequest(String requestId) async {
+    final response = await dioClient.dio.delete(ApiEndpoints.cancelCircleJoinRequest(requestId));
+    return response.statusCode == 200 || response.statusCode == 204;
   }
 }

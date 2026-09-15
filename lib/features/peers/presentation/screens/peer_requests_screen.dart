@@ -13,7 +13,8 @@ import '../widgets/peers_skeleton_loader.dart';
 import '../widgets/request_peer_card.dart';
 
 class PeerRequestsScreen extends StatefulWidget {
-  const PeerRequestsScreen({super.key});
+  final bool isTab;
+  const PeerRequestsScreen({super.key, this.isTab = false});
 
   @override
   State<PeerRequestsScreen> createState() => _PeerRequestsScreenState();
@@ -33,34 +34,47 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppCommonBar(
-        title: 'Requests',
-        showBack: true,
-        showSearch: false,
-        showNotifications: false,
-        showProfile: false,
-        onBackTap: () => Navigator.pop(context),
-      ),
-      body: AppGradientBackground(
-        child: ResponsiveContainer(
-          child: BlocConsumer<PeerRequestsBloc, PeerRequestsState>(
-            listenWhen: (prev, curr) =>
-                curr.errorMessage != null &&
-                prev.errorMessage != curr.errorMessage,
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
-            builder: (context, state) {
-              final isReceivedTab = state.activeTab == 0;
-              final list = isReceivedTab
-                  ? state.receivedRequests
-                  : state.sentRequests;
+    return BlocConsumer<PeerRequestsBloc, PeerRequestsState>(
+      listenWhen: (prev, curr) =>
+          curr.errorMessage != null &&
+          prev.errorMessage != curr.errorMessage,
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          AppSnackBar.showError(context, state.errorMessage!);
+        }
+      },
+      builder: (context, state) {
+        final isReceivedTab = state.activeTab == 0;
+        final list = isReceivedTab
+            ? state.receivedRequests
+            : state.sentRequests;
 
-              return RefreshIndicator(
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: widget.isTab
+              ? null
+              : AppCommonBar(
+                  title: 'Requests',
+                  showBack: true,
+                  showSearch: false,
+                  showNotifications: false,
+                  showProfile: false,
+                  onBackTap: () => Navigator.pop(context),
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(48),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildTabBar(
+                        state.activeTab,
+                        receivedCount: state.receivedRequests.length,
+                        sentCount: state.sentRequests.length,
+                      ),
+                    ),
+                  ),
+                ),
+          body: AppGradientBackground(
+            child: ResponsiveContainer(
+              child: RefreshIndicator(
                 color: AppColor.primaryBlue,
                 onRefresh: () async {
                   context
@@ -70,20 +84,21 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-                          _buildTabBar(
+                    if (widget.isTab)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12, bottom: 6),
+                          child: _buildTabBar(
                             state.activeTab,
                             receivedCount: state.receivedRequests.length,
                             sentCount: state.sentRequests.length,
                           ),
-                          const SizedBox(height: 10),
-                        ],
+                        ),
+                      )
+                    else
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 8),
                       ),
-                    ),
                     if (state.status == PeerRequestsStatus.loading &&
                         list.isEmpty)
                       const SliverToBoxAdapter(
@@ -146,11 +161,11 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

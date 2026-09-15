@@ -8,6 +8,7 @@ import '../../features/home/presentation/screens/create_post_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/peers/presentation/screens/connections_screen.dart';
 import '../../features/peers/presentation/screens/matches_screen.dart';
+import '../../features/peers/presentation/screens/my_peers_screen.dart';
 import '../../features/peers/presentation/screens/near_me_screen.dart';
 import '../../features/peers/presentation/screens/peer_requests_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,11 +29,15 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/circles/domain/entities/circle_closed_category_entity.dart';
 import '../../features/circles/domain/entities/circle_entity.dart';
 import '../../features/circles/domain/entities/circle_open_category_entity.dart';
+import '../../features/circles/domain/entities/circle_category_entity.dart';
 import '../../features/circles/presentation/screens/circle_categories_screen.dart';
 import '../../features/circles/presentation/screens/circle_detail_screen.dart';
 import '../../features/circles/presentation/screens/circle_join_screen.dart';
 import '../../features/circles/presentation/screens/circle_members_screen.dart';
+import '../../features/circles/presentation/screens/circle_subcategories_screen.dart';
+import '../../features/circles/presentation/screens/circles_screen.dart';
 import '../../features/circles/presentation/screens/join_request_status_screen.dart';
+import '../../features/membership/presentation/screens/membership_paywall_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -43,6 +48,7 @@ class AppRoutes {
   static const String verifyOtp = '/verify-otp';
   static const String register = '/register';
   static const String home = '/home';
+  static const String peers = '/peers';
   static const String connections = '/connections';
   static const String peerRequests = '/peer-requests';
   static const String nearMe = '/near-me';
@@ -51,15 +57,18 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String createPost = '/create-post';
   static const String notifications = '/notifications';
+  static const String membershipPaywall = '/membership-paywall';
 
   // Aliases & Future Feature Routes (Fallback to Home/Parent screen if UI pending)
   static const String connectionRequests = '/peer-requests';
   static const String pendingRequests = '/peer-requests';
   static const String postDetails = '/post-details';
   static const String p2pMeetings = '/p2p-meetings';
+  static const String circles = '/circles';
   static const String circleDetails = '/circle-details';
   static const String circleMembers = '/circle-members';
   static const String circleCategories = '/circle-categories';
+  static const String circleSubcategories = '/circle-subcategories';
   static const String circleJoin = '/circle-join';
   static const String joinRequestStatus = '/join-request-status';
   static const String circleChat = '/circle-chat';
@@ -70,7 +79,6 @@ class AppRoutes {
   static const String circulars = '/circulars';
   static const String supportTicketDetails = '/support-ticket-details';
 }
-
 
 class AppRouter {
   AppRouter._();
@@ -116,6 +124,11 @@ class AppRouter {
           builder: (_) => const HomeScreen(),
           settings: settings,
         );
+      case AppRoutes.peers:
+        return MaterialPageRoute(
+          builder: (_) => const MyPeersScreen(),
+          settings: settings,
+        );
       case AppRoutes.connections:
         return MaterialPageRoute(
           builder: (_) => const ConnectionsScreen(),
@@ -145,8 +158,10 @@ class AppRouter {
               getMemberPostsUseCase: ctx.read<GetMemberPostsUseCase>(),
               followUserUseCase: ctx.read<FollowUserUseCase>(),
               unfollowUserUseCase: ctx.read<UnfollowUserUseCase>(),
-              sendConnectionRequestUseCase: ctx.read<SendConnectionRequestUseCase>(),
-              cancelSentConnectionRequestUseCase: ctx.read<CancelSentConnectionRequestUseCase>(),
+              sendConnectionRequestUseCase: ctx
+                  .read<SendConnectionRequestUseCase>(),
+              cancelSentConnectionRequestUseCase: ctx
+                  .read<CancelSentConnectionRequestUseCase>(),
               togglePeerBookmarkUseCase: ctx.read<TogglePeerBookmarkUseCase>(),
               removeConnectionUseCase: ctx.read<RemoveConnectionUseCase>(),
               togglePostLikeUseCase: ctx.read<TogglePostLikeUseCase>(),
@@ -171,6 +186,11 @@ class AppRouter {
           builder: (_) => const NotificationsScreen(),
           settings: settings,
         );
+      case AppRoutes.circles:
+        return MaterialPageRoute(
+          builder: (_) => const CirclesScreen(),
+          settings: settings,
+        );
       case AppRoutes.circleDetails:
         final circle = settings.arguments as CircleEntity?;
         return MaterialPageRoute(
@@ -186,9 +206,13 @@ class AppRouter {
       case AppRoutes.circleCategories:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         final circle = args['circle'] as CircleEntity?;
-        final initialTab = (args['initialTab'] is int) ? args['initialTab'] as int : 0;
-        final preloadedOpen = args['openCategories'] as List<CircleOpenCategoryEntity>?;
-        final preloadedClosed = args['closedCategories'] as List<CircleClosedCategoryEntity>?;
+        final initialTab = (args['initialTab'] is int)
+            ? args['initialTab'] as int
+            : 0;
+        final preloadedOpen =
+            args['openCategories'] as List<CircleOpenCategoryEntity>?;
+        final preloadedClosed =
+            args['closedCategories'] as List<CircleClosedCategoryEntity>?;
         if (circle != null) {
           return MaterialPageRoute(
             builder: (_) => CircleCategoriesScreen(
@@ -204,14 +228,26 @@ class AppRouter {
           builder: (_) => const WelcomeScreen(),
           settings: settings,
         );
+      case AppRoutes.circleSubcategories:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) => CircleSubcategoriesScreen(
+            circleId: args['circleId']?.toString() ?? '',
+            circleName: args['circleName']?.toString() ?? 'Circle',
+            isPicker: args['isPicker'] == true,
+          ),
+          settings: settings,
+        );
       case AppRoutes.circleJoin:
-
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         return MaterialPageRoute(
           builder: (_) => CircleJoinScreen(
             circleId: args['circleId']?.toString() ?? '',
             defaultSectorName: args['defaultSectorName']?.toString(),
             defaultSectorId: args['defaultSectorId']?.toString(),
+            preselectedCategory:
+                args['preselectedCategory'] as CircleCategoryEntity?,
+            isOtherCategory: args['isOtherCategory'] == true,
           ),
           settings: settings,
         );
@@ -224,6 +260,11 @@ class AppRouter {
           ),
           settings: settings,
         );
+      case AppRoutes.membershipPaywall:
+        return MaterialPageRoute(
+          builder: (_) => const MembershipPaywallScreen(),
+          settings: settings,
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => const WelcomeScreen(),
@@ -232,4 +273,3 @@ class AppRouter {
     }
   }
 }
-

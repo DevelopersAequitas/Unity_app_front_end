@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/app_date_formatter.dart';
@@ -99,8 +100,28 @@ class ProfileMembershipCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 34,
+            child: OutlinedButton.icon(
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.membershipPaywall),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColor.primaryBlue,
+                side: const BorderSide(color: AppColor.primaryBlue, width: 0.8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: EdgeInsets.zero,
+              ),
+              icon: const Icon(Icons.auto_awesome, size: 14),
+              label: Text(
+                profile.isPro ? 'Manage / Renew Plan' : 'Upgrade to Pro',
+                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
+

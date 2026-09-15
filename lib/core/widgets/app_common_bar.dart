@@ -36,6 +36,7 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<String>? onSearchSubmitted;
   final VoidCallback? onSearchClose;
   final String? searchHint;
+  final PreferredSizeWidget? bottom;
 
   const AppCommonBar({
     super.key,
@@ -56,10 +57,13 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
     this.onSearchSubmitted,
     this.onSearchClose,
     this.searchHint,
+    this.bottom,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(
+        kToolbarHeight + (bottom?.preferredSize.height ?? 0.0),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -144,10 +148,16 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(
-          height: 1,
-          color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+        preferredSize: Size.fromHeight((bottom?.preferredSize.height ?? 0) + 1),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ?bottom,
+            Container(
+              height: 1,
+              color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+            ),
+          ],
         ),
       ),
       // Build entire row ourselves for exact 16px alignment on both sides

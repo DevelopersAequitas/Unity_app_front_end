@@ -14,7 +14,8 @@ import '../widgets/match_action_buttons.dart';
 import '../widgets/match_discovery_card.dart';
 
 class MatchesScreen extends StatefulWidget {
-  const MatchesScreen({super.key});
+  final bool isTab;
+  const MatchesScreen({super.key, this.isTab = false});
 
   @override
   State<MatchesScreen> createState() => _MatchesScreenState();
@@ -43,14 +44,16 @@ class _MatchesScreenState extends State<MatchesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.lightScaffoldBg,
-      appBar: AppCommonBar(
-        title: 'Discovery',
-        showBack: true,
-        showSearch: false,
-        showNotifications: false,
-        showProfile: false,
-        onBackTap: () => Navigator.pop(context),
-      ),
+      appBar: widget.isTab
+          ? null
+          : AppCommonBar(
+              title: 'Discovery',
+              showBack: true,
+              showSearch: false,
+              showNotifications: false,
+              showProfile: false,
+              onBackTap: () => Navigator.pop(context),
+            ),
       body: AppGradientBackground(
         child: ResponsiveContainer(
           child: BlocConsumer<MatchesBloc, MatchesState>(

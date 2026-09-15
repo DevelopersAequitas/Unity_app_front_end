@@ -265,20 +265,26 @@ class _CircleCategoriesScreenState extends State<CircleCategoriesScreen>
         },
         onSearchChanged: (_) => setState(() {}),
         onBackTap: () => Navigator.of(context).pop(),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: CircleCategoriesTabBar(
+              controller: _tabController,
+              openCount: query.isEmpty
+                  ? _flatOpenCategories.length
+                  : openFiltered.length,
+              closedCount: query.isEmpty
+                  ? _closedCategories.length
+                  : closedFiltered.length,
+            ),
+          ),
+        ),
       ),
       body: AppGradientBackground(
         child: ResponsiveContainer(
           child: Column(
             children: [
-              CircleCategoriesTabBar(
-                controller: _tabController,
-                openCount: query.isEmpty
-                    ? _flatOpenCategories.length
-                    : openFiltered.length,
-                closedCount: query.isEmpty
-                    ? _closedCategories.length
-                    : closedFiltered.length,
-              ),
               Expanded(
                 child: _isLoading
                     ? const Center(

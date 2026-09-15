@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/core/router/app_router.dart';
 import '../../../peers/presentation/bloc/peers_bloc.dart';
 import '../../../peers/presentation/bloc/peers_event.dart';
 import '../../../peers/presentation/bloc/peers_state.dart';
-import '../../../peers/presentation/screens/my_peers_screen.dart';
 import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
 import '../../../profile/presentation/bloc/profile_posts_event.dart';
 import '../../../circles/presentation/bloc/circles_bloc.dart';
 import '../../../circles/presentation/bloc/circles_event.dart';
 import '../../../circles/presentation/bloc/circles_state.dart';
-import '../../../circles/presentation/screens/circles_screen.dart';
+import '../../../highlights/presentation/bloc/highlights_bloc.dart';
+import '../../../highlights/presentation/bloc/highlights_event.dart';
+import '../../../highlights/presentation/bloc/highlights_state.dart';
+import '../../../highlights/presentation/screens/highlights_screen.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -41,9 +44,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final PageController _pageController = PageController();
   Timer? _debounceTimer;
   int _currentNavIndex = 0;
   bool _isSearching = false;
+  DateTime? _lastBackPressTime;
 
   static const _tabTitles = ['Home', 'Peers', '', 'Circles', 'Highlights'];
 
@@ -63,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _debounceTimer?.cancel();
     _searchController.dispose();
+    _pageController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -90,6 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<PeersBloc>().add(PeersSearchChanged(query));
       } else if (_currentNavIndex == 3) {
         context.read<CirclesBloc>().add(CirclesSearchChanged(query));
+      } else if (_currentNavIndex == 4) {
+        context.read<HighlightsBloc>().add(HighlightsSearchChanged(query));
       }
     });
   }
@@ -105,6 +113,86 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<PeersBloc>().add(const PeersSearchChanged(''));
     } else if (_currentNavIndex == 3) {
       context.read<CirclesBloc>().add(const CirclesSearchChanged(''));
+    } else if (_currentNavIndex == 4) {
+      context.read<HighlightsBloc>().add(const HighlightsSearchChanged(''));
+    }
+  }
+
+  void _onTabSelected(int index) {
+    // Don't close search on tab switch — clear search query for old tab first
+    if (_isSearching && index != _currentNavIndex) {
+      _debounceTimer?.cancel();
+      _searchController.clear();
+      // Clear old tab's search
+      if (_currentNavIndex == 0) {
+        context.read<HomeBloc>().add(const HomeSearchChanged(''));
+      } else if (_currentNavIndex == 1) {
+        context.read<PeersBloc>().add(const PeersSearchChanged(''));
+      } else if (_currentNavIndex == 4) {
+        context.read<HighlightsBloc>().add(const HighlightsSearchChanged(''));
+      }
+    }
+    if (index == 0 && _currentNavIndex == 0) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      return;
+    }
+    if (index == 1) {
+      final peersBloc = context.read<PeersBloc>();
+      if (peersBloc.state.status == PeersStatus.initial) {
+        peersBloc.add(const PeersFetchRequested());
+      }
+      Navigator.pushNamed(context, AppRoutes.peers);
+      return;
+    }
+    if (index == 2) return;
+    if (index == 3) {
+      final circlesBloc = context.read<CirclesBloc>();
+      if (circlesBloc.state.status == CirclesStatus.initial) {
+        circlesBloc.add(const CirclesFetchRequested());
+      }
+      Navigator.pushNamed(context, AppRoutes.circles);
+      return;
+    }
+    setState(() => _currentNavIndex = index);
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+      );
+    }
+    if (index == 4) {
+      final highlightsBloc = context.read<HighlightsBloc>();
+      if (highlightsBloc.state.status == HighlightsStatus.initial) {
+        highlightsBloc.add(const HighlightsFetchRequested());
+      }
+    }
+  }
+
+  void _handleBackPress() {
+    if (_isSearching) {
+      _onSearchClose();
+      return;
+    }
+
+    if (_currentNavIndex != 0) {
+      _onTabSelected(0);
+      return;
+    }
+
+    final now = DateTime.now();
+    if (_lastBackPressTime == null ||
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      AppSnackBar.showInfo(context, 'Press back again to exit');
+    } else {
+      SystemNavigator.pop();
     }
   }
 
@@ -115,84 +203,55 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppCommonBar(
-        title: _currentTitle,
-        showSearch: true,
-        showNotifications: true,
-        showProfile: true,
-        isSearching: _isSearching,
-        searchController: _searchController,
-        searchHint: _currentNavIndex == 1
-            ? 'Search peers by name, company, city...'
-            : (_currentNavIndex == 3
-                ? 'Search circles by name, category, city...'
-                : 'Search posts by name, content, category...'),
-        onSearchTap: () => setState(() => _isSearching = true),
-        onSearchChanged: _onSearchChanged,
-        onSearchClose: _onSearchClose,
-        onNotificationsTap: () {
-          Navigator.of(context).pushNamed(AppRoutes.notifications);
-        },
-        onProfileTap: () {
-          Navigator.of(context).pushNamed(AppRoutes.profile);
-        },
-      ),
-      bottomNavigationBar: HomeBottomNavBar(
-        selectedIndex: _currentNavIndex,
-        onItemSelected: (index) {
-          // Don't close search on tab switch — clear search query for old tab first
-          if (_isSearching && index != _currentNavIndex) {
-            _debounceTimer?.cancel();
-            _searchController.clear();
-            // Clear old tab's search
-            if (_currentNavIndex == 0) {
-              context.read<HomeBloc>().add(const HomeSearchChanged(''));
-            } else if (_currentNavIndex == 1) {
-              context.read<PeersBloc>().add(const PeersSearchChanged(''));
-            } else if (_currentNavIndex == 3) {
-              context.read<CirclesBloc>().add(const CirclesSearchChanged(''));
-            }
-          }
-          if (index == 0 && _currentNavIndex == 0) {
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                0,
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeOutCubic,
-              );
-            }
-          }
-          setState(() => _currentNavIndex = index);
-          if (index == 1) {
-            final peersBloc = context.read<PeersBloc>();
-            if (peersBloc.state.status == PeersStatus.initial) {
-              peersBloc.add(const PeersFetchRequested());
-            }
-          } else if (index == 3) {
-            final circlesBloc = context.read<CirclesBloc>();
-            if (circlesBloc.state.status == CirclesStatus.initial) {
-              circlesBloc.add(const CirclesFetchRequested());
-            }
-          }
-        },
-        onCreateTap: () => CreateActionSheet.show(context),
-      ),
-      floatingActionButton: _currentNavIndex == 0
-          ? _buildCreatePostFloatingButton(context)
-          : null,
-      body: AppGradientBackground(
-        child: ResponsiveContainer(
-          child: IndexedStack(
-            index: _currentNavIndex,
-            children: [
-              _buildHomeFeedTab(),
-              const MyPeersScreen(),
-              const SizedBox.shrink(),
-              const CirclesScreen(),
-              _buildComingSoonTab('Highlights'),
-            ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBackPress();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppCommonBar(
+          title: _currentTitle,
+          showSearch: true,
+          showNotifications: true,
+          showProfile: true,
+          isSearching: _isSearching,
+          searchController: _searchController,
+          searchHint: _currentNavIndex == 4
+              ? 'Search highlights...'
+              : 'Search posts by name, content, category...',
+          onSearchTap: () => setState(() => _isSearching = true),
+          onSearchChanged: _onSearchChanged,
+          onSearchClose: _onSearchClose,
+          onNotificationsTap: () {
+            Navigator.of(context).pushNamed(AppRoutes.notifications);
+          },
+          onProfileTap: () {
+            Navigator.of(context).pushNamed(AppRoutes.profile);
+          },
+        ),
+        bottomNavigationBar: HomeBottomNavBar(
+          selectedIndex: _currentNavIndex,
+          onItemSelected: _onTabSelected,
+          onCreateTap: () => CreateActionSheet.show(context),
+        ),
+        floatingActionButton: _currentNavIndex == 0
+            ? _buildCreatePostFloatingButton(context)
+            : null,
+        body: AppGradientBackground(
+          child: ResponsiveContainer(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildHomeFeedTab(),
+                const SizedBox.shrink(),
+                const SizedBox.shrink(),
+                const SizedBox.shrink(),
+                const _KeepAliveTab(child: HighlightsScreen()),
+              ],
+            ),
           ),
         ),
       ),
@@ -395,7 +454,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildEmptyFeedState() {
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
@@ -416,19 +474,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildComingSoonTab(String name) {
-    return Center(
-      child: Text(
-        '$name Coming Soon',
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: AppColor.lightTextSecondary,
         ),
       ),
     );
@@ -465,5 +510,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+}
+
+class _KeepAliveTab extends StatefulWidget {
+  final Widget child;
+  const _KeepAliveTab({required this.child});
+
+  @override
+  State<_KeepAliveTab> createState() => _KeepAliveTabState();
+}
+
+class _KeepAliveTabState extends State<_KeepAliveTab> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

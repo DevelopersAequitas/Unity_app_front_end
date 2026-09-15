@@ -1,10 +1,16 @@
 import 'package:lottie/lottie.dart';
+import 'package:unity_app/features/circles/domain/usecases/cancel_circle_join_request_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_category_subcategories_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_closed_categories_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_join_request_status_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_members_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_open_categories_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_my_join_requests_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/submit_circle_join_usecase.dart';
+import '../../features/highlights/data/datasources/highlights_local_datasource.dart';
+import '../../features/highlights/data/repositories_impl/highlights_repository_impl.dart';
+import '../../features/highlights/domain/repositories/highlights_repository.dart';
+import '../../features/highlights/domain/usecases/get_highlight_sections_usecase.dart';
 
 import '../../core/cache/hive_cache_store.dart';
 import '../../core/network/dio_client.dart';
@@ -14,6 +20,13 @@ import '../../core/services/location_sync_service.dart';
 import '../../core/services/network_connectivity_service.dart';
 import '../../core/services/peers_realtime_sync_service.dart';
 import '../../core/services/user_presence_service.dart';
+import '../../features/membership/data/datasources/membership_remote_datasource.dart';
+import '../../features/membership/data/repositories_impl/membership_repository_impl.dart';
+import '../../features/membership/domain/repositories/membership_repository.dart';
+import '../../features/membership/domain/usecases/get_membership_plans_usecase.dart';
+import '../../features/membership/domain/usecases/get_subscription_history_usecase.dart';
+import '../../features/membership/domain/usecases/initiate_plan_checkout_usecase.dart';
+import '../../features/membership/domain/usecases/verify_checkout_status_usecase.dart';
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories_impl/auth_repository_impl.dart';
@@ -101,6 +114,17 @@ class AppDependencies {
   final ProfileRepository profileRepository;
   final NotificationsRepository notificationsRepository;
   final CirclesRepository circlesRepository;
+  final HighlightsRepository highlightsRepository;
+  final MembershipRepository membershipRepository;
+
+  // Highlights UseCases
+  final GetHighlightSectionsUseCase getHighlightSectionsUseCase;
+
+  // Membership UseCases
+  final GetMembershipPlansUseCase getMembershipPlansUseCase;
+  final InitiatePlanCheckoutUseCase initiatePlanCheckoutUseCase;
+  final VerifyCheckoutStatusUseCase verifyCheckoutStatusUseCase;
+  final GetSubscriptionHistoryUseCase getSubscriptionHistoryUseCase;
 
   // Circles UseCases
   final GetMyCirclesUseCase getMyCirclesUseCase;
@@ -113,6 +137,8 @@ class AppDependencies {
   final GetCircleClosedCategoriesUseCase getCircleClosedCategoriesUseCase;
   final SubmitCircleJoinUseCase submitCircleJoinUseCase;
   final GetMyJoinRequestsUseCase getMyJoinRequestsUseCase;
+  final GetCircleJoinRequestStatusUseCase getCircleJoinRequestStatusUseCase;
+  final CancelCircleJoinRequestUseCase cancelCircleJoinRequestUseCase;
 
 
   // Notifications UseCases
@@ -180,6 +206,11 @@ class AppDependencies {
     required this.profileRepository,
     required this.notificationsRepository,
     required this.circlesRepository,
+    required this.membershipRepository,
+    required this.getMembershipPlansUseCase,
+    required this.initiatePlanCheckoutUseCase,
+    required this.verifyCheckoutStatusUseCase,
+    required this.getSubscriptionHistoryUseCase,
     required this.getMyCirclesUseCase,
     required this.getCircleCategoriesUseCase,
     required this.getCircleDetailUseCase,
@@ -190,6 +221,8 @@ class AppDependencies {
     required this.getCircleClosedCategoriesUseCase,
     required this.submitCircleJoinUseCase,
     required this.getMyJoinRequestsUseCase,
+    required this.getCircleJoinRequestStatusUseCase,
+    required this.cancelCircleJoinRequestUseCase,
     required this.getNotificationsUseCase,
 
     required this.markNotificationReadUseCase,
@@ -237,6 +270,8 @@ class AppDependencies {
     required this.getUserPostsUseCase,
     required this.getSavedPostsUseCase,
     required this.uploadProfileMediaUseCase,
+    required this.highlightsRepository,
+    required this.getHighlightSectionsUseCase,
   });
 
   static Future<AppDependencies> initialize() async {
@@ -347,7 +382,37 @@ class AppDependencies {
     final getMyJoinRequestsUseCase = GetMyJoinRequestsUseCase(
       circlesRepository,
     );
+    final getCircleJoinRequestStatusUseCase = GetCircleJoinRequestStatusUseCase(
+      circlesRepository,
+    );
+    final cancelCircleJoinRequestUseCase = CancelCircleJoinRequestUseCase(
+      circlesRepository,
+    );
 
+    // Highlights Data Sources & Repositories
+    final highlightsLocalDataSource = HighlightsLocalDataSourceImpl();
+    final highlightsRepository = HighlightsRepositoryImpl(highlightsLocalDataSource);
+    final getHighlightSectionsUseCase = GetHighlightSectionsUseCase(highlightsRepository);
+
+    // Membership Data Sources & Repositories
+    final membershipRemoteDataSource = MembershipRemoteDataSourceImpl(
+      dioClient: dioClient,
+    );
+    final membershipRepository = MembershipRepositoryImpl(
+      remoteDataSource: membershipRemoteDataSource,
+    );
+    final getMembershipPlansUseCase = GetMembershipPlansUseCase(
+      membershipRepository,
+    );
+    final initiatePlanCheckoutUseCase = InitiatePlanCheckoutUseCase(
+      membershipRepository,
+    );
+    final verifyCheckoutStatusUseCase = VerifyCheckoutStatusUseCase(
+      membershipRepository,
+    );
+    final getSubscriptionHistoryUseCase = GetSubscriptionHistoryUseCase(
+      membershipRepository,
+    );
 
     // Notifications UseCases
     final getNotificationsUseCase = GetNotificationsUseCase(
@@ -522,6 +587,15 @@ class AppDependencies {
       getUserPostsUseCase: getUserPostsUseCase,
       getSavedPostsUseCase: getSavedPostsUseCase,
       uploadProfileMediaUseCase: uploadProfileMediaUseCase,
+      highlightsRepository: highlightsRepository,
+      getHighlightSectionsUseCase: getHighlightSectionsUseCase,
+      membershipRepository: membershipRepository,
+      getMembershipPlansUseCase: getMembershipPlansUseCase,
+      initiatePlanCheckoutUseCase: initiatePlanCheckoutUseCase,
+      verifyCheckoutStatusUseCase: verifyCheckoutStatusUseCase,
+      getSubscriptionHistoryUseCase: getSubscriptionHistoryUseCase,
+      getCircleJoinRequestStatusUseCase: getCircleJoinRequestStatusUseCase,
+      cancelCircleJoinRequestUseCase: cancelCircleJoinRequestUseCase,
     );
   }
 }

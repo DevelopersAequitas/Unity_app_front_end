@@ -15,7 +15,8 @@ import '../widgets/near_me_radius_selector.dart';
 import '../widgets/peers_skeleton_loader.dart';
 
 class NearMeScreen extends StatefulWidget {
-  const NearMeScreen({super.key});
+  final bool isTab;
+  const NearMeScreen({super.key, this.isTab = false});
 
   @override
   State<NearMeScreen> createState() => _NearMeScreenState();
@@ -31,9 +32,11 @@ class _NearMeScreenState extends State<NearMeScreen> {
   @override
   void initState() {
     super.initState();
-    final bloc = context.read<NearMeBloc>();
-    if (bloc.state.status == NearMeStatus.initial) {
-      bloc.add(const NearMeFetchRequested());
+    if (!widget.isTab) {
+      final bloc = context.read<NearMeBloc>();
+      if (bloc.state.status == NearMeStatus.initial) {
+        bloc.add(const NearMeFetchRequested());
+      }
     }
   }
 
@@ -52,16 +55,18 @@ class _NearMeScreenState extends State<NearMeScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColor.darkBackground : AppColor.lightSurface,
-      appBar: AppCommonBar(
-        title: 'Nearby Peers',
-        showBack: true,
-        showSearch: false,
-        showNotifications: false,
-        showProfile: false,
-        onBackTap: () => Navigator.pop(context),
-        actions: [
-          // Eye / Filter Radius button
-          IconButton(
+      appBar: widget.isTab
+          ? null
+          : AppCommonBar(
+              title: 'Nearby Peers',
+              showBack: true,
+              showSearch: false,
+              showNotifications: false,
+              showProfile: false,
+              onBackTap: () => Navigator.pop(context),
+              actions: [
+                // Eye / Filter Radius button
+                IconButton(
             icon: Icon(
               _showRadiusSelector
                   ? Icons.visibility_rounded

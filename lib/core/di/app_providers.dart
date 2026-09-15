@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:unity_app/features/circles/domain/usecases/cancel_circle_join_request_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_join_request_status_usecase.dart';
+import '../../features/membership/domain/usecases/get_membership_plans_usecase.dart';
+import '../../features/membership/domain/usecases/get_subscription_history_usecase.dart';
+import '../../features/membership/domain/usecases/initiate_plan_checkout_usecase.dart';
+import '../../features/membership/domain/usecases/verify_checkout_status_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/register_bloc.dart';
 import '../../features/home/domain/usecases/add_post_comment_usecase.dart';
@@ -46,8 +52,10 @@ import '../../features/circles/domain/usecases/get_circle_open_categories_usecas
 import '../../features/circles/domain/usecases/get_my_circles_usecase.dart';
 import '../../features/circles/domain/usecases/get_my_join_requests_usecase.dart';
 import '../../features/circles/domain/usecases/submit_circle_join_usecase.dart';
-
 import '../../features/circles/presentation/bloc/circles_bloc.dart';
+import '../../features/highlights/domain/usecases/get_highlight_sections_usecase.dart';
+import '../../features/highlights/presentation/bloc/highlights_bloc.dart';
+import '../../features/highlights/presentation/bloc/highlights_event.dart';
 import 'app_dependencies.dart';
 
 class AppProviders extends StatelessWidget {
@@ -154,9 +162,29 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<SubmitCircleJoinUseCase>.value(
           value: dependencies.submitCircleJoinUseCase,
         ),
-
+        RepositoryProvider<GetHighlightSectionsUseCase>.value(
+          value: dependencies.getHighlightSectionsUseCase,
+        ),
         RepositoryProvider<GetMyJoinRequestsUseCase>.value(
           value: dependencies.getMyJoinRequestsUseCase,
+        ),
+        RepositoryProvider<GetCircleJoinRequestStatusUseCase>.value(
+          value: dependencies.getCircleJoinRequestStatusUseCase,
+        ),
+        RepositoryProvider<CancelCircleJoinRequestUseCase>.value(
+          value: dependencies.cancelCircleJoinRequestUseCase,
+        ),
+        RepositoryProvider<GetMembershipPlansUseCase>.value(
+          value: dependencies.getMembershipPlansUseCase,
+        ),
+        RepositoryProvider<InitiatePlanCheckoutUseCase>.value(
+          value: dependencies.initiatePlanCheckoutUseCase,
+        ),
+        RepositoryProvider<VerifyCheckoutStatusUseCase>.value(
+          value: dependencies.verifyCheckoutStatusUseCase,
+        ),
+        RepositoryProvider<GetSubscriptionHistoryUseCase>.value(
+          value: dependencies.getSubscriptionHistoryUseCase,
         ),
       ],
       child: MultiBlocProvider(
@@ -167,6 +195,7 @@ class AppProviders extends StatelessWidget {
               getCircleCategoriesUseCase: dependencies.getCircleCategoriesUseCase,
               getCircleDetailUseCase: dependencies.getCircleDetailUseCase,
               getCachedCirclesUseCase: dependencies.getCachedCirclesUseCase,
+              getMyJoinRequestsUseCase: dependencies.getMyJoinRequestsUseCase,
             ),
           ),
           BlocProvider<NotificationsBloc>(
@@ -274,6 +303,11 @@ class AppProviders extends StatelessWidget {
               togglePostLikeUseCase: dependencies.togglePostLikeUseCase,
               togglePostSaveUseCase: dependencies.togglePostSaveUseCase,
             ),
+          ),
+          BlocProvider<HighlightsBloc>(
+            create: (_) => HighlightsBloc(
+              getHighlightSectionsUseCase: dependencies.getHighlightSectionsUseCase,
+            )..add(const HighlightsFetchRequested()),
           ),
         ],
         child: child,

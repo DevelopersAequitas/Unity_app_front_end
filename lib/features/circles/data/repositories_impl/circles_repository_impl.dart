@@ -92,6 +92,16 @@ class CirclesRepositoryImpl implements CirclesRepository {
   }
 
   @override
+  Future<CircleJoinRequestEntity> getCircleJoinRequestStatus(String requestId) async {
+    return await remoteDataSource.getCircleJoinRequestStatus(requestId);
+  }
+
+  @override
+  Future<bool> cancelCircleJoinRequest(String requestId) async {
+    return await remoteDataSource.cancelCircleJoinRequest(requestId);
+  }
+
+  @override
   Future<List<CircleEntity>> getCachedMyCircles() =>
       localDataSource.getCachedMyCircles();
 

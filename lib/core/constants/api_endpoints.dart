@@ -78,6 +78,18 @@ class ApiEndpoints {
   static String circleClosedCategories(String circleId) => '/circles/$circleId/closed-categories';
   static const String circleJoinRequests = '/circle-join-requests';
   static const String myCircleJoinRequests = '/circle-join-requests/my';
+  static String circleJoinRequestStatus(String id) => '/circle-join-requests/$id/status';
+  static String cancelCircleJoinRequest(String id) => '/circle-join-requests/$id';
+
+  // Membership & Billing (Zoho)
+  static const String zohoPlans = '/zoho/plans';
+  static const String membershipPlans = '/membership-plans';
+  static const String billingCheckout = '/billing/checkout';
+  static String billingCheckoutStatus(String hostedPageId) => '/billing/checkout/$hostedPageId/status';
+  static const String subscriptionsHistory = '/billing/subscriptions-history';
+  static const String billingInvoices = '/billing/invoices';
+  static String billingInvoiceDetail(String invoiceId) => '/billing/invoices/$invoiceId';
+  static String billingInvoicePdf(String invoiceId) => '/billing/invoices/$invoiceId/pdf';
 }
 
 

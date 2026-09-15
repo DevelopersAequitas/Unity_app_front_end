@@ -34,6 +34,18 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     on<PeerBookmarkToggled>(_onBookmark);
     on<PeerFollowToggled>(_onFollowToggle);
     on<PeerStatusUpdated>(_onStatusUpdated);
+    on<PeerFollowStatusSynced>((event, emit) {
+      final updated = state.allPeers.map((p) {
+        return p.id == event.peerId ? p.copyWith(isFollowing: event.isFollowing) : p;
+      }).toList();
+      emit(state.copyWith(allPeers: updated));
+    });
+    on<PeerBookmarkStatusSynced>((event, emit) {
+      final updated = state.allPeers.map((p) {
+        return p.id == event.peerId ? p.copyWith(isBookmarked: event.isBookmarked) : p;
+      }).toList();
+      emit(state.copyWith(allPeers: updated));
+    });
 
     _busSubscription = PeersEventBus.instance.stream.listen((event) {
       if (event is PeerConnectionAcceptedEvent) {
@@ -49,15 +61,9 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
           status: 'none',
         ));
       } else if (event is PeerFollowToggledEvent) {
-        final updated = state.allPeers.map((p) {
-          return p.id == event.peerId ? p.copyWith(isFollowing: event.isFollowing) : p;
-        }).toList();
-        emit(state.copyWith(allPeers: updated));
+        add(PeerFollowStatusSynced(peerId: event.peerId, isFollowing: event.isFollowing));
       } else if (event is PeerBookmarkToggledEvent) {
-        final updated = state.allPeers.map((p) {
-          return p.id == event.peerId ? p.copyWith(isBookmarked: event.isBookmarked) : p;
-        }).toList();
-        emit(state.copyWith(allPeers: updated));
+        add(PeerBookmarkStatusSynced(peerId: event.peerId, isBookmarked: event.isBookmarked));
       } else if (event is PeersSyncNeededEvent) {
         add(const PeersRefreshRequested());
       }

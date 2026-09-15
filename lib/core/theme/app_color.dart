@@ -61,6 +61,7 @@ class AppColor {
   static const Color black = Color(0xFF000000);
 
   static const Color lightTextTertiary = lightTextDisabled;
+  static const Color darkTextTertiary = darkTextDisabled;
   static const Color accentGreen = success;
   static const Color primary = primaryBlue;
   static const Color primaryGradientEnd = primaryPink;

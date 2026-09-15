@@ -13,7 +13,8 @@ import '../widgets/connected_peer_card.dart';
 import '../widgets/peers_skeleton_loader.dart';
 
 class ConnectionsScreen extends StatefulWidget {
-  const ConnectionsScreen({super.key});
+  final bool isTab;
+  const ConnectionsScreen({super.key, this.isTab = false});
 
   @override
   State<ConnectionsScreen> createState() => _ConnectionsScreenState();
@@ -54,14 +55,16 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppCommonBar(
-        title: 'Connections',
-        showBack: true,
-        showSearch: false,
-        showNotifications: false,
-        showProfile: false,
-        onBackTap: () => Navigator.pop(context),
-      ),
+      appBar: widget.isTab
+          ? null
+          : AppCommonBar(
+              title: 'Connections',
+              showBack: true,
+              showSearch: false,
+              showNotifications: false,
+              showProfile: false,
+              onBackTap: () => Navigator.pop(context),
+            ),
       body: AppGradientBackground(
         child: ResponsiveContainer(
           child: BlocConsumer<ConnectionsBloc, ConnectionsState>(

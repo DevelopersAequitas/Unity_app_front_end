@@ -21,6 +21,8 @@ abstract class CirclesRepository {
     String? customCategoryName,
   });
   Future<List<CircleJoinRequestEntity>> getMyJoinRequests();
+  Future<CircleJoinRequestEntity> getCircleJoinRequestStatus(String requestId);
+  Future<bool> cancelCircleJoinRequest(String requestId);
   Future<List<CircleEntity>> getCachedMyCircles();
   Future<List<CircleCategoryEntity>> getCachedCircleCategories();
 }

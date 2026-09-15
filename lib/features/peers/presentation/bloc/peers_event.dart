@@ -78,3 +78,23 @@ class PeerStatusUpdated extends PeersEvent {
   @override
   List<Object?> get props => [peerId, status];
 }
+
+class PeerFollowStatusSynced extends PeersEvent {
+  final String peerId;
+  final bool isFollowing;
+
+  const PeerFollowStatusSynced({required this.peerId, required this.isFollowing});
+
+  @override
+  List<Object?> get props => [peerId, isFollowing];
+}
+
+class PeerBookmarkStatusSynced extends PeersEvent {
+  final String peerId;
+  final bool isBookmarked;
+
+  const PeerBookmarkStatusSynced({required this.peerId, required this.isBookmarked});
+
+  @override
+  List<Object?> get props => [peerId, isBookmarked];
+}
