@@ -24,6 +24,11 @@ class ContactsSyncService {
   }
 
   Future<void> syncAddressBook() async {
+    // In debug mode, do not post contacts/numbers to API. Only sync in production (release mode).
+    if (kDebugMode) {
+      debugPrint('[CONTACT_SYNC] Skipped syncing contacts to API in debug mode.');
+      return;
+    }
     if (_isSyncing) return;
     try {
       final status = await Permission.contacts.status;

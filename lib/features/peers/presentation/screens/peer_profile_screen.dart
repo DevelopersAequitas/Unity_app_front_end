@@ -18,17 +18,41 @@ import '../../../home/presentation/bloc/home_bloc.dart';
 import '../../../home/presentation/bloc/home_event.dart';
 import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
 import '../../../profile/presentation/bloc/profile_posts_event.dart';
+import '../../../profile/presentation/widgets/profile_circles_card.dart';
 import '../../../profile/presentation/widgets/profile_share_card_sheet.dart';
+import '../../../testimonials/domain/usecases/get_given_testimonials_usecase.dart';
+import '../../../testimonials/domain/usecases/get_received_testimonials_usecase.dart';
+import '../../../testimonials/domain/usecases/get_user_testimonials_usecase.dart';
+import '../../../testimonials/presentation/bloc/testimonials_bloc.dart';
+import '../../../testimonials/presentation/bloc/testimonials_event.dart';
+import '../../../testimonials/presentation/widgets/testimonials_card.dart';
 
-class PeerProfileScreen extends StatefulWidget {
+class PeerProfileScreen extends StatelessWidget {
   final String peerId;
   const PeerProfileScreen({super.key, required this.peerId});
 
   @override
-  State<PeerProfileScreen> createState() => _PeerProfileScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (ctx) => TestimonialsBloc(
+        getReceivedTestimonialsUseCase: ctx.read<GetReceivedTestimonialsUseCase>(),
+        getGivenTestimonialsUseCase: ctx.read<GetGivenTestimonialsUseCase>(),
+        getUserTestimonialsUseCase: ctx.read<GetUserTestimonialsUseCase>(),
+      )..add(TestimonialsFetchUserRequested(peerId)),
+      child: _PeerProfileView(peerId: peerId),
+    );
+  }
 }
 
-class _PeerProfileScreenState extends State<PeerProfileScreen> {
+class _PeerProfileView extends StatefulWidget {
+  final String peerId;
+  const _PeerProfileView({required this.peerId});
+
+  @override
+  State<_PeerProfileView> createState() => _PeerProfileViewState();
+}
+
+class _PeerProfileViewState extends State<_PeerProfileView> {
   @override
   void initState() {
     super.initState();
@@ -98,7 +122,12 @@ class _PeerProfileScreenState extends State<PeerProfileScreen> {
 
     return RefreshIndicator(
       color: AppColor.primaryBlue,
-      onRefresh: () async => bloc.add(PeerProfileFetchRequested(widget.peerId)),
+      onRefresh: () async {
+        bloc.add(PeerProfileFetchRequested(widget.peerId));
+        context.read<TestimonialsBloc>().add(
+          TestimonialsFetchUserRequested(widget.peerId),
+        );
+      },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
@@ -119,6 +148,21 @@ class _PeerProfileScreenState extends State<PeerProfileScreen> {
             PeerProfileContactCard(profile: profile),
             const SizedBox(height: 10),
             PeerProfileBusinessCard(profile: profile),
+            if (profile.circleMemberships.isNotEmpty || profile.activeCircle != null) ...[
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ProfileCirclesCard(profile: profile),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TestimonialsCard(
+                peerId: profile.id,
+                peerName: profile.displayName,
+              ),
+            ),
             if (profile.skills.isNotEmpty) ...[
               const SizedBox(height: 10),
               PeerProfileChipsCard(icon: Icons.bar_chart_rounded, iconColor: AppColor.primaryBlue, title: 'Skills', items: profile.skills),

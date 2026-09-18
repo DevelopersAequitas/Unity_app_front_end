@@ -8,6 +8,7 @@ class AppCacheBoxes {
   static const String peersBox = 'peers_data_box';
   static const String notificationsBox = 'peers_notifications_box';
   static const String circlesBox = 'peers_circles_box';
+  static const String leaderboardBox = 'peers_leaderboard_box';
 }
 
 class AppCacheKeys {
@@ -36,4 +37,10 @@ class AppCacheKeys {
   // Circles Caching
   static const String myCircles = 'cached_my_circles';
   static const String circleCategories = 'cached_circle_categories';
+
+  // Leaderboard Caching
+  static const String coinsLeaderboard = 'cached_coins_leaderboard';
+  static const String impactLeaderboard = 'cached_impact_leaderboard';
+  static const String coinGuidelines = 'cached_coin_guidelines';
+  static const String impactGuidelines = 'cached_impact_guidelines';
 }

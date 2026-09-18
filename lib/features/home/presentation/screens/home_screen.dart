@@ -6,6 +6,8 @@ import 'package:unity_app/core/router/app_router.dart';
 import '../../../peers/presentation/bloc/peers_bloc.dart';
 import '../../../peers/presentation/bloc/peers_event.dart';
 import '../../../peers/presentation/bloc/peers_state.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
+import '../../../profile/presentation/bloc/profile_event.dart';
 import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
 import '../../../profile/presentation/bloc/profile_posts_event.dart';
 import '../../../circles/presentation/bloc/circles_bloc.dart';
@@ -272,6 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: AppColor.primaryBlue,
           onRefresh: () async {
             context.read<HomeBloc>().add(const HomeFeedRefreshRequested());
+            context.read<ProfileBloc>().add(const ProfileRefreshRequested());
           },
           child: CustomScrollView(
             controller: _scrollController,

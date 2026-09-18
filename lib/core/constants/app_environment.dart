@@ -169,4 +169,50 @@ class AppEnvironment {
       queryParameters: query,
     ).toString();
   }
+
+  /// 10. Testimonial Deep Link
+  static String getTestimonialDeepLink({
+    String? testimonialId,
+    String? peerId,
+    String? tab,
+  }) {
+    final queryParams = <String, String>{
+      'type': 'testimonial',
+      if (testimonialId != null && testimonialId.isNotEmpty) 'id': testimonialId,
+      if (peerId != null && peerId.isNotEmpty) 'peer_id': peerId,
+      if (tab != null && tab.isNotEmpty) 'tab': tab,
+    };
+    return Uri.https(appDomain, '/share', queryParams).toString();
+  }
+
+  /// 11. Business Deal Deep Link
+  static String getBusinessDealDeepLink({
+    String? dealId,
+    String? peerId,
+    String? tab,
+  }) {
+    final queryParams = <String, String>{
+      'type': 'business_deal',
+      if (dealId != null && dealId.isNotEmpty) 'id': dealId,
+      if (peerId != null && peerId.isNotEmpty) 'peer_id': peerId,
+      if (tab != null && tab.isNotEmpty) 'tab': tab,
+    };
+    return Uri.https(appDomain, '/share', queryParams).toString();
+  }
+
+  /// 12. Referral Deep Link
+  static String getReferralDeepLink({
+    String? referralId,
+    String? peerId,
+    String? tab,
+  }) {
+    final queryParams = <String, String>{
+      'type': 'referral',
+      if (referralId != null && referralId.isNotEmpty) 'id': referralId,
+      if (peerId != null && peerId.isNotEmpty) 'peer_id': peerId,
+      if (tab != null && tab.isNotEmpty) 'tab': tab,
+    };
+    return Uri.https(appDomain, '/share', queryParams).toString();
+  }
 }
+

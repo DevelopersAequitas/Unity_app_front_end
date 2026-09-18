@@ -35,6 +35,8 @@ class ProfileModel extends ProfileEntity {
     super.membershipStatusLabel,
     super.membershipStartsAt,
     super.membershipEndsAt,
+    super.zohoPlanCode,
+    super.zohoSubscriptionId,
     super.activeCircleId,
     super.circleJoinedAt,
     super.circleExpiresAt,
@@ -51,6 +53,7 @@ class ProfileModel extends ProfileEntity {
     super.p2pMeetingsCount = 0,
     super.referralsCount = 0,
     super.businessDealsCount = 0,
+    super.testimonialsCount = 0,
     super.businessType,
     super.experienceYears,
     super.experienceSummary,
@@ -340,8 +343,10 @@ class ProfileModel extends ProfileEntity {
       membershipStatus: root['membership_status']?.toString(),
       membershipStatusLabel:
           root['membership_status_label']?.toString() ?? 'Member',
-      membershipStartsAt: root['membership_starts_at']?.toString(),
-      membershipEndsAt: root['membership_ends_at']?.toString(),
+      membershipStartsAt: (root['membership_starts_at'] ?? root['membership_start_date'])?.toString(),
+      membershipEndsAt: (root['membership_ends_at'] ?? root['membership_expiry'] ?? root['membership_end_date'])?.toString(),
+      zohoPlanCode: root['zoho_plan_code']?.toString() ?? root['plan_code']?.toString(),
+      zohoSubscriptionId: root['zoho_subscription_id']?.toString() ?? root['subscription_id']?.toString(),
       activeCircleId: root['active_circle_id']?.toString(),
       circleJoinedAt: root['circle_joined_at']?.toString(),
       circleExpiresAt: root['circle_expires_at']?.toString(),
@@ -370,6 +375,8 @@ class ProfileModel extends ProfileEntity {
                 '0',
           ) ??
           0,
+      testimonialsCount:
+          int.tryParse(root['testimonials_count']?.toString() ?? '0') ?? 0,
       businessType: root['business_type']?.toString(),
       experienceYears: int.tryParse(root['experience_years']?.toString() ?? ''),
       experienceSummary: root['experience_summary']?.toString(),
@@ -459,7 +466,12 @@ class ProfileModel extends ProfileEntity {
       introducedByUser: introducedEntity,
       isPro: root['is_pro'] == true ||
           root['is_pro'] == 1 ||
-          root['is_pro']?.toString() == '1',
+          root['is_pro']?.toString() == '1' ||
+          (root['zoho_plan_code'] != null && root['zoho_plan_code'].toString().isNotEmpty) ||
+          (root['zoho_subscription_id'] != null && root['zoho_subscription_id'].toString().isNotEmpty) ||
+          (root['membership_status'] != null &&
+              ['only_unity_peer', 'only unity peer', 'global_peer', 'circle_peer', 'multi_circle_peer', 'chartered_peer']
+                  .contains(root['membership_status'].toString().toLowerCase().trim())),
       isFollowing: root['is_following'] == true,
       isBookmark: root['is_bookmark'] == true,
       isConnected: root['is_connected'] == true || root['connection_status'] == 'connected',
@@ -515,6 +527,8 @@ class ProfileModel extends ProfileEntity {
       'membership_status_label': membershipStatusLabel,
       'membership_starts_at': membershipStartsAt,
       'membership_ends_at': membershipEndsAt,
+      'zoho_plan_code': zohoPlanCode,
+      'zoho_subscription_id': zohoSubscriptionId,
       'active_circle_id': activeCircleId,
       'circle_joined_at': circleJoinedAt,
       'circle_expires_at': circleExpiresAt,
@@ -528,6 +542,7 @@ class ProfileModel extends ProfileEntity {
       'p2p_meetings_count': p2pMeetingsCount,
       'referrals_count': referralsCount,
       'business_deals_count': businessDealsCount,
+      'testimonials_count': testimonialsCount,
       'business_type': businessType,
       'experience_years': experienceYears,
       'experience_summary': experienceSummary,

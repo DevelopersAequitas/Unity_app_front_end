@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:unity_app/features/membership/domain/entities/membership_plan_entity.dart';
 
 abstract class MembershipEvent extends Equatable {
   const MembershipEvent();
@@ -9,6 +10,15 @@ abstract class MembershipEvent extends Equatable {
 
 class MembershipPlansFetchRequested extends MembershipEvent {
   const MembershipPlansFetchRequested();
+}
+
+class MembershipPlanSelected extends MembershipEvent {
+  final MembershipPlanEntity plan;
+
+  const MembershipPlanSelected(this.plan);
+
+  @override
+  List<Object?> get props => [plan];
 }
 
 class MembershipCheckoutInitiated extends MembershipEvent {

@@ -7,13 +7,40 @@ class PeerProfileStats extends StatelessWidget {
 
   const PeerProfileStats({super.key, required this.profile});
 
-  String _formatCount(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}k';
+  String _formatCount(int number) {
+    if (number >= 1000000000000000) {
+      final val = (number / 1000000000000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}Q';
     }
-    return count.toString();
+    if (number >= 1000000000000) {
+      final val = (number / 1000000000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}T';
+    }
+    if (number >= 1000000000) {
+      final val = (number / 1000000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}B';
+    }
+    if (number >= 1000000) {
+      final val = (number / 1000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}M';
+    }
+    if (number >= 10000) {
+      final val = (number / 1000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}K';
+    }
+    if (number >= 1000) {
+      final str = number.toString();
+      final chars = str.split('');
+      final buffer = StringBuffer();
+      for (int i = 0; i < chars.length; i++) {
+        if (i > 0 && (chars.length - i) % 3 == 0) {
+          buffer.write(',');
+        }
+        buffer.write(chars[i]);
+      }
+      return buffer.toString();
+    }
+    return number.toString();
   }
 
   @override
@@ -23,7 +50,10 @@ class PeerProfileStats extends StatelessWidget {
       child: Column(
         children: [
           _buildStatsCard([
-            _buildCell(_formatCount(profile.lifeImpactedCount), 'Lives Impacted'),
+            _buildCell(
+              _formatCount(profile.lifeImpactedCount),
+              'Lives Impacted',
+            ),
             _buildDivider(),
             _buildCell(_formatCount(profile.connectionCount), 'Connections'),
             _buildDivider(),
@@ -31,12 +61,10 @@ class PeerProfileStats extends StatelessWidget {
             _buildDivider(),
             _buildCell(_formatCount(profile.followingCount), 'Following'),
             _buildDivider(),
-            _buildCell(_formatCount(profile.postsCount), 'Posts'),
+            _buildCell(_formatCount(profile.coinsBalance), 'Coins'),
           ]),
           const SizedBox(height: 8),
           _buildStatsCard([
-            _buildCell(_formatCount(profile.coinsBalance), 'Coins'),
-            _buildDivider(),
             _buildCell(_formatCount(profile.badgesCount), 'Badges'),
             _buildDivider(),
             _buildCell(_formatCount(profile.p2pMeetingsCount), 'P2P'),
@@ -44,6 +72,8 @@ class PeerProfileStats extends StatelessWidget {
             _buildCell(_formatCount(profile.referralsCount), 'Referrals'),
             _buildDivider(),
             _buildCell(_formatCount(profile.businessDealsCount), 'Deals'),
+            _buildDivider(),
+            _buildCell(_formatCount(profile.testimonialsCount), 'Testimonials'),
           ]),
         ],
       ),
@@ -74,12 +104,16 @@ class PeerProfileStats extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            count,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
-              color: AppColor.lightTextPrimary,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              count,
+              maxLines: 1,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: AppColor.lightTextPrimary,
+              ),
             ),
           ),
           const SizedBox(height: 2),

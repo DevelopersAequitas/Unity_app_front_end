@@ -125,6 +125,11 @@ class DeepLinkService {
         Navigator.pushNamed(context, AppRoutes.home);
         break;
 
+      case 'testimonial':
+      case 'testimonials':
+        Navigator.pushNamed(context, AppRoutes.testimonials);
+        break;
+
       default:
         debugPrint('[DeepLinkService] Unhandled deep link type: $type');
         break;

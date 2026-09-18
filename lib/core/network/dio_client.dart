@@ -26,6 +26,14 @@ class DioClient {
         );
 
     dio.interceptors.addAll([
+      if (kDebugMode)
+        LogInterceptor(
+          requestHeader: false,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: false,
+          error: true,
+        ),
       QueuedInterceptorsWrapper(
         onRequest: (options, handler) async {
           if (cacheStore != null) {
@@ -52,14 +60,6 @@ class DioClient {
           );
         },
       ),
-      if (kDebugMode)
-        LogInterceptor(
-          requestHeader: false,
-          requestBody: true,
-          responseBody: true,
-          responseHeader: false,
-          error: true,
-        ),
     ]);
   }
 
@@ -73,6 +73,15 @@ class DioClient {
     }
     if (error.response?.data is Map<String, dynamic>) {
       final map = error.response!.data as Map<String, dynamic>;
+      if (map['errors'] is Map && (map['errors'] as Map).isNotEmpty) {
+        final errMap = map['errors'] as Map;
+        final firstVal = errMap.values.first;
+        if (firstVal is List && firstVal.isNotEmpty) {
+          return firstVal.first.toString();
+        } else if (firstVal is String) {
+          return firstVal;
+        }
+      }
       return (map['message'] ?? map['error'] ?? 'An error occurred').toString();
     }
     return error.message ?? 'Network connection error';

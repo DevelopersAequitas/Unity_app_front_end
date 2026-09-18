@@ -277,6 +277,28 @@ class ProfileHeaderCard extends StatelessWidget {
                         color: AppColor.primaryBlue,
                       ),
                     ],
+                    if (profile.isPro) ...[
+                      const SizedBox(width: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: AppColor.brandGradient,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'PRO',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                            color: AppColor.white,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 if (workText.isNotEmpty) ...[

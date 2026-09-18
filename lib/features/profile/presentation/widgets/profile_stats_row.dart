@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/profile_entity.dart';
@@ -8,32 +9,88 @@ class ProfileStatsRow extends StatelessWidget {
 
   const ProfileStatsRow({super.key, required this.profile});
 
+  String _formatCount(int number) {
+    if (number >= 1000000000000000) {
+      final val = (number / 1000000000000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}Q';
+    }
+    if (number >= 1000000000000) {
+      final val = (number / 1000000000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}T';
+    }
+    if (number >= 1000000000) {
+      final val = (number / 1000000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}B';
+    }
+    if (number >= 1000000) {
+      final val = (number / 1000000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}M';
+    }
+    if (number >= 10000) {
+      final val = (number / 1000).toStringAsFixed(1);
+      return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}K';
+    }
+    if (number >= 1000) {
+      final str = number.toString();
+      final chars = str.split('');
+      final buffer = StringBuffer();
+      for (int i = 0; i < chars.length; i++) {
+        if (i > 0 && (chars.length - i) % 3 == 0) {
+          buffer.write(',');
+        }
+        buffer.write(chars[i]);
+      }
+      return buffer.toString();
+    }
+    return number.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _buildStatsCard([
-          _buildCell('${profile.lifeImpactedCount}', 'Lives Impacted'),
+          _buildCell(context, _formatCount(profile.lifeImpactedCount), 'Lives Impacted'),
           _buildDivider(),
-          _buildCell('${profile.connectionCount}', 'Connections'),
+          _buildCell(context, _formatCount(profile.connectionCount), 'Connections'),
           _buildDivider(),
-          _buildCell('${profile.followersCount}', 'Followers'),
+          _buildCell(context, _formatCount(profile.followersCount), 'Followers'),
           _buildDivider(),
-          _buildCell('${profile.followingCount}', 'Following'),
+          _buildCell(context, _formatCount(profile.followingCount), 'Following'),
           _buildDivider(),
-          _buildCell('${profile.postsCount}', 'Posts'),
+          _buildCell(context, _formatCount(profile.coinsBalance), 'Coins'),
         ]),
         const SizedBox(height: 8),
         _buildStatsCard([
-          _buildCell('${profile.coinsBalance}', 'Coins'),
+          _buildCell(context, _formatCount(profile.badgesCount), 'Badges'),
           _buildDivider(),
-          _buildCell('${profile.badgesCount}', 'Badges'),
+          _buildCell(
+            context,
+            _formatCount(profile.p2pMeetingsCount),
+            'P2P',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.p2pMeetings),
+          ),
           _buildDivider(),
-          _buildCell('${profile.p2pMeetingsCount}', 'P2P'),
+          _buildCell(
+            context,
+            _formatCount(profile.referralsCount),
+            'Referrals',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.referrals),
+          ),
           _buildDivider(),
-          _buildCell('${profile.referralsCount}', 'Referrals'),
+          _buildCell(
+            context,
+            _formatCount(profile.businessDealsCount),
+            'Deals',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.businessDeals),
+          ),
           _buildDivider(),
-          _buildCell('${profile.businessDealsCount}', 'Deals'),
+          _buildCell(
+            context,
+            _formatCount(profile.testimonialsCount),
+            'Testimonials',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.testimonials),
+          ),
         ]),
       ],
     );
@@ -51,33 +108,53 @@ class ProfileStatsRow extends StatelessWidget {
     );
   }
 
-  Widget _buildCell(String count, String label) {
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
+  Widget _buildCell(
+    BuildContext context,
+    String count,
+    String label, {
+    VoidCallback? onTap,
+  }) {
+    final cellContent = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
             count,
+            maxLines: 1,
             style: AppTypography.titleMedium.copyWith(
               fontWeight: FontWeight.w500,
               fontSize: 13,
               color: AppColor.lightTextPrimary,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: AppTypography.bodySmall.copyWith(
-              color: AppColor.lightTextTertiary,
-              fontSize: 9,
-              height: 1.1,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColor.lightTextTertiary,
+            fontSize: 9,
+            height: 1.1,
           ),
-        ],
-      ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+
+    return Expanded(
+      child: onTap != null
+          ? InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: cellContent,
+              ),
+            )
+          : cellContent,
     );
   }
 

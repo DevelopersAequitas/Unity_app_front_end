@@ -21,23 +21,46 @@ class SubscriptionStatusModel extends SubscriptionStatusEntity {
       }
     }
 
+    final handled = json['handled'] == true ||
+        json['handled'] == 1 ||
+        json['handled'] == 'true';
+    final hasPlanCode = json['zoho_plan_code'] != null &&
+        json['zoho_plan_code'].toString().trim().isNotEmpty;
+    final hasSubscription = json['zoho_subscription_id'] != null &&
+        json['zoho_subscription_id'].toString().trim().isNotEmpty;
+
     final isPro = json['is_pro'] == true ||
         json['is_pro'] == 1 ||
         json['is_pro'] == '1' ||
-        json['is_pro'] == 'true';
+        json['is_pro'] == 'true' ||
+        handled ||
+        hasPlanCode ||
+        hasSubscription ||
+        json['payment_status'] == 'paid' ||
+        json['hostedpage_status'] == 'paid' ||
+        json['hostedpage_status'] == 'success' ||
+        json['hostedpage_status'] == 'completed';
+
+    final hostedPageStatus = json['hostedpage_status']?.toString() ??
+        json['status']?.toString() ??
+        json['payment_status']?.toString() ??
+        (handled || isPro ? 'success' : 'pending');
 
     return SubscriptionStatusModel(
       isPro: isPro,
       membershipStatus: json['membership_status']?.toString() ??
-          (isPro ? 'pro_member' : 'free'),
-      membershipStartsAt: parseDate(json['membership_starts_at'] ?? json['starts_at']),
-      membershipEndsAt: parseDate(json['membership_ends_at'] ?? json['ends_at']),
+          (isPro ? 'Only Unity Peer' : 'free'),
+      membershipStartsAt: parseDate(json['membership_starts_at'] ??
+          json['membership_started_at'] ??
+          json['starts_at']),
+      membershipEndsAt: parseDate(json['membership_ends_at'] ??
+          json['membership_expires_at'] ??
+          json['ends_at']),
       zohoSubscriptionId: json['zoho_subscription_id']?.toString() ??
           json['subscription_id']?.toString(),
-      zohoPlanCode: json['zoho_plan_code']?.toString() ?? json['plan_code']?.toString(),
-      hostedPageStatus: json['hostedpage_status']?.toString() ??
-          json['status']?.toString() ??
-          (isPro ? 'success' : 'pending'),
+      zohoPlanCode: json['zoho_plan_code']?.toString() ??
+          json['plan_code']?.toString(),
+      hostedPageStatus: hostedPageStatus,
     );
   }
 

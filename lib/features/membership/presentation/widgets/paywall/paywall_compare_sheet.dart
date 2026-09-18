@@ -36,14 +36,14 @@ class PaywallCompareSheet extends StatelessWidget {
     final secondaryText = isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary;
 
     final comparisonItems = [
-      {'feature': 'Peer Direct Messaging', '012': true, '013': true, '014': true},
-      {'feature': 'Circle Seat Eligibility', '012': true, '013': true, '014': true},
-      {'feature': 'Networking & Introductions', '012': true, '013': true, '014': true},
+      {'feature': 'Direct Peer Messaging', '012': true, '013': true, '014': true},
+      {'feature': 'Circle Seat Access', '012': true, '013': true, '014': true},
+      {'feature': 'Global Peer Networking', '012': true, '013': true, '014': true},
       {'feature': 'Online & Offline Events', '012': true, '013': true, '014': true},
-      {'feature': 'Extended Multi-Year Savings', '012': false, '013': true, '014': true},
-      {'feature': 'Priority Opportunity Matching', '012': false, '013': true, '014': true},
-      {'feature': 'Featured Peer Profile Badge', '012': false, '013': false, '014': true},
-      {'feature': 'VIP Community Access', '012': false, '013': false, '014': true},
+      {'feature': 'Post & View Requirements', '012': true, '013': true, '014': true},
+      {'feature': 'Multi-Year Cost Savings', '012': false, '013': true, '014': true},
+      {'feature': 'Featured Peer Badge', '012': false, '013': false, '014': true},
+      {'feature': 'VIP Community Recognition', '012': false, '013': false, '014': true},
     ];
 
     return Container(

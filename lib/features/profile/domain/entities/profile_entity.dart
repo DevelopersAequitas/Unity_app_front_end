@@ -34,6 +34,8 @@ class ProfileEntity extends Equatable {
   final String? membershipStatusLabel;
   final String? membershipStartsAt;
   final String? membershipEndsAt;
+  final String? zohoPlanCode;
+  final String? zohoSubscriptionId;
   final String? activeCircleId;
   final String? circleJoinedAt;
   final String? circleExpiresAt;
@@ -50,6 +52,7 @@ class ProfileEntity extends Equatable {
   final int p2pMeetingsCount;
   final int referralsCount;
   final int businessDealsCount;
+  final int testimonialsCount;
   final String? businessType;
   final int? experienceYears;
   final String? experienceSummary;
@@ -146,6 +149,8 @@ class ProfileEntity extends Equatable {
     this.membershipStatusLabel,
     this.membershipStartsAt,
     this.membershipEndsAt,
+    this.zohoPlanCode,
+    this.zohoSubscriptionId,
     this.activeCircleId,
     this.circleJoinedAt,
     this.circleExpiresAt,
@@ -162,6 +167,7 @@ class ProfileEntity extends Equatable {
     this.p2pMeetingsCount = 0,
     this.referralsCount = 0,
     this.businessDealsCount = 0,
+    this.testimonialsCount = 0,
     this.businessType,
     this.experienceYears,
     this.experienceSummary,
@@ -259,6 +265,8 @@ class ProfileEntity extends Equatable {
     String? membershipStatusLabel,
     String? membershipStartsAt,
     String? membershipEndsAt,
+    String? zohoPlanCode,
+    String? zohoSubscriptionId,
     String? activeCircleId,
     String? circleJoinedAt,
     String? circleExpiresAt,
@@ -275,6 +283,7 @@ class ProfileEntity extends Equatable {
     int? p2pMeetingsCount,
     int? referralsCount,
     int? businessDealsCount,
+    int? testimonialsCount,
     String? businessType,
     int? experienceYears,
     String? experienceSummary,
@@ -371,6 +380,8 @@ class ProfileEntity extends Equatable {
       membershipStatusLabel: membershipStatusLabel ?? this.membershipStatusLabel,
       membershipStartsAt: membershipStartsAt ?? this.membershipStartsAt,
       membershipEndsAt: membershipEndsAt ?? this.membershipEndsAt,
+      zohoPlanCode: zohoPlanCode ?? this.zohoPlanCode,
+      zohoSubscriptionId: zohoSubscriptionId ?? this.zohoSubscriptionId,
       activeCircleId: activeCircleId ?? this.activeCircleId,
       circleJoinedAt: circleJoinedAt ?? this.circleJoinedAt,
       circleExpiresAt: circleExpiresAt ?? this.circleExpiresAt,
@@ -387,6 +398,7 @@ class ProfileEntity extends Equatable {
       p2pMeetingsCount: p2pMeetingsCount ?? this.p2pMeetingsCount,
       referralsCount: referralsCount ?? this.referralsCount,
       businessDealsCount: businessDealsCount ?? this.businessDealsCount,
+      testimonialsCount: testimonialsCount ?? this.testimonialsCount,
       businessType: businessType ?? this.businessType,
       experienceYears: experienceYears ?? this.experienceYears,
       experienceSummary: experienceSummary ?? this.experienceSummary,
@@ -482,6 +494,7 @@ class ProfileEntity extends Equatable {
         postsCount,
         coinsBalance,
         lifeImpactedCount,
+        testimonialsCount,
         bio,
         skills,
         interests,

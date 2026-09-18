@@ -34,7 +34,7 @@ class PaywallHeroSection extends StatelessWidget {
                       colors: [Color(0xFF1D4ED8), Color(0xFF8B5CF6), Color(0xFFE11D48)],
                     ).createShader(bounds),
                     child: Text(
-                      'Pro',
+                      'Peers Pro',
                       style: AppTypography.displayLarge.copyWith(
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -48,7 +48,7 @@ class PaywallHeroSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'More connections. More opportunities. A bigger impact.',
+            'Connect, collaborate, and create opportunities with verified peers.',
             style: AppTypography.bodySmall.copyWith(
               color: secondaryText,
               height: 1.35,

@@ -25,15 +25,40 @@ import '../widgets/profile_about_tab.dart';
 import '../widgets/profile_skeleton_loader.dart';
 import '../widgets/profile_share_card_sheet.dart';
 import 'edit_profile_overview_screen.dart';
+import '../../../testimonials/domain/usecases/get_given_testimonials_usecase.dart';
+import '../../../testimonials/domain/usecases/get_received_testimonials_usecase.dart';
+import '../../../testimonials/domain/usecases/get_user_testimonials_usecase.dart';
+import '../../../testimonials/presentation/bloc/testimonials_bloc.dart';
+import '../../../testimonials/presentation/bloc/testimonials_event.dart';
+import '../../../testimonials/presentation/widgets/testimonials_card.dart';
+import '../../../menu/presentation/bloc/menu_bloc.dart';
+import '../../../menu/presentation/bloc/menu_state.dart';
+import '../../../menu/presentation/screens/menu_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (ctx) => TestimonialsBloc(
+        getReceivedTestimonialsUseCase: ctx.read<GetReceivedTestimonialsUseCase>(),
+        getGivenTestimonialsUseCase: ctx.read<GetGivenTestimonialsUseCase>(),
+        getUserTestimonialsUseCase: ctx.read<GetUserTestimonialsUseCase>(),
+      )..add(const TestimonialsFetchReceivedRequested()),
+      child: const _ProfileView(),
+    );
+  }
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileView extends StatefulWidget {
+  const _ProfileView();
+
+  @override
+  State<_ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<_ProfileView> {
   ProfileTab _selectedTab = ProfileTab.posts;
   final ScrollController _scrollController = ScrollController();
 
@@ -55,6 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     context.read<ProfileBloc>().add(const ProfileRefreshRequested());
     context.read<ProfilePostsBloc>().add(const ProfilePostsRefreshRequested());
     context.read<ProfileSavedPostsBloc>().add(const ProfileSavedPostsRefreshRequested());
+    context.read<TestimonialsBloc>().add(const TestimonialsFetchReceivedRequested());
   }
 
   Future<void> _handleEditPhoto({required bool isCover}) async {
@@ -81,6 +107,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _navigateToEditProfile() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const EditProfileOverviewScreen()),
+    );
+  }
+
+  void _navigateToMenu() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MenuScreen()),
     );
   }
 
@@ -119,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 14, left: 4),
+            padding: const EdgeInsets.only(right: 4, left: 4),
             child: GestureDetector(
               onTap: _navigateToEditProfile,
               child: Container(
@@ -139,6 +171,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+          BlocBuilder<MenuBloc, MenuState>(
+            builder: (context, menuState) {
+              final count = menuState.summary.meetingRequestsCount;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    tooltip: 'Menu',
+                    icon: const Icon(Icons.menu_rounded, size: 22, color: AppColor.lightTextPrimary),
+                    onPressed: _navigateToMenu,
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppColor.error,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          count > 9 ? '9+' : count.toString(),
+                          style: AppTypography.labelSmall.copyWith(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: BlocConsumer<ProfileBloc, ProfileState>(
@@ -183,6 +253,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ProfileMembershipCard(profile: profile),
                   const SizedBox(height: 12),
                   ProfileCirclesCard(profile: profile),
+                  const SizedBox(height: 12),
+                  TestimonialsCard(
+                    peerId: profile.id,
+                    peerName: profile.displayName,
+                    isOwnProfile: true,
+                  ),
                   const SizedBox(height: 12),
                   ProfileContentTabs(
                     selectedTab: _selectedTab,

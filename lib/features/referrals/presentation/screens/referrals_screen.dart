@@ -1,0 +1,337 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/router/app_router.dart';
+import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/responsive_container.dart';
+import '../../domain/entities/referral_entity.dart';
+import '../../domain/usecases/get_given_referrals_usecase.dart';
+import '../../domain/usecases/get_received_referrals_usecase.dart';
+import '../../domain/usecases/get_referral_statuses_usecase.dart';
+import '../../domain/usecases/get_referrals_stats_usecase.dart';
+import '../../domain/usecases/update_referral_status_usecase.dart';
+import '../bloc/referrals_bloc.dart';
+import '../bloc/referrals_event.dart';
+import '../bloc/referrals_state.dart';
+import '../widgets/add_referral_fab.dart';
+import '../widgets/referral_empty_state.dart';
+import '../widgets/referral_error_view.dart';
+import '../widgets/referral_list_view.dart';
+import '../widgets/referral_skeleton_list.dart';
+import '../widgets/referral_success_sheet.dart';
+import '../widgets/referrals_bottom_nav.dart';
+
+class ReferralsScreen extends StatelessWidget {
+  final bool isModal;
+
+  const ReferralsScreen({
+    super.key,
+    this.isModal = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (ctx) => ReferralsBloc(
+        getReceivedReferralsUseCase: ctx.read<GetReceivedReferralsUseCase>(),
+        getGivenReferralsUseCase: ctx.read<GetGivenReferralsUseCase>(),
+        getReferralsStatsUseCase: ctx.read<GetReferralsStatsUseCase>(),
+        getReferralStatusesUseCase: ctx.read<GetReferralStatusesUseCase>(),
+        updateReferralStatusUseCase: ctx.read<UpdateReferralStatusUseCase>(),
+      )
+        ..add(const ReferralsFetchReceivedRequested())
+        ..add(const ReferralsFetchStatsRequested())
+        ..add(const ReferralsStatusesFetchRequested()),
+      child: _ReferralsView(isModal: isModal),
+    );
+  }
+}
+
+class _ReferralsView extends StatefulWidget {
+  final bool isModal;
+
+  const _ReferralsView({required this.isModal});
+
+  @override
+  State<_ReferralsView> createState() => _ReferralsViewState();
+}
+
+class _ReferralsViewState extends State<_ReferralsView> {
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final bloc = context.read<ReferralsBloc>();
+      if (bloc.state.activeTab == ReferralTab.received) {
+        bloc.add(const ReferralsLoadMoreReceivedRequested());
+      } else {
+        bloc.add(const ReferralsLoadMoreGivenRequested());
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openAddReferral() async {
+    final result = await Navigator.pushNamed(context, AppRoutes.addReferral);
+    if (!mounted || result == null) return;
+
+    if (result is Map && result['success'] == true) {
+      final createdReferral = result['referral'];
+      final coins = (result['coinsEarned'] as int?) ??
+          (createdReferral is ReferralEntity ? createdReferral.coinsEarned : null);
+      final impact = (result['impactEarned'] as int?) ??
+          (createdReferral is ReferralEntity ? createdReferral.impactEarned : null);
+
+      // Switch to Given tab
+      context.read<ReferralsBloc>().add(
+            const ReferralsTabChanged(ReferralTab.given),
+          );
+
+      if (createdReferral is ReferralEntity) {
+        context.read<ReferralsBloc>().add(
+              ReferralCreatedLocally(createdReferral),
+            );
+      }
+
+      // Sync fresh data from backend
+      context.read<ReferralsBloc>().add(
+            const ReferralsFetchGivenRequested(forceRefresh: true),
+          );
+
+      if (mounted) {
+        ReferralSuccessSheet.show(
+          context,
+          coinsEarned: coins,
+          impactEarned: impact,
+          onDone: () {
+            Navigator.pop(context); // Close celebration bottom sheet
+          },
+          onAddAnother: () {
+            Navigator.pop(context); // Close celebration bottom sheet
+            _openAddReferral(); // Re-open Add Referral
+          },
+        );
+      }
+    }
+  }
+
+  Widget _buildStatusFilterBar(BuildContext context, ReferralsState state) {
+    final filters = [
+      {'label': 'All', 'value': null},
+      {'label': 'Pending', 'value': 'Pending'},
+      {'label': 'Contacted', 'value': 'Contacted'},
+      {'label': 'Got Business', 'value': 'Got Business'},
+      {'label': 'Not Qualified', 'value': 'Not Qualified'},
+    ];
+
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.only(top: 4, bottom: 6),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: filters.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final item = filters[index];
+          final String label = item['label'] as String;
+          final val = item['value'];
+          final isSelected = state.statusFilter == val;
+
+          return ChoiceChip(
+            label: Text(label),
+            selected: isSelected,
+            onSelected: (_) {
+              context.read<ReferralsBloc>().add(
+                    ReferralsStatusFilterChanged(val),
+                  );
+            },
+            labelStyle: TextStyle(
+              fontSize: 11.5,
+              fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+              color: isSelected ? AppColor.white : AppColor.lightTextSecondary,
+            ),
+            selectedColor: AppColor.primaryBlue,
+            backgroundColor: AppColor.lightSurface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: isSelected ? AppColor.primaryBlue : AppColor.lightBorder,
+                width: 0.8,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColor.lightBackground,
+      appBar: AppCommonBar(
+        title: 'Referrals',
+        showBack: Navigator.canPop(context),
+        showSearch: true,
+        isSearching: _isSearching,
+        searchController: _searchController,
+        searchHint: 'Search referral name, peer, city, phone...',
+        onSearchTap: () {
+          setState(() => _isSearching = true);
+        },
+        onSearchChanged: (query) {
+          context.read<ReferralsBloc>().add(ReferralsSearchChanged(query));
+        },
+        onSearchClose: () {
+          _searchController.clear();
+          context.read<ReferralsBloc>().add(const ReferralsSearchChanged(''));
+          setState(() => _isSearching = false);
+        },
+        showNotifications: false,
+        showProfile: true,
+        onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+        onBackTap:
+            Navigator.canPop(context) ? () => Navigator.pop(context) : null,
+      ),
+      body: SafeArea(
+        top: false,
+        child: ResponsiveContainer(
+          child: BlocConsumer<ReferralsBloc, ReferralsState>(
+            listener: (context, state) {
+              if (state.currentStatus == ReferralsStatus.failure &&
+                  state.errorMessage != null) {
+                AppSnackBar.showError(context, state.errorMessage!);
+              }
+            },
+            builder: (context, state) {
+              final activeTab = state.activeTab;
+              final status = state.currentStatus;
+              final list = state.currentList;
+
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      _buildStatusFilterBar(context, state),
+                      Expanded(
+                        child: _buildBodyContent(
+                          context,
+                          activeTab: activeTab,
+                          status: status,
+                          list: list,
+                          searchQuery: state.searchQuery,
+                          statusFilter: state.statusFilter,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: ReferralsBottomNav(
+                      activeTab: activeTab,
+                      onTabChanged: (tab) {
+                        context.read<ReferralsBloc>().add(
+                              ReferralsTabChanged(tab),
+                            );
+                      },
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 34,
+                    child: Center(
+                      child: AddReferralFab(
+                        onTap: _openAddReferral,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBodyContent(
+    BuildContext context, {
+    required ReferralTab activeTab,
+    required ReferralsStatus status,
+    required List<ReferralEntity> list,
+    required String searchQuery,
+    String? statusFilter,
+  }) {
+    if (status == ReferralsStatus.loading && list.isEmpty) {
+      return const ReferralSkeletonList();
+    }
+
+    if (status == ReferralsStatus.failure && list.isEmpty) {
+      return ReferralErrorView(
+        onRetry: () {
+          if (activeTab == ReferralTab.received) {
+            context.read<ReferralsBloc>().add(
+                  const ReferralsFetchReceivedRequested(forceRefresh: true),
+                );
+          } else {
+            context.read<ReferralsBloc>().add(
+                  const ReferralsFetchGivenRequested(forceRefresh: true),
+                );
+          }
+        },
+      );
+    }
+
+    if (list.isEmpty) {
+      return ReferralEmptyState(
+        tab: activeTab,
+        searchQuery: searchQuery,
+        statusFilter: statusFilter,
+        onActionTap: _openAddReferral,
+      );
+    }
+
+    return ReferralListView(
+      referrals: list,
+      tabType: activeTab == ReferralTab.received ? 'received' : 'given',
+      scrollController: _scrollController,
+      isLoadingMore: context.select<ReferralsBloc, bool>(
+        (b) => b.state.isLoadingMore,
+      ),
+      onRefresh: () async {
+        if (activeTab == ReferralTab.received) {
+          context.read<ReferralsBloc>().add(
+                const ReferralsFetchReceivedRequested(forceRefresh: true),
+              );
+        } else {
+          context.read<ReferralsBloc>().add(
+                const ReferralsFetchGivenRequested(forceRefresh: true),
+              );
+        }
+      },
+    );
+  }
+}

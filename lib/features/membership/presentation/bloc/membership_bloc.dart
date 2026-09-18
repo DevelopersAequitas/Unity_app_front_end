@@ -19,6 +19,9 @@ class MembershipBloc extends Bloc<MembershipEvent, MembershipState> {
     required this.getSubscriptionHistoryUseCase,
   }) : super(const MembershipState()) {
     on<MembershipPlansFetchRequested>(_onFetchPlans);
+    on<MembershipPlanSelected>((event, emit) {
+      emit(state.copyWith(selectedPlan: event.plan));
+    });
     on<MembershipCheckoutInitiated>(_onInitiateCheckout);
     on<MembershipCheckoutStatusVerified>(_onVerifyStatus);
     on<MembershipHistoryFetchRequested>(_onFetchHistory);
@@ -70,25 +73,40 @@ class MembershipBloc extends Bloc<MembershipEvent, MembershipState> {
     Emitter<MembershipState> emit,
   ) async {
     emit(state.copyWith(status: MembershipStatus.verifying));
-    try {
-      final status = await verifyCheckoutStatusUseCase(event.hostedPageId);
-      if (status.isSuccessful) {
-        emit(state.copyWith(
-          status: MembershipStatus.verificationSuccess,
-          subscriptionStatus: status,
-        ));
-      } else {
-        emit(state.copyWith(
-          status: MembershipStatus.verificationFailed,
-          subscriptionStatus: status,
-          errorMessage: 'Payment not completed yet.',
-        ));
+
+    const maxAttempts = 8;
+    const delayBetweenAttempts = Duration(milliseconds: 2000);
+
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final status = await verifyCheckoutStatusUseCase(event.hostedPageId);
+        if (status.isSuccessful) {
+          emit(state.copyWith(
+            status: MembershipStatus.verificationSuccess,
+            subscriptionStatus: status,
+          ));
+          return;
+        }
+
+        if (attempt < maxAttempts) {
+          await Future.delayed(delayBetweenAttempts);
+        } else {
+          emit(state.copyWith(
+            status: MembershipStatus.verificationFailed,
+            subscriptionStatus: status,
+            errorMessage: 'Payment is being processed by the gateway and will reflect shortly.',
+          ));
+        }
+      } catch (e) {
+        if (attempt < maxAttempts) {
+          await Future.delayed(delayBetweenAttempts);
+        } else {
+          emit(state.copyWith(
+            status: MembershipStatus.verificationFailed,
+            errorMessage: 'Could not verify payment status with gateway.',
+          ));
+        }
       }
-    } catch (e) {
-      emit(state.copyWith(
-        status: MembershipStatus.verificationFailed,
-        errorMessage: 'Could not verify payment status.',
-      ));
     }
   }
 

@@ -12,6 +12,8 @@ class PeerCard extends StatelessWidget {
   final VoidCallback onBookmark;
   final VoidCallback? onScheduleP2P;
   final VoidCallback? onTap;
+  final EdgeInsetsGeometry? margin;
+  final bool showBorder;
 
   const PeerCard({
     super.key,
@@ -23,23 +25,27 @@ class PeerCard extends StatelessWidget {
     required this.onBookmark,
     this.onScheduleP2P,
     this.onTap,
+    this.margin,
+    this.showBorder = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 2.5),
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 2.5),
       decoration: BoxDecoration(
-        color: AppColor.lightSurface,
+        color: showBorder ? AppColor.lightSurface : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColor.lightBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        border: showBorder ? Border.all(color: AppColor.lightBorder) : null,
+        boxShadow: showBorder
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -115,32 +121,21 @@ class PeerCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                            color: const Color(0xFFFDE68A), width: 0.8),
+                        horizontal: 5,
+                        vertical: 1.5,
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.workspace_premium_outlined,
-                            size: 9.5,
-                            color: Color(0xFF92400E),
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            'PRO',
-                            style: TextStyle(
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF92400E),
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ],
+                      decoration: BoxDecoration(
+                        gradient: AppColor.brandGradient,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'PRO',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w500,
+                          color: AppColor.white,
+                          letterSpacing: 0.4,
+                        ),
                       ),
                     ),
                   ],

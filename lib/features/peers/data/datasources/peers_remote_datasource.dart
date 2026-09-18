@@ -84,9 +84,6 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
     };
     if (search != null && search.trim().isNotEmpty) {
       queryParams['search'] = search.trim();
-      queryParams['q'] = search.trim();
-    } else {
-      queryParams['is_connected'] = false;
     }
     if (sort != null && sort.isNotEmpty) {
       queryParams['sort'] = sort;

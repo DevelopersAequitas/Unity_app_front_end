@@ -235,32 +235,21 @@ class PeerProfileHeader extends StatelessWidget {
                 const SizedBox(width: 5),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 1.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                        color: const Color(0xFFFDE68A), width: 0.8),
+                    horizontal: 6,
+                    vertical: 1.5,
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.workspace_premium_outlined,
-                        size: 10,
-                        color: Color(0xFF92400E),
-                      ),
-                      SizedBox(width: 2.5),
-                      Text(
-                        'PRO',
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF92400E),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
+                  decoration: BoxDecoration(
+                    gradient: AppColor.brandGradient,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'PRO',
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppColor.white,
+                      letterSpacing: 0.4,
+                    ),
                   ),
                 ),
               ],

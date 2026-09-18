@@ -6,9 +6,31 @@ import '../theme/app_color.dart';
 import '../theme/app_typography.dart';
 import 'app_snack_bar.dart';
 
-class ContactPickerSheet extends StatefulWidget {
-  const ContactPickerSheet({super.key});
+class ContactPickerResult {
+  final String name;
+  final String phone;
+  final String? email;
+  final String? company;
+  final String? address;
 
+  const ContactPickerResult({
+    required this.name,
+    required this.phone,
+    this.email,
+    this.company,
+    this.address,
+  });
+}
+
+class ContactPickerSheet extends StatefulWidget {
+  final bool returnResultObject;
+
+  const ContactPickerSheet({
+    super.key,
+    this.returnResultObject = false,
+  });
+
+  /// Opens the contact picker and returns the selected phone number.
   static Future<String?> show(BuildContext context) async {
     final status = await Permission.contacts.request();
     if (!status.isGranted) {
@@ -29,7 +51,32 @@ class ContactPickerSheet extends StatefulWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => const ContactPickerSheet(),
+      builder: (ctx) => const ContactPickerSheet(returnResultObject: false),
+    );
+  }
+
+  /// Opens the contact picker and returns full contact details (name, phone, email, etc.).
+  static Future<ContactPickerResult?> pickContact(BuildContext context) async {
+    final status = await Permission.contacts.request();
+    if (!status.isGranted) {
+      if (context.mounted) {
+        AppSnackBar.showError(
+          context,
+          'Contacts permission is required to pick a contact.',
+        );
+      }
+      return null;
+    }
+
+    // Automatically sync contacts to backend API in background
+    ContactsSyncService.instance.syncAddressBookInBackground();
+
+    if (!context.mounted) return null;
+    return showModalBottomSheet<ContactPickerResult>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => const ContactPickerSheet(returnResultObject: true),
     );
   }
 
@@ -59,7 +106,13 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
   Future<void> _loadContacts() async {
     try {
       final list = await FlutterContacts.getAll(
-        properties: {ContactProperty.phone},
+        properties: {
+          ContactProperty.name,
+          ContactProperty.phone,
+          ContactProperty.email,
+          ContactProperty.address,
+          ContactProperty.organization,
+        },
       );
       final withPhones = list.where((c) => c.phones.isNotEmpty).toList();
       if (mounted) {
@@ -88,7 +141,10 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
           final phoneMatch = c.phones.any(
             (p) => p.number.replaceAll(RegExp(r'\D'), '').contains(query),
           );
-          return nameMatch || phoneMatch;
+          final emailMatch = c.emails.any(
+            (e) => e.address.toLowerCase().contains(query),
+          );
+          return nameMatch || phoneMatch || emailMatch;
         }).toList();
       }
     });
@@ -109,15 +165,15 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
       color: Colors.transparent,
       child: Container(
         height: MediaQuery.of(context).size.height * 0.75,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
             ),
           ],
         ),
@@ -142,14 +198,14 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               TextField(
                 controller: _searchController,
                 style: AppTypography.bodyMedium.copyWith(
                   color: primaryTextColor,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Search contacts...',
+                  hintText: 'Search by name, phone or email...',
                   prefixIcon: const Icon(Icons.search, size: 20),
                   filled: true,
                   fillColor: isDark
@@ -157,11 +213,26 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                       : AppColor.lightBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColor.primaryBlue,
+                      width: 1.5,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+                    horizontal: 16,
+                    vertical: 12,
                   ),
                 ),
               ),
@@ -193,6 +264,24 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                               contact.displayName?.trim().isNotEmpty == true
                               ? contact.displayName!
                               : 'Unknown';
+                          final email = contact.emails.isNotEmpty
+                              ? contact.emails.first.address
+                              : null;
+                          final company = contact.organizations.isNotEmpty
+                              ? contact.organizations.first.name
+                              : null;
+                          final address = contact.addresses.isNotEmpty
+                              ? [
+                                  contact.addresses.first.street,
+                                  contact.addresses.first.city,
+                                  contact.addresses.first.state,
+                                  contact.addresses.first.postalCode,
+                                  contact.addresses.first.country,
+                                ]
+                                  .where((s) => s != null && s.trim().isNotEmpty)
+                                  .join(', ')
+                              : null;
+
                           return Material(
                             color: Colors.transparent,
                             child: ListTile(
@@ -219,15 +308,33 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                                 ),
                               ),
                               subtitle: Text(
-                                phone,
+                                [
+                                  phone,
+                                  if (email != null && email.isNotEmpty) email,
+                                ].join(' · '),
                                 style: AppTypography.bodySmall.copyWith(
                                   color: secondaryTextColor,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               onTap: () {
                                 var clean = phone.replaceAll(RegExp(r'\D'), '');
                                 clean = clean.replaceFirst(RegExp(r'^0+'), '');
-                                Navigator.of(context).pop(clean);
+
+                                if (widget.returnResultObject) {
+                                  Navigator.of(context).pop(
+                                    ContactPickerResult(
+                                      name: name,
+                                      phone: clean.isNotEmpty ? clean : phone,
+                                      email: email,
+                                      company: company,
+                                      address: address,
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.of(context).pop(clean);
+                                }
                               },
                             ),
                           );

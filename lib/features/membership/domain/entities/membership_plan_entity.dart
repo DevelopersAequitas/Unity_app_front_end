@@ -30,21 +30,31 @@ class MembershipPlanEntity extends Equatable {
   String get durationLabel {
     final lower = name.toLowerCase();
     if (lower.contains('month') || planCode == '012') return '/ month';
-    if (lower.contains('2-year') || lower.contains('2 year') || planCode == '014') return '/ 2 years';
+    if (lower.contains('2-year') ||
+        lower.contains('2 year') ||
+        planCode == '014') {
+      return '/ 2 years';
+    }
     if (lower.contains('year') || planCode == '013') return '/ year';
     return '/ year';
   }
 
   String get displayTitle {
     final lower = name.toLowerCase();
-    if (lower.contains('1-month') || lower.contains('1 month') || planCode == '012') {
-      return '1 Month Pro';
+    if (lower.contains('1-month') ||
+        lower.contains('1 month') ||
+        planCode == '012') {
+      return '1 Month';
     }
-    if (lower.contains('1-year') || lower.contains('1 year') || planCode == '013') {
-      return '1 Year Pro';
+    if (lower.contains('1-year') ||
+        lower.contains('1 year') ||
+        planCode == '013') {
+      return '1 Year';
     }
-    if (lower.contains('2-year') || lower.contains('2 year') || planCode == '014') {
-      return '2 Year Pro';
+    if (lower.contains('2-year') ||
+        lower.contains('2 year') ||
+        planCode == '014') {
+      return '2 Year';
     }
     return name.trim();
   }
@@ -111,16 +121,16 @@ class MembershipPlanEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        planCode,
-        name,
-        price,
-        currency,
-        interval,
-        intervalCount,
-        status,
-        description,
-        tier,
-        isPopular,
-        features,
-      ];
+    planCode,
+    name,
+    price,
+    currency,
+    interval,
+    intervalCount,
+    status,
+    description,
+    tier,
+    isPopular,
+    features,
+  ];
 }

@@ -116,7 +116,6 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         category: 'Highlights',
         icon: Icons.verified_rounded,
         accentColor: Color(0xFF7C3AED),
-        isLocked: true,
       ),
       HighlightSectionModel(
         id: 'entrepreneur_certificate',
@@ -124,7 +123,6 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         category: 'Highlights',
         icon: Icons.military_tech_rounded,
         accentColor: Color(0xFFD97706),
-        isLocked: true,
       ),
 
       // Category 2: Core Collaboration Actions

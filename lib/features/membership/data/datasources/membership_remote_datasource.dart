@@ -80,10 +80,41 @@ class MembershipRemoteDataSourceImpl implements MembershipRemoteDataSource {
 
   @override
   Future<SubscriptionStatusModel> verifyCheckoutStatus(String hostedPageId) async {
+    // 1. First trigger the hosted page membership sync endpoint which updates the database
+    try {
+      final syncResponse = await dioClient.dio.get(
+        ApiEndpoints.billingHostedPageSync(hostedPageId),
+      );
+      final syncData = syncResponse.data;
+      if (syncData is Map<String, dynamic>) {
+        final payload = (syncData['data'] is Map<String, dynamic>)
+            ? syncData['data'] as Map<String, dynamic>
+            : syncData;
+        final model = SubscriptionStatusModel.fromJson(payload);
+        if (model.isSuccessful) {
+          return model;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Direct checkout status check without /status suffix
+    try {
+      final response = await dioClient.dio.get(
+        ApiEndpoints.billingCheckoutDetail(hostedPageId),
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final payload = (data['data'] is Map<String, dynamic>)
+            ? data['data'] as Map<String, dynamic>
+            : data;
+        return SubscriptionStatusModel.fromJson(payload);
+      }
+    } catch (_) {}
+
+    // 3. Fallback to status path if needed
     final response = await dioClient.dio.get(
       ApiEndpoints.billingCheckoutStatus(hostedPageId),
     );
-
     final data = response.data;
     if (data is Map<String, dynamic>) {
       if (data['data'] is Map<String, dynamic>) {

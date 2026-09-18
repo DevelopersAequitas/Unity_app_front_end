@@ -22,7 +22,10 @@ class SubscriptionStatusEntity extends Equatable {
   bool get isSuccessful =>
       isPro ||
       hostedPageStatus.toLowerCase() == 'success' ||
-      hostedPageStatus.toLowerCase() == 'completed';
+      hostedPageStatus.toLowerCase() == 'completed' ||
+      hostedPageStatus.toLowerCase() == 'paid' ||
+      hostedPageStatus.toLowerCase() == 'payment_success' ||
+      hostedPageStatus.toLowerCase() == 'active';
 
   @override
   List<Object?> get props => [
