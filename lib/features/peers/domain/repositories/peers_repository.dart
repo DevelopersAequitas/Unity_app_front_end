@@ -1,3 +1,4 @@
+import '../../../highlights/domain/entities/introduced_peer_entity.dart';
 import '../../../home/domain/entities/timeline_item_entity.dart';
 import '../../../profile/domain/entities/profile_entity.dart';
 import '../entities/geo_peer_entity.dart';
@@ -68,4 +69,14 @@ abstract class PeersRepository {
   Future<void> cancelSentConnectionRequest(String requestId);
 
   Future<void> togglePeerBookmark(String memberId, bool isCurrentlyBookmarked);
+
+  Future<List<IntroducedPeerEntity>> getMemberIntroducedPeers(String memberId);
+
+  Future<bool> blockPeer(String peerId, {String reason = 'Spam messages'});
+
+  Future<bool> unblockPeer(String peerId);
+
+  Future<List<Map<String, dynamic>>> getBlockedPeers();
+
+  Future<bool> getPeerBlockStatus(String peerId);
 }

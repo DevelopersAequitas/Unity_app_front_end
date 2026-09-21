@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/theme/app_typography.dart';
+import 'package:unity_app/core/utils/app_date_formatter.dart';
 import 'package:unity_app/core/widgets/app_avatar.dart';
 import 'package:unity_app/core/widgets/app_gradient_text.dart';
 import 'package:unity_app/features/p2p_meetings/domain/entities/p2p_meeting_request_entity.dart';
@@ -58,12 +59,7 @@ class P2pRequestCard extends StatelessWidget {
       category: peerCategory,
     );
 
-    DateTime? parsedDate;
-    if (request.scheduledAt != null && request.scheduledAt!.isNotEmpty) {
-      try {
-        parsedDate = DateTime.tryParse(request.scheduledAt!);
-      } catch (_) {}
-    }
+    DateTime? parsedDate = AppDateFormatter.parseUtc(request.scheduledAt);
 
     Navigator.pushNamed(
       context,
@@ -248,7 +244,7 @@ class P2pRequestCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    request.scheduledAt!,
+                    AppDateFormatter.formatDateTime(request.scheduledAt),
                     style: AppTypography.bodySmall.copyWith(
                       fontSize: 11.5,
                       color: AppColor.lightTextSecondary,

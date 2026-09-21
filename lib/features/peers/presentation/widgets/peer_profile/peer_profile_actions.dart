@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/widgets/app_snack_bar.dart';
 import 'package:unity_app/features/profile/domain/entities/profile_entity.dart';
@@ -48,12 +49,30 @@ class PeerProfileActions extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap: isPending
-                        ? onCancelRequest
-                        : (isConnected
-                            ? () => AppSnackBar.showInfo(
-                                context, 'Saying Hi to ${profile.displayName} 👋')
-                            : onConnect),
+                    onTap: () {
+                      if (profile.isBlocked) {
+                        AppSnackBar.showError(
+                          context,
+                          'You have blocked this peer. Unblock them to interact.',
+                        );
+                        return;
+                      }
+                      if (isPending) {
+                        onCancelRequest();
+                      } else if (isConnected) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.directChat,
+                          arguments: {
+                            'peer_id': profile.id,
+                            'peer_name': profile.displayName,
+                            'peer_avatar': profile.profilePhotoUrl,
+                          },
+                        );
+                      } else {
+                        onConnect();
+                      }
+                    },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Row(
@@ -119,7 +138,16 @@ class PeerProfileActions extends StatelessWidget {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(6.8),
-                      onTap: onFollowToggle,
+                      onTap: () {
+                        if (profile.isBlocked) {
+                          AppSnackBar.showError(
+                            context,
+                            'You have blocked this peer. Unblock them to interact.',
+                          );
+                          return;
+                        }
+                        onFollowToggle();
+                      },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: ShaderMask(
@@ -177,8 +205,19 @@ class PeerProfileActions extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap: () => AppSnackBar.showInfo(
-                        context, 'Schedule P2P with ${profile.displayName}'),
+                    onTap: () {
+                      if (profile.isBlocked) {
+                        AppSnackBar.showError(
+                          context,
+                          'You have blocked this peer. Unblock them to interact.',
+                        );
+                        return;
+                      }
+                      AppSnackBar.showInfo(
+                        context,
+                        'Schedule P2P with ${profile.displayName}',
+                      );
+                    },
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4),
                       child: Row(

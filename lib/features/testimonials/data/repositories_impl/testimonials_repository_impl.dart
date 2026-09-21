@@ -1,6 +1,7 @@
 import '../../domain/entities/create_testimonial_params.dart';
 import '../../domain/entities/paginated_testimonials_entity.dart';
 import '../../domain/entities/testimonial_entity.dart';
+import '../../domain/entities/testimonial_leaderboard_entity.dart';
 import '../../domain/repositories/testimonials_repository.dart';
 import '../datasources/testimonials_remote_datasource.dart';
 
@@ -48,4 +49,11 @@ class TestimonialsRepositoryImpl implements TestimonialsRepository {
   Future<TestimonialEntity> createTestimonial(CreateTestimonialParams params) {
     return remoteDataSource.createTestimonial(params);
   }
+
+  @override
+  Future<List<TestimonialLeaderboardEntity>> getTestimonialsLeaderboard({int limit = 50}) async {
+    final models = await remoteDataSource.getTestimonialsLeaderboard(limit: limit);
+    return models.map((m) => m.toEntity()).toList();
+  }
 }
+

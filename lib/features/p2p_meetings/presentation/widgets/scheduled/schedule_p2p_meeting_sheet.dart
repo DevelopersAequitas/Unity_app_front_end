@@ -8,6 +8,8 @@ import 'package:unity_app/features/p2p_meetings/presentation/bloc/schedule_p2p_m
 import 'package:unity_app/features/p2p_meetings/presentation/bloc/schedule_p2p_meeting_state.dart';
 import 'package:unity_app/features/p2p_meetings/presentation/widgets/common/p2p_meeting_location_field.dart';
 
+import 'package:unity_app/core/utils/app_date_formatter.dart';
+
 class ScheduleP2pMeetingSheet extends StatefulWidget {
   final VoidCallback onSuccess;
 
@@ -72,18 +74,21 @@ class _ScheduleP2pMeetingSheetState extends State<ScheduleP2pMeetingSheet> {
       _selectedDate = d;
       _selectedTime = t;
     });
-    final formatted = _formatDateTime();
-    context.read<ScheduleP2pMeetingBloc>().add(ScheduleP2pMeetingDateTimeChanged(formatted));
+    final localDateTime = DateTime(d.year, d.month, d.day, t.hour, t.minute);
+    final utcFormatted = AppDateFormatter.toUtcString(localDateTime);
+    context.read<ScheduleP2pMeetingBloc>().add(ScheduleP2pMeetingDateTimeChanged(utcFormatted));
   }
 
-  String _formatDateTime() {
+  String _formatDisplayDateTime() {
     if (_selectedDate == null || _selectedTime == null) return '';
-    final y = _selectedDate!.year.toString().padLeft(4, '0');
-    final m = _selectedDate!.month.toString().padLeft(2, '0');
-    final d = _selectedDate!.day.toString().padLeft(2, '0');
-    final hh = _selectedTime!.hour.toString().padLeft(2, '0');
-    final mm = _selectedTime!.minute.toString().padLeft(2, '0');
-    return '$y-$m-$d $hh:$mm:00';
+    final localDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+    return AppDateFormatter.formatDateTime(localDateTime);
   }
 
   void _submit() {
@@ -168,7 +173,7 @@ class _ScheduleP2pMeetingSheetState extends State<ScheduleP2pMeetingSheet> {
                 const SizedBox(height: 12),
                 _PickerTile(
                   icon: Icons.calendar_today_outlined,
-                  label: _selectedDate == null ? 'Select Date & Time' : _formatDateTime(),
+                  label: _selectedDate == null ? 'Select Date & Time' : _formatDisplayDateTime(),
                   isSelected: _selectedDate != null,
                   onTap: _pickDateTime,
                 ),

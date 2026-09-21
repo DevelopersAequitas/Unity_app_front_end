@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/testimonial_entity.dart';
+import '../../domain/entities/testimonial_leaderboard_entity.dart';
 import '../../domain/entities/testimonial_pagination_entity.dart';
 import 'testimonials_event.dart';
 
@@ -9,9 +10,11 @@ class TestimonialsState extends Equatable {
   final TestimonialTab activeTab;
   final TestimonialsStatus receivedStatus;
   final TestimonialsStatus givenStatus;
+  final TestimonialsStatus leaderboardStatus;
   final List<TestimonialEntity> receivedTestimonials;
   final List<TestimonialEntity> givenTestimonials;
   final List<TestimonialEntity> userTestimonials;
+  final List<TestimonialLeaderboardEntity> leaderboardList;
   final TestimonialPaginationEntity receivedPagination;
   final TestimonialPaginationEntity givenPagination;
   final TestimonialPaginationEntity userPagination;
@@ -23,9 +26,11 @@ class TestimonialsState extends Equatable {
     this.activeTab = TestimonialTab.received,
     this.receivedStatus = TestimonialsStatus.initial,
     this.givenStatus = TestimonialsStatus.initial,
+    this.leaderboardStatus = TestimonialsStatus.initial,
     this.receivedTestimonials = const [],
     this.givenTestimonials = const [],
     this.userTestimonials = const [],
+    this.leaderboardList = const [],
     this.receivedPagination = const TestimonialPaginationEntity(),
     this.givenPagination = const TestimonialPaginationEntity(),
     this.userPagination = const TestimonialPaginationEntity(),
@@ -60,13 +65,26 @@ class TestimonialsState extends Equatable {
     return list.where((t) => _matchesQuery(t, searchQuery)).toList();
   }
 
-  TestimonialsStatus get currentStatus =>
-      activeTab == TestimonialTab.received ? receivedStatus : givenStatus;
+  List<TestimonialLeaderboardEntity> get filteredLeaderboardList {
+    if (searchQuery.trim().isEmpty) return leaderboardList;
+    final q = searchQuery.trim().toLowerCase();
+    return leaderboardList.where((b) {
+      return b.displayName.toLowerCase().contains(q) ||
+          (b.companyName ?? '').toLowerCase().contains(q) ||
+          (b.designation ?? '').toLowerCase().contains(q) ||
+          (b.city ?? '').toLowerCase().contains(q) ||
+          (b.category ?? '').toLowerCase().contains(q);
+    }).toList();
+  }
+
+  TestimonialsStatus get currentStatus {
+    if (activeTab == TestimonialTab.leaderboard) return leaderboardStatus;
+    return activeTab == TestimonialTab.received ? receivedStatus : givenStatus;
+  }
 
   TestimonialPaginationEntity get currentPagination =>
       activeTab == TestimonialTab.received ? receivedPagination : givenPagination;
 
-  // Compatibility getter for widgets using state.testimonials
   List<TestimonialEntity> get testimonials =>
       userTestimonials.isNotEmpty ? userTestimonials : currentList;
 
@@ -79,9 +97,11 @@ class TestimonialsState extends Equatable {
     TestimonialTab? activeTab,
     TestimonialsStatus? receivedStatus,
     TestimonialsStatus? givenStatus,
+    TestimonialsStatus? leaderboardStatus,
     List<TestimonialEntity>? receivedTestimonials,
     List<TestimonialEntity>? givenTestimonials,
     List<TestimonialEntity>? userTestimonials,
+    List<TestimonialLeaderboardEntity>? leaderboardList,
     TestimonialPaginationEntity? receivedPagination,
     TestimonialPaginationEntity? givenPagination,
     TestimonialPaginationEntity? userPagination,
@@ -93,9 +113,11 @@ class TestimonialsState extends Equatable {
       activeTab: activeTab ?? this.activeTab,
       receivedStatus: receivedStatus ?? this.receivedStatus,
       givenStatus: givenStatus ?? this.givenStatus,
+      leaderboardStatus: leaderboardStatus ?? this.leaderboardStatus,
       receivedTestimonials: receivedTestimonials ?? this.receivedTestimonials,
       givenTestimonials: givenTestimonials ?? this.givenTestimonials,
       userTestimonials: userTestimonials ?? this.userTestimonials,
+      leaderboardList: leaderboardList ?? this.leaderboardList,
       receivedPagination: receivedPagination ?? this.receivedPagination,
       givenPagination: givenPagination ?? this.givenPagination,
       userPagination: userPagination ?? this.userPagination,
@@ -110,9 +132,11 @@ class TestimonialsState extends Equatable {
         activeTab,
         receivedStatus,
         givenStatus,
+        leaderboardStatus,
         receivedTestimonials,
         givenTestimonials,
         userTestimonials,
+        leaderboardList,
         receivedPagination,
         givenPagination,
         userPagination,

@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/notification_entity.dart';
 
 class NotificationModel {
@@ -80,14 +81,7 @@ class NotificationModel {
       return false;
     }
 
-    DateTime? parseDate(dynamic value) {
-      if (value == null) return null;
-      if (value is DateTime) return value;
-      if (value is String && value.isNotEmpty) {
-        return DateTime.tryParse(value)?.toLocal();
-      }
-      return null;
-    }
+    DateTime? parseDate(dynamic value) => AppDateFormatter.parseUtc(value);
 
     final rawTitle = (json['title'] ?? meta?['title'] ?? '').toString();
     final rawBody = (json['body'] ??

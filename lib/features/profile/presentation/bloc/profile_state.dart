@@ -22,8 +22,6 @@ class ProfileState extends Equatable {
       interestsPercentage: 0,
       socialPercentage: 0,
       mediaPercentage: 0,
-      circlePercentage: 0,
-      additionalPercentage: 0,
     ),
     this.errorMessage,
     this.isRefreshing = false,

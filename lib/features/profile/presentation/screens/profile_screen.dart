@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/image_source_picker_sheet.dart';
+import '../../../../core/widgets/app_gradient_background.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
@@ -18,6 +20,7 @@ import '../widgets/profile_header_card.dart';
 import '../widgets/profile_stats_row.dart';
 import '../widgets/profile_membership_card.dart';
 import '../widgets/profile_circles_card.dart';
+import '../widgets/profile_introduced_peers_card.dart';
 import '../widgets/profile_content_tabs.dart';
 import '../widgets/profile_posts_tab.dart';
 import '../widgets/profile_saved_posts_tab.dart';
@@ -25,6 +28,8 @@ import '../widgets/profile_about_tab.dart';
 import '../widgets/profile_skeleton_loader.dart';
 import '../widgets/profile_share_card_sheet.dart';
 import 'edit_profile_overview_screen.dart';
+import '../../../highlights/presentation/bloc/top_builders/top_builders_bloc.dart';
+import '../../../highlights/presentation/bloc/top_builders/top_builders_event.dart';
 import '../../../testimonials/domain/usecases/get_given_testimonials_usecase.dart';
 import '../../../testimonials/domain/usecases/get_received_testimonials_usecase.dart';
 import '../../../testimonials/domain/usecases/get_user_testimonials_usecase.dart';
@@ -68,6 +73,7 @@ class _ProfileViewState extends State<_ProfileView> {
     context.read<ProfileBloc>().add(const ProfileFetchRequested());
     context.read<ProfilePostsBloc>().add(const ProfilePostsFetchRequested());
     context.read<ProfileSavedPostsBloc>().add(const ProfileSavedPostsFetchRequested());
+    context.read<TopBuildersBloc>().add(const FetchTopBuildersDataEvent());
   }
 
   @override
@@ -80,6 +86,7 @@ class _ProfileViewState extends State<_ProfileView> {
     context.read<ProfileBloc>().add(const ProfileRefreshRequested());
     context.read<ProfilePostsBloc>().add(const ProfilePostsRefreshRequested());
     context.read<ProfileSavedPostsBloc>().add(const ProfileSavedPostsRefreshRequested());
+    context.read<TopBuildersBloc>().add(const FetchTopBuildersDataEvent(isRefresh: true));
     context.read<TestimonialsBloc>().add(const TestimonialsFetchReceivedRequested());
   }
 
@@ -118,21 +125,33 @@ class _ProfileViewState extends State<_ProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColor.darkBackground : AppColor.lightBackground;
+    final textPrimary = isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
+
     return Scaffold(
-      backgroundColor: AppColor.lightBackground,
+      backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
           'My Profile',
           style: AppTypography.titleMedium.copyWith(
             fontWeight: FontWeight.w500,
-            color: AppColor.lightTextPrimary,
+            color: textPrimary,
           ),
         ),
         centerTitle: false,
-        backgroundColor: AppColor.lightSurface,
+        backgroundColor: bgColor,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColor.lightTextPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: textPrimary),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         actions: [
@@ -149,27 +168,6 @@ class _ProfileViewState extends State<_ProfileView> {
                 ),
               );
             },
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 4, left: 4),
-            child: GestureDetector(
-              onTap: _navigateToEditProfile,
-              child: Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  gradient: AppColor.brandGradient,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColor.primaryPink.withValues(alpha: 0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.edit_outlined, size: 16, color: Colors.white),
-              ),
-            ),
           ),
           BlocBuilder<MenuBloc, MenuState>(
             builder: (context, menuState) {
@@ -211,73 +209,78 @@ class _ProfileViewState extends State<_ProfileView> {
           const SizedBox(width: 8),
         ],
       ),
-      body: BlocConsumer<ProfileBloc, ProfileState>(
-        listener: (context, state) {
-          if (state.status == ProfileStatus.failure && state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state.status == ProfileStatus.loading && state.profile == null) {
-            return const ProfileSkeletonLoader();
-          }
+      body: AppGradientBackground(
+        child: BlocConsumer<ProfileBloc, ProfileState>(
+          listener: (context, state) {
+            if (state.status == ProfileStatus.failure && state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.errorMessage!)),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state.status == ProfileStatus.loading && state.profile == null) {
+              return const ProfileSkeletonLoader();
+            }
 
-          if (state.status == ProfileStatus.failure && state.profile == null) {
-            return _buildErrorState(state.errorMessage);
-          }
+            if (state.status == ProfileStatus.failure && state.profile == null) {
+              return _buildErrorState(state.errorMessage);
+            }
 
-          final profile = state.profile;
-          if (profile == null) return const SizedBox.shrink();
+            final profile = state.profile;
+            if (profile == null) return const SizedBox.shrink();
 
-          return RefreshIndicator(
-            onRefresh: _handleRefresh,
-            color: AppColor.primaryBlue,
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildUploadProgressBanner(),
-                  ProfileHeaderCard(
-                    profile: profile,
-                    onEditCover: () => _handleEditPhoto(isCover: true),
-                    onEditPhoto: () => _handleEditPhoto(isCover: false),
-                  ),
-                  const SizedBox(height: 12),
-                  ProfileStatsRow(profile: profile),
-                  const SizedBox(height: 12),
-                  ProfileMembershipCard(profile: profile),
-                  const SizedBox(height: 12),
-                  ProfileCirclesCard(profile: profile),
-                  const SizedBox(height: 12),
-                  TestimonialsCard(
-                    peerId: profile.id,
-                    peerName: profile.displayName,
-                    isOwnProfile: true,
-                  ),
-                  const SizedBox(height: 12),
-                  ProfileContentTabs(
-                    selectedTab: _selectedTab,
-                    onTabSelected: (tab) => setState(() => _selectedTab = tab),
-                    postCount: profile.postsCount,
-                  ),
-                  const SizedBox(height: 12),
-                  if (_selectedTab == ProfileTab.posts)
-                    ProfilePostsTab(scrollController: _scrollController)
-                  else if (_selectedTab == ProfileTab.saved)
-                    ProfileSavedPostsTab(scrollController: _scrollController)
-                  else
-                    ProfileAboutTab(profile: profile),
-                  const SizedBox(height: 24),
-                ],
+            return RefreshIndicator(
+              onRefresh: _handleRefresh,
+              color: AppColor.primaryBlue,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildUploadProgressBanner(),
+                    ProfileHeaderCard(
+                      profile: profile,
+                      onEditCover: () => _handleEditPhoto(isCover: true),
+                      onEditPhoto: () => _handleEditPhoto(isCover: false),
+                      onEditProfile: _navigateToEditProfile,
+                    ),
+                    const SizedBox(height: 12),
+                    ProfileStatsRow(profile: profile),
+                    const SizedBox(height: 12),
+                    ProfileMembershipCard(profile: profile),
+                    const SizedBox(height: 12),
+                    ProfileCirclesCard(profile: profile),
+                    const SizedBox(height: 12),
+                    const ProfileIntroducedPeersCard(),
+                    const SizedBox(height: 12),
+                    TestimonialsCard(
+                      peerId: profile.id,
+                      peerName: profile.displayName,
+                      isOwnProfile: true,
+                    ),
+                    const SizedBox(height: 12),
+                    ProfileContentTabs(
+                      selectedTab: _selectedTab,
+                      onTabSelected: (tab) => setState(() => _selectedTab = tab),
+                      postCount: profile.postsCount,
+                    ),
+                    const SizedBox(height: 12),
+                    if (_selectedTab == ProfileTab.posts)
+                      ProfilePostsTab(scrollController: _scrollController)
+                    else if (_selectedTab == ProfileTab.saved)
+                      ProfileSavedPostsTab(scrollController: _scrollController)
+                    else
+                      ProfileAboutTab(profile: profile),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

@@ -9,10 +9,7 @@ import 'core/widgets/connectivity_overlay.dart';
 class MyApp extends StatelessWidget {
   final AppDependencies dependencies;
 
-  const MyApp({
-    super.key,
-    required this.dependencies,
-  });
+  const MyApp({super.key, required this.dependencies});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +24,8 @@ class MyApp extends StatelessWidget {
         themeMode: ThemeMode.light,
         initialRoute: AppRoutes.splash,
         onGenerateRoute: AppRouter.onGenerateRoute,
-        builder: (context, child) => ConnectivityOverlay(
-          child: child ?? const SizedBox.shrink(),
-        ),
+        builder: (context, child) =>
+            ConnectivityOverlay(child: child ?? const SizedBox.shrink()),
       ),
     );
   }

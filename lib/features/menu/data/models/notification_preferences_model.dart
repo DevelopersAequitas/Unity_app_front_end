@@ -40,8 +40,16 @@ class NotificationPreferencesModel extends NotificationPreferencesEntity {
       businessEnabled: parseBool(json['business_enabled']),
       eventEnabled: parseBool(json['event_enabled']),
       campaignEnabled: parseBool(json['campaign_enabled']),
-      quietHoursStart: json['quiet_hours_start']?.toString(),
-      quietHoursEnd: json['quiet_hours_end']?.toString(),
+      quietHoursStart: (json['quiet_hours_start'] != null &&
+              json['quiet_hours_start'].toString().isNotEmpty &&
+              json['quiet_hours_start'].toString() != 'null')
+          ? json['quiet_hours_start'].toString()
+          : null,
+      quietHoursEnd: (json['quiet_hours_end'] != null &&
+              json['quiet_hours_end'].toString().isNotEmpty &&
+              json['quiet_hours_end'].toString() != 'null')
+          ? json['quiet_hours_end'].toString()
+          : null,
       config: json['config'],
       autoUpdateApp: parseBool(json['auto_update_app']),
       allowAnyNetwork: parseBool(json['allow_any_network'], fallback: false),

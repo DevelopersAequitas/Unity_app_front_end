@@ -1,15 +1,20 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:unity_app/features/profile/domain/entities/profile_entity.dart';
 import '../../../../core/events/peers_event_bus.dart';
 import '../../../home/domain/usecases/toggle_post_like_usecase.dart';
 import '../../../home/domain/usecases/toggle_post_save_usecase.dart';
+import '../../domain/usecases/block_peer_usecase.dart';
 import '../../domain/usecases/cancel_sent_connection_request_usecase.dart';
 import '../../domain/usecases/follow_user_usecase.dart';
+import '../../domain/usecases/get_member_introduced_peers_usecase.dart';
 import '../../domain/usecases/get_member_posts_usecase.dart';
 import '../../domain/usecases/get_member_profile_usecase.dart';
+import '../../domain/usecases/get_peer_block_status_usecase.dart';
 import '../../domain/usecases/remove_connection_usecase.dart';
 import '../../domain/usecases/send_connection_request_usecase.dart';
 import '../../domain/usecases/toggle_peer_bookmark_usecase.dart';
+import '../../domain/usecases/unblock_peer_usecase.dart';
 import '../../domain/usecases/unfollow_user_usecase.dart';
 import 'peer_profile_event.dart';
 import 'peer_profile_state.dart';
@@ -23,13 +28,18 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
   final RemoveConnectionUseCase removeConnectionUseCase;
   final CancelSentConnectionRequestUseCase cancelSentConnectionRequestUseCase;
   final TogglePeerBookmarkUseCase togglePeerBookmarkUseCase;
+  final GetMemberIntroducedPeersUseCase? getMemberIntroducedPeersUseCase;
   final TogglePostLikeUseCase? togglePostLikeUseCase;
   final TogglePostSaveUseCase? togglePostSaveUseCase;
+  final BlockPeerUseCase? blockPeerUseCase;
+  final UnblockPeerUseCase? unblockPeerUseCase;
+  final GetPeerBlockStatusUseCase? getPeerBlockStatusUseCase;
   StreamSubscription<PeerBusEvent>? _busSubscription;
 
   PeerProfileBloc({
     required this.getMemberProfileUseCase,
     required this.getMemberPostsUseCase,
+    this.getMemberIntroducedPeersUseCase,
     required this.followUserUseCase,
     required this.unfollowUserUseCase,
     required this.sendConnectionRequestUseCase,
@@ -38,6 +48,9 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     required this.togglePeerBookmarkUseCase,
     this.togglePostLikeUseCase,
     this.togglePostSaveUseCase,
+    this.blockPeerUseCase,
+    this.unblockPeerUseCase,
+    this.getPeerBlockStatusUseCase,
   }) : super(const PeerProfileState()) {
     on<PeerProfileFetchRequested>(_onFetch);
     on<PeerProfileFollowToggled>(_onFollowToggle);
@@ -50,6 +63,8 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     on<PeerProfilePostSaveToggled>(_onPostSaveToggled);
     on<PeerProfilePostCommentCountIncremented>(_onPostCommentCountIncremented);
     on<PeerProfileEventBusUpdateReceived>(_onEventBusUpdateReceived);
+    on<PeerProfileBlockRequested>(_onBlockPeer);
+    on<PeerProfileUnblockRequested>(_onUnblockPeer);
 
     _busSubscription = PeersEventBus.instance.stream.listen((event) {
       if (event is PeerConnectionAcceptedEvent) {
@@ -87,6 +102,14 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
           peerId: event.peerId,
           isBookmarked: event.isBookmarked,
         ));
+      } else if (event is PeerBlockedEvent) {
+        if (state.profile?.id == event.peerId) {
+          add(const PeerProfileBlockRequested());
+        }
+      } else if (event is PeerUnblockedEvent) {
+        if (state.profile?.id == event.peerId) {
+          add(PeerProfileFetchRequested(event.peerId));
+        }
       }
     });
   }
@@ -153,33 +176,175 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
   ) async {
     emit(state.copyWith(status: PeerProfileStatus.loading));
     try {
+      bool isBlocked = false;
+      if (getPeerBlockStatusUseCase != null) {
+        try {
+          isBlocked = await getPeerBlockStatusUseCase!(event.peerId);
+        } catch (_) {}
+      }
+
+      if (isBlocked) {
+        ProfileEntity? profile;
+        try {
+          profile = await getMemberProfileUseCase(event.peerId);
+        } catch (_) {}
+
+        emit(state.copyWith(
+          status: PeerProfileStatus.success,
+          profile: (profile ?? state.profile)?.copyWith(isBlocked: true),
+          isBlocked: true,
+          errorMessage: null,
+          isPostsLoading: false,
+          isIntroducedPeersLoading: false,
+        ));
+        return;
+      }
+
       final profile = await getMemberProfileUseCase(event.peerId);
+      final effectiveBlocked = profile.isBlocked;
       emit(state.copyWith(
         status: PeerProfileStatus.success,
         profile: profile,
-        isPostsLoading: true,
+        isBlocked: effectiveBlocked,
+        errorMessage: null,
+        isPostsLoading: !effectiveBlocked,
+        isIntroducedPeersLoading: !effectiveBlocked,
       ));
 
-      try {
-        final targetId = (profile.userId != null && profile.userId!.isNotEmpty)
-            ? profile.userId!
-            : (profile.id.isNotEmpty ? profile.id : event.peerId);
+      if (!effectiveBlocked) {
+        if (getMemberIntroducedPeersUseCase != null) {
+          try {
+            final targetMemberId =
+                (profile.id.isNotEmpty) ? profile.id : event.peerId;
+            final introduced =
+                await getMemberIntroducedPeersUseCase!(targetMemberId);
+            emit(state.copyWith(
+              introducedPeers: introduced,
+              isIntroducedPeersLoading: false,
+            ));
+          } catch (_) {
+            emit(state.copyWith(isIntroducedPeersLoading: false));
+          }
+        } else {
+          emit(state.copyWith(isIntroducedPeersLoading: false));
+        }
 
-        final posts = await getMemberPostsUseCase(targetId);
+        try {
+          final targetId = (profile.userId != null && profile.userId!.isNotEmpty)
+              ? profile.userId!
+              : (profile.id.isNotEmpty ? profile.id : event.peerId);
 
+          final posts = await getMemberPostsUseCase(targetId);
+
+          emit(state.copyWith(
+            posts: posts,
+            postsPage: 1,
+            hasMorePosts: posts.length >= 10,
+            isPostsLoading: false,
+          ));
+        } catch (_) {
+          emit(state.copyWith(isPostsLoading: false));
+        }
+      } else {
         emit(state.copyWith(
-          posts: posts,
-          postsPage: 1,
-          hasMorePosts: posts.length >= 10,
           isPostsLoading: false,
+          isIntroducedPeersLoading: false,
         ));
-      } catch (_) {
-        emit(state.copyWith(isPostsLoading: false));
       }
     } catch (e) {
+      bool isBlocked = false;
+      if (getPeerBlockStatusUseCase != null) {
+        try {
+          isBlocked = await getPeerBlockStatusUseCase!(event.peerId);
+        } catch (_) {}
+      }
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('block') || errStr.contains('403') || isBlocked) {
+        emit(state.copyWith(
+          status: PeerProfileStatus.success,
+          isBlocked: true,
+          errorMessage: null,
+        ));
+      } else {
+        emit(state.copyWith(
+          status: PeerProfileStatus.failure,
+          errorMessage: e.toString(),
+        ));
+      }
+    }
+  }
+
+  Future<void> _onBlockPeer(
+    PeerProfileBlockRequested event,
+    Emitter<PeerProfileState> emit,
+  ) async {
+    final profile = state.profile;
+    final targetId = profile?.id ?? '';
+    if (targetId.isEmpty) return;
+
+    final updatedProfile = profile?.copyWith(
+      isBlocked: true,
+      isConnected: false,
+      isRequested: false,
+      connectionStatus: 'none',
+    );
+    // Instantly show the blocked overlay without waiting for network response
+    emit(state.copyWith(
+      isBlocked: true,
+      isBlockLoading: true,
+      profile: updatedProfile,
+      errorMessage: null,
+    ));
+
+    try {
+      if (blockPeerUseCase != null) {
+        await blockPeerUseCase!(targetId, reason: event.reason ?? 'Spam messages');
+      }
       emit(state.copyWith(
-        status: PeerProfileStatus.failure,
-        errorMessage: e.toString(),
+        isBlocked: true,
+        isBlockLoading: false,
+        profile: updatedProfile,
+        errorMessage: null,
+      ));
+      PeersEventBus.instance.emit(PeerBlockedEvent(peerId: targetId));
+      PeersEventBus.instance.emit(const PeersSyncNeededEvent());
+    } catch (_) {
+      emit(state.copyWith(
+        isBlocked: false,
+        isBlockLoading: false,
+        profile: profile,
+        errorMessage: 'Failed to block peer. Please try again.',
+      ));
+    }
+  }
+
+  Future<void> _onUnblockPeer(
+    PeerProfileUnblockRequested event,
+    Emitter<PeerProfileState> emit,
+  ) async {
+    final profile = state.profile;
+    final targetId = profile?.id ?? '';
+    if (targetId.isEmpty) return;
+
+    emit(state.copyWith(isBlockLoading: true));
+    try {
+      if (unblockPeerUseCase != null) {
+        await unblockPeerUseCase!(targetId);
+      }
+      final updatedProfile = profile?.copyWith(isBlocked: false);
+      emit(state.copyWith(
+        isBlocked: false,
+        isBlockLoading: false,
+        profile: updatedProfile,
+        errorMessage: null,
+      ));
+      PeersEventBus.instance.emit(PeerUnblockedEvent(peerId: targetId));
+      PeersEventBus.instance.emit(const PeersSyncNeededEvent());
+      add(PeerProfileFetchRequested(targetId));
+    } catch (_) {
+      emit(state.copyWith(
+        isBlockLoading: false,
+        errorMessage: 'Failed to unblock peer. Please try again.',
       ));
     }
   }

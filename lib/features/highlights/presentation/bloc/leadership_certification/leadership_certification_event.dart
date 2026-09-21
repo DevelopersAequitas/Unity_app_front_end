@@ -7,8 +7,22 @@ abstract class LeadershipCertificationEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class LoadLeadershipInitialDataEvent extends LeadershipCertificationEvent {
+  const LoadLeadershipInitialDataEvent();
+}
+
 class LoadLeadershipQuestionsEvent extends LeadershipCertificationEvent {
   const LoadLeadershipQuestionsEvent();
+}
+
+class LoadLeadershipSubmissionsEvent extends LeadershipCertificationEvent {
+  final int page;
+  final bool isRefresh;
+
+  const LoadLeadershipSubmissionsEvent({this.page = 1, this.isRefresh = false});
+
+  @override
+  List<Object?> get props => [page, isRefresh];
 }
 
 class AnswerLeadershipQuestionEvent extends LeadershipCertificationEvent {
@@ -22,6 +36,28 @@ class AnswerLeadershipQuestionEvent extends LeadershipCertificationEvent {
 
   @override
   List<Object?> get props => [field, answer];
+}
+
+class SetQuestionnaireStepEvent extends LeadershipCertificationEvent {
+  final int step;
+
+  const SetQuestionnaireStepEvent(this.step);
+
+  @override
+  List<Object?> get props => [step];
+}
+
+class SelectLeadershipTabEvent extends LeadershipCertificationEvent {
+  final int tabIndex;
+
+  const SelectLeadershipTabEvent(this.tabIndex);
+
+  @override
+  List<Object?> get props => [tabIndex];
+}
+
+class RetakeLeadershipAssessmentEvent extends LeadershipCertificationEvent {
+  const RetakeLeadershipAssessmentEvent();
 }
 
 class SubmitLeadershipCertificationEvent extends LeadershipCertificationEvent {

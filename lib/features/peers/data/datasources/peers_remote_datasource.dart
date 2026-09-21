@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../highlights/data/models/introduced_peer_model.dart';
 import '../../../home/data/models/timeline_item_model.dart';
 import '../../../home/domain/entities/timeline_item_entity.dart';
 import '../../../profile/data/models/profile_model.dart';
@@ -45,7 +46,10 @@ abstract class PeersRemoteDataSource {
 
   Future<ProfileModel> getMemberProfile(String memberId);
 
-  Future<List<TimelineItemEntity>> getMemberPosts(String memberId, {int page = 1});
+  Future<List<TimelineItemEntity>> getMemberPosts(
+    String memberId, {
+    int page = 1,
+  });
 
   Future<void> followUser(String userId);
 
@@ -62,6 +66,16 @@ abstract class PeersRemoteDataSource {
   Future<void> cancelSentConnectionRequest(String requestId);
 
   Future<void> togglePeerBookmark(String memberId, bool isCurrentlyBookmarked);
+
+  Future<List<IntroducedPeerModel>> getMemberIntroducedPeers(String memberId);
+
+  Future<bool> blockPeer(String peerId, {String reason = 'Spam messages'});
+
+  Future<bool> unblockPeer(String peerId);
+
+  Future<List<Map<String, dynamic>>> getBlockedPeers();
+
+  Future<bool> getPeerBlockStatus(String peerId);
 }
 
 class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
@@ -78,10 +92,7 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
     String? search,
     String? sort,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page,
-      'per_page': limit,
-    };
+    final queryParams = <String, dynamic>{'page': page, 'per_page': limit};
     if (search != null && search.trim().isNotEmpty) {
       queryParams['search'] = search.trim();
     }
@@ -103,10 +114,7 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
     int limit = 20,
     String? search,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page,
-      'per_page': limit,
-    };
+    final queryParams = <String, dynamic>{'page': page, 'per_page': limit};
     if (search != null && search.trim().isNotEmpty) {
       queryParams['search'] = search.trim();
     }
@@ -154,10 +162,7 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
     double? latitude,
     double? longitude,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page,
-      'per_page': limit,
-    };
+    final queryParams = <String, dynamic>{'page': page, 'per_page': limit};
     if (radiusKm != null) queryParams['radius'] = radiusKm;
     if (latitude != null) queryParams['latitude'] = latitude;
     if (longitude != null) queryParams['longitude'] = longitude;
@@ -212,7 +217,10 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
   }
 
   @override
-  Future<List<TimelineItemEntity>> getMemberPosts(String memberId, {int page = 1}) async {
+  Future<List<TimelineItemEntity>> getMemberPosts(
+    String memberId, {
+    int page = 1,
+  }) async {
     try {
       dynamic data;
       // 1. Primary: /users/{memberId}/posts
@@ -246,7 +254,8 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
           if (inner is List) {
             rawList = inner;
           } else if (inner is Map<String, dynamic>) {
-            rawList = (inner['items'] ?? inner['posts'] ?? inner['data']) as List?;
+            rawList =
+                (inner['items'] ?? inner['posts'] ?? inner['data']) as List?;
           } else if (data['items'] is List) {
             rawList = data['items'] as List?;
           } else if (data['posts'] is List) {
@@ -360,7 +369,8 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
       if (inner is List) {
         rawList = inner;
       } else if (inner is Map<String, dynamic>) {
-        rawList = (inner['data'] ?? inner['items'] ?? inner['members']) as List?;
+        rawList =
+            (inner['data'] ?? inner['items'] ?? inner['members']) as List?;
       } else if (data['items'] is List) {
         rawList = data['items'] as List?;
       }
@@ -377,7 +387,10 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
     return [];
   }
 
-  List<PeerRequestModel> _extractRequestList(dynamic data, {bool isSent = false}) {
+  List<PeerRequestModel> _extractRequestList(
+    dynamic data, {
+    bool isSent = false,
+  }) {
     if (data == null) return [];
     List? rawList;
     if (data is Map<String, dynamic>) {
@@ -427,5 +440,145 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
           .toList();
     }
     return [];
+  }
+
+  @override
+  Future<List<IntroducedPeerModel>> getMemberIntroducedPeers(
+    String memberId,
+  ) async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.memberIntroducedPeers(memberId),
+      );
+      final data = response.data['data'] ?? response.data;
+      List<dynamic> items = [];
+      if (data is Map<String, dynamic> && data['items'] is List) {
+        items = data['items'] as List;
+      } else if (data is List) {
+        items = data;
+      }
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map((e) => IntroducedPeerModel.fromJson(e))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<bool> blockPeer(
+    String peerId, {
+    String reason = 'Spam messages',
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.blockPeer(peerId),
+        data: {'reason': reason},
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return data['success'] == true || data['status'] == true;
+        }
+        return true;
+      }
+    } catch (_) {
+      try {
+        final response = await _dio.post(
+          '/blocked-users',
+          data: {'user_id': peerId, 'reason': reason},
+        );
+        return response.statusCode == 200 || response.statusCode == 201;
+      } catch (e) {
+        rethrow;
+      }
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> unblockPeer(String peerId) async {
+    try {
+      final response = await _dio.delete(ApiEndpoints.unblockPeer(peerId));
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return data['success'] == true || data['status'] == true;
+        }
+        return true;
+      }
+    } catch (_) {
+      try {
+        final response = await _dio.delete(ApiEndpoints.unblockUser(peerId));
+        return response.statusCode == 200 || response.statusCode == 204;
+      } catch (e) {
+        rethrow;
+      }
+    }
+    return false;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getBlockedPeers() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.blockedPeers);
+      final data = response.data;
+      List? raw;
+      if (data is Map<String, dynamic>) {
+        final inner = data['data'];
+        if (inner is Map<String, dynamic>) {
+          raw =
+              inner['items'] as List? ??
+              inner['peers'] as List? ??
+              inner['users'] as List?;
+        } else if (inner is List) {
+          raw = inner;
+        } else {
+          raw = data['items'] as List?;
+        }
+      } else if (data is List) {
+        raw = data;
+      }
+      if (raw != null) {
+        return raw.whereType<Map<String, dynamic>>().toList();
+      }
+    } catch (_) {
+      try {
+        final response = await _dio.get(ApiEndpoints.blockedUsers);
+        final data = response.data;
+        List? raw;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'];
+          if (inner is Map<String, dynamic>) {
+            raw = inner['items'] as List? ?? inner['users'] as List?;
+          } else if (inner is List) {
+            raw = inner;
+          }
+        }
+        if (raw != null) {
+          return raw.whereType<Map<String, dynamic>>().toList();
+        }
+      } catch (_) {}
+    }
+    return [];
+  }
+
+  @override
+  Future<bool> getPeerBlockStatus(String peerId) async {
+    try {
+      final response = await _dio.get(ApiEndpoints.peerBlockStatus(peerId));
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final inner = data['data'] ?? data;
+        if (inner is Map<String, dynamic>) {
+          return inner['is_blocked_by_me'] == true ||
+              inner['cannot_interact'] == true ||
+              inner['is_blocked'] == true ||
+              inner['blocked'] == true;
+        }
+      }
+    } catch (_) {}
+    return false;
   }
 }

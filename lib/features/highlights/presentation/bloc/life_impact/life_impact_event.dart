@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
+import '../../../domain/entities/submit_life_impact_params.dart';
 
-abstract class LifeImpactEvent extends Equatable {
+sealed class LifeImpactEvent extends Equatable {
   const LifeImpactEvent();
 
   @override
@@ -15,19 +16,22 @@ class FetchLifeImpactHistoryEvent extends LifeImpactEvent {
   List<Object?> get props => [isRefresh];
 }
 
-class SubmitLifeImpactEvent extends LifeImpactEvent {
-  final String title;
-  final String description;
-  final String category;
-  final int impactPoints;
+class FetchLifeImpactActionsEvent extends LifeImpactEvent {
+  const FetchLifeImpactActionsEvent();
+}
 
-  const SubmitLifeImpactEvent({
-    required this.title,
-    required this.description,
-    required this.category,
-    required this.impactPoints,
-  });
+class SubmitLifeImpactEvent extends LifeImpactEvent {
+  final SubmitLifeImpactParams params;
+  const SubmitLifeImpactEvent(this.params);
 
   @override
-  List<Object?> get props => [title, description, category, impactPoints];
+  List<Object?> get props => [params];
+}
+
+class ChangeLifeImpactFilterEvent extends LifeImpactEvent {
+  final String filter;
+  const ChangeLifeImpactFilterEvent(this.filter);
+
+  @override
+  List<Object?> get props => [filter];
 }

@@ -28,6 +28,9 @@ class NotificationRouterHelper {
     } else if (tapDest == '/profile') {
       safePush(AppRoutes.profile);
       return;
+    } else if (tapDest == '/chats' || tapDest == '/chat-hub') {
+      safePush(AppRoutes.chatList);
+      return;
     }
 
     switch (type) {
@@ -78,7 +81,33 @@ class NotificationRouterHelper {
         safePush(AppRoutes.p2pMeetings, arguments: meetingId?.toString());
         break;
 
-      // 5. Circle & Circle Chat
+      // 5. Direct Message / Direct Chat
+      case 'direct_message_notification':
+      case 'direct_message':
+      case 'direct_chat':
+      case 'chat_direct':
+        final chatId = meta['chat_id'] ?? meta['conversation_id'];
+        final peerId = meta['peer_id'] ??
+            meta['user_id'] ??
+            meta['sender_id'] ??
+            notification.referenceId;
+        final peerName =
+            meta['peer_name'] ?? meta['sender_name'] ?? meta['user_name'];
+        final peerAvatar = meta['peer_avatar'] ??
+            meta['avatar_url'] ??
+            meta['profile_photo_url'];
+        safePush(
+          AppRoutes.directChat,
+          arguments: {
+            'chat_id': chatId?.toString(),
+            'peer_id': peerId?.toString(),
+            'peer_name': peerName?.toString(),
+            'peer_avatar': peerAvatar?.toString(),
+          },
+        );
+        break;
+
+      // 6. Circle & Circle Chat / Leadership Chat
       case 'circle_join_notification':
       case 'circle_approved':
         final circleId = meta['circle_id'] ?? notification.referenceId;
@@ -88,9 +117,44 @@ class NotificationRouterHelper {
         break;
       case 'chat_message_notification':
       case 'chat_message':
+      case 'circle_chat_message_notification':
+      case 'circle_chat':
+        final isLeadership = meta['is_leadership'] == true ||
+            meta['chat_type'] == 'leadership';
         final circleId = meta['circle_id'] ?? notification.referenceId;
+        final circleName = meta['circle_name'] ?? meta['title'];
         if (circleId != null && circleId.toString().isNotEmpty) {
-          safePush(AppRoutes.circleChat, arguments: circleId.toString());
+          if (isLeadership) {
+            safePush(
+              AppRoutes.circleLeadershipChat,
+              arguments: {
+                'circle_id': circleId.toString(),
+                'circle_name': circleName?.toString(),
+              },
+            );
+          } else {
+            safePush(
+              AppRoutes.circleChat,
+              arguments: {
+                'circle_id': circleId.toString(),
+                'circle_name': circleName?.toString(),
+              },
+            );
+          }
+        }
+        break;
+      case 'circle_leadership_chat':
+      case 'circle_leadership_chat_notification':
+        final circleId = meta['circle_id'] ?? notification.referenceId;
+        final circleName = meta['circle_name'] ?? meta['title'];
+        if (circleId != null && circleId.toString().isNotEmpty) {
+          safePush(
+            AppRoutes.circleLeadershipChat,
+            arguments: {
+              'circle_id': circleId.toString(),
+              'circle_name': circleName?.toString(),
+            },
+          );
         }
         break;
 

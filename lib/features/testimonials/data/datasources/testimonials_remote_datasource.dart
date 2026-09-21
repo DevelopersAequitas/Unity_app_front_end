@@ -3,6 +3,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/create_testimonial_params.dart';
 import '../models/paginated_testimonials_model.dart';
+import '../models/testimonial_leaderboard_model.dart';
 import '../models/testimonial_model.dart';
 
 class ProMembershipRequiredException implements Exception {
@@ -28,6 +29,7 @@ abstract class TestimonialsRemoteDataSource {
     int perPage = 10,
   });
   Future<TestimonialModel> createTestimonial(CreateTestimonialParams params);
+  Future<List<TestimonialLeaderboardModel>> getTestimonialsLeaderboard({int limit = 50});
 }
 
 class TestimonialsRemoteDataSourceImpl implements TestimonialsRemoteDataSource {
@@ -162,4 +164,31 @@ class TestimonialsRemoteDataSourceImpl implements TestimonialsRemoteDataSource {
       rethrow;
     }
   }
+
+  @override
+  Future<List<TestimonialLeaderboardModel>> getTestimonialsLeaderboard({int limit = 50}) async {
+    final response = await dioClient.dio.get(
+      ApiEndpoints.leaderboardTestimonials,
+      queryParameters: {'limit': limit},
+    );
+    final data = response.data;
+    List<dynamic> listData = [];
+    if (data is List) {
+      listData = data;
+    } else if (data is Map<String, dynamic>) {
+      if (data['data'] is List) {
+        listData = data['data'] as List;
+      } else if (data['leaderboard'] is List) {
+        listData = data['leaderboard'] as List;
+      } else if (data['results'] is List) {
+        listData = data['results'] as List;
+      }
+    }
+    return listData.asMap().entries.map((entry) {
+      final index = entry.key;
+      final item = entry.value as Map<String, dynamic>;
+      return TestimonialLeaderboardModel.fromJson(item, fallbackRank: index + 1);
+    }).toList();
+  }
 }
+

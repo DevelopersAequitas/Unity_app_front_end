@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/get_given_testimonials_usecase.dart';
 import '../../domain/usecases/get_received_testimonials_usecase.dart';
+import '../../domain/usecases/get_testimonials_leaderboard_usecase.dart';
 import '../../domain/usecases/get_user_testimonials_usecase.dart';
 import 'testimonials_event.dart';
 import 'testimonials_state.dart';
@@ -9,17 +10,20 @@ class TestimonialsBloc extends Bloc<TestimonialsEvent, TestimonialsState> {
   final GetReceivedTestimonialsUseCase getReceivedTestimonialsUseCase;
   final GetGivenTestimonialsUseCase getGivenTestimonialsUseCase;
   final GetUserTestimonialsUseCase getUserTestimonialsUseCase;
+  final GetTestimonialsLeaderboardUseCase? getTestimonialsLeaderboardUseCase;
 
   TestimonialsBloc({
     required this.getReceivedTestimonialsUseCase,
     required this.getGivenTestimonialsUseCase,
     required this.getUserTestimonialsUseCase,
+    this.getTestimonialsLeaderboardUseCase,
   }) : super(const TestimonialsState()) {
     on<TestimonialsTabChanged>(_onTabChanged);
     on<TestimonialsFetchReceivedRequested>(_onFetchReceived);
     on<TestimonialsLoadMoreReceivedRequested>(_onLoadMoreReceived);
     on<TestimonialsFetchGivenRequested>(_onFetchGiven);
     on<TestimonialsLoadMoreGivenRequested>(_onLoadMoreGiven);
+    on<TestimonialsFetchLeaderboardRequested>(_onFetchLeaderboard);
     on<TestimonialsFetchUserRequested>(_onFetchUser);
     on<TestimonialsLoadMoreUserRequested>(_onLoadMoreUser);
     on<TestimonialCreatedLocally>(_onCreatedLocally);
@@ -39,6 +43,33 @@ class TestimonialsBloc extends Bloc<TestimonialsEvent, TestimonialsState> {
     } else if (event.tab == TestimonialTab.received &&
         state.receivedStatus == TestimonialsStatus.initial) {
       add(const TestimonialsFetchReceivedRequested());
+    } else if (event.tab == TestimonialTab.leaderboard &&
+        state.leaderboardStatus == TestimonialsStatus.initial) {
+      add(const TestimonialsFetchLeaderboardRequested());
+    }
+  }
+
+  Future<void> _onFetchLeaderboard(
+    TestimonialsFetchLeaderboardRequested event,
+    Emitter<TestimonialsState> emit,
+  ) async {
+    if (getTestimonialsLeaderboardUseCase == null) return;
+    if (state.leaderboardList.isEmpty || event.forceRefresh) {
+      emit(state.copyWith(leaderboardStatus: TestimonialsStatus.loading));
+    }
+    try {
+      final list = await getTestimonialsLeaderboardUseCase!();
+      emit(state.copyWith(
+        leaderboardStatus: TestimonialsStatus.success,
+        leaderboardList: list,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        leaderboardStatus: state.leaderboardList.isNotEmpty
+            ? TestimonialsStatus.success
+            : TestimonialsStatus.failure,
+        errorMessage: e.toString(),
+      ));
     }
   }
 

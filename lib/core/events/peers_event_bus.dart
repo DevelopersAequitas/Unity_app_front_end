@@ -44,6 +44,16 @@ class PeerBookmarkToggledEvent extends PeerBusEvent {
   const PeerBookmarkToggledEvent({required this.peerId, required this.isBookmarked});
 }
 
+class PeerBlockedEvent extends PeerBusEvent {
+  final String peerId;
+  const PeerBlockedEvent({required this.peerId});
+}
+
+class PeerUnblockedEvent extends PeerBusEvent {
+  final String peerId;
+  const PeerUnblockedEvent({required this.peerId});
+}
+
 class PeersSyncNeededEvent extends PeerBusEvent {
   const PeersSyncNeededEvent();
 }

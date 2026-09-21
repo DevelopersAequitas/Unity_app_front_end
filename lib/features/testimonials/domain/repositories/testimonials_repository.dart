@@ -1,6 +1,7 @@
 import '../entities/create_testimonial_params.dart';
 import '../entities/paginated_testimonials_entity.dart';
 import '../entities/testimonial_entity.dart';
+import '../entities/testimonial_leaderboard_entity.dart';
 
 abstract class TestimonialsRepository {
   Future<PaginatedTestimonialsEntity> getUserTestimonials(
@@ -17,4 +18,6 @@ abstract class TestimonialsRepository {
     int perPage = 10,
   });
   Future<TestimonialEntity> createTestimonial(CreateTestimonialParams params);
+  Future<List<TestimonialLeaderboardEntity>> getTestimonialsLeaderboard({int limit = 50});
 }
+

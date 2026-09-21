@@ -6,6 +6,8 @@ class BlockedUserTile extends StatelessWidget {
   final String id;
   final String name;
   final String avatar;
+  final String? subtitle;
+  final String? reason;
   final VoidCallback onUnblock;
 
   const BlockedUserTile({
@@ -13,6 +15,8 @@ class BlockedUserTile extends StatelessWidget {
     required this.id,
     required this.name,
     required this.avatar,
+    this.subtitle,
+    this.reason,
     required this.onUnblock,
   });
 
@@ -40,14 +44,46 @@ class BlockedUserTile extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              name,
-              style: AppTypography.bodyLarge.copyWith(
-                fontWeight: FontWeight.w500,
-                color: AppColor.lightTextPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppColor.lightTextPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (subtitle != null && subtitle!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColor.lightTextSecondary,
+                      fontSize: 12,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ] else if (reason != null && reason!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Reason: $reason',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColor.lightTextTertiary,
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
             ),
           ),
+          const SizedBox(width: 8),
           OutlinedButton(
             onPressed: onUnblock,
             style: OutlinedButton.styleFrom(

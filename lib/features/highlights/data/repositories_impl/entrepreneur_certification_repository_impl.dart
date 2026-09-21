@@ -1,5 +1,6 @@
 import '../../domain/entities/certification_question_entity.dart';
 import '../../domain/entities/entrepreneur_certification_result_entity.dart';
+import '../../domain/entities/entrepreneur_submissions_response_entity.dart';
 import '../../domain/repositories/entrepreneur_certification_repository.dart';
 import '../datasources/entrepreneur_certification_remote_datasource.dart';
 
@@ -11,6 +12,11 @@ class EntrepreneurCertificationRepositoryImpl implements EntrepreneurCertificati
   @override
   Future<List<CertificationQuestionEntity>> getQuestions() async {
     return await remoteDataSource.getQuestions();
+  }
+
+  @override
+  Future<EntrepreneurSubmissionsResponseEntity> getSubmissions({int page = 1}) async {
+    return await remoteDataSource.getSubmissions(page: page);
   }
 
   @override
@@ -32,3 +38,4 @@ class EntrepreneurCertificationRepositoryImpl implements EntrepreneurCertificati
     return await remoteDataSource.submitCertification(payload);
   }
 }
+

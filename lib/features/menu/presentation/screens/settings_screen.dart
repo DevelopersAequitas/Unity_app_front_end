@@ -73,7 +73,9 @@ class SettingsScreen extends StatelessWidget {
                   quietHoursEnd: prefs.quietHoursEnd,
                   onUpdateQuietHours: (start, end) => _update(
                     context,
-                    prefs.copyWith(quietHoursStart: start, quietHoursEnd: end),
+                    start == null && end == null
+                        ? prefs.copyWith(clearQuietHours: true)
+                        : prefs.copyWith(quietHoursStart: start, quietHoursEnd: end),
                   ),
                 ),
                 const SizedBox(height: 16),

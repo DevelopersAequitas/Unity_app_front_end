@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/events/peers_event_bus.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../peers/domain/usecases/get_blocked_peers_usecase.dart';
+import '../../../peers/domain/usecases/unblock_peer_usecase.dart';
 import '../widgets/blocked_user_tile.dart';
 
 class BlockedUsersScreen extends StatefulWidget {
@@ -20,37 +24,48 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchBlockedUsers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchBlockedUsers();
+    });
   }
 
   Future<void> _fetchBlockedUsers() async {
     setState(() => _isLoading = true);
+    List<Map<String, dynamic>> items = [];
     try {
-      final res = await _dio.dio.get(ApiEndpoints.blockedUsers);
-      final data = res.data;
-      List<dynamic> raw = [];
-      if (data is Map<String, dynamic>) {
-        raw = data['data']?['items'] as List? ??
-            data['data']?['users'] as List? ??
-            data['items'] as List? ??
-            data['data'] as List? ??
-            [];
-      } else if (data is List) {
-        raw = data;
-      }
-      if (mounted) {
-        setState(() {
-          _users = raw.whereType<Map<String, dynamic>>().toList();
-          _isLoading = false;
-        });
-      }
+      final useCase = context.read<GetBlockedPeersUseCase>();
+      items = await useCase();
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _users = [];
-          _isLoading = false;
-        });
-      }
+      try {
+        final res = await _dio.dio.get(ApiEndpoints.blockedPeers);
+        final data = res.data;
+        List? raw;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'];
+          if (inner is Map<String, dynamic>) {
+            raw =
+                (inner['items'] as List?) ??
+                (inner['peers'] as List?) ??
+                (inner['users'] as List?);
+          } else if (inner is List) {
+            raw = inner;
+          } else {
+            raw = (data['items'] as List?) ?? (data['peers'] as List?);
+          }
+        } else if (data is List) {
+          raw = data;
+        }
+        if (raw != null) {
+          items = raw.whereType<Map<String, dynamic>>().toList();
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {
+        _users = items;
+        _isLoading = false;
+      });
     }
   }
 
@@ -61,14 +76,14 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         backgroundColor: AppColor.lightSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Unblock User',
+          'Unblock Peer',
           style: AppTypography.titleMedium.copyWith(
             fontWeight: FontWeight.w500,
             color: AppColor.lightTextPrimary,
           ),
         ),
         content: Text(
-          'Are you sure you want to unblock $name? They will be able to view your profile and connect.',
+          'Are you sure you want to unblock $name? They will be able to view your profile and interact with you.',
           style: AppTypography.bodyMedium.copyWith(
             color: AppColor.lightTextSecondary,
             fontWeight: FontWeight.w400,
@@ -93,19 +108,29 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     );
 
     if (confirm != true) return;
+    if (!mounted) return;
 
     try {
-      await _dio.dio.delete(ApiEndpoints.unblockUser(userId));
+      try {
+        final unblockUseCase = context.read<UnblockPeerUseCase>();
+        await unblockUseCase(userId);
+      } catch (_) {
+        await _dio.dio.delete(ApiEndpoints.unblockPeer(userId));
+      }
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unblocked $name successfully')),
-        );
+        PeersEventBus.instance.emit(PeerUnblockedEvent(peerId: userId));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unblocked $name successfully')));
         _fetchBlockedUsers();
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to unblock user. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to unblock user. Please try again.'),
+          ),
         );
       }
     }
@@ -126,7 +151,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         backgroundColor: AppColor.lightSurface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColor.lightTextPrimary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColor.lightTextPrimary,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -169,7 +198,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
                   color: AppColor.primaryBlue.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.person_off_outlined, size: 28, color: AppColor.primaryBlue),
+                child: const Icon(
+                  Icons.person_off_outlined,
+                  size: 28,
+                  color: AppColor.primaryBlue,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -182,7 +215,9 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
               const SizedBox(height: 8),
               Text(
                 'You haven\'t blocked any members.',
-                style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColor.lightTextSecondary,
+                ),
               ),
             ],
           ),
@@ -196,14 +231,70 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final item = _users[index];
-        final id = item['id']?.toString() ?? '';
-        final name = item['name']?.toString() ?? item['full_name']?.toString() ?? 'Blocked Member';
-        final avatar = item['avatar_url']?.toString() ?? item['avatar']?.toString() ?? '';
+        final userObj = (item['user'] is Map<String, dynamic>)
+            ? item['user'] as Map<String, dynamic>
+            : (item['peer'] is Map<String, dynamic>)
+            ? item['peer'] as Map<String, dynamic>
+            : null;
+        final id =
+            item['id']?.toString() ??
+            item['peer_id']?.toString() ??
+            item['user_id']?.toString() ??
+            item['blocked_user_id']?.toString() ??
+            userObj?['id']?.toString() ??
+            '';
+        final name =
+            item['name']?.toString() ??
+            item['full_name']?.toString() ??
+            item['displayName']?.toString() ??
+            item['display_name']?.toString() ??
+            item['peer_name']?.toString() ??
+            userObj?['name']?.toString() ??
+            userObj?['full_name']?.toString() ??
+            userObj?['displayName']?.toString() ??
+            (userObj != null && userObj['first_name'] != null
+                ? '${userObj['first_name']} ${userObj['last_name'] ?? ''}'
+                      .trim()
+                : 'Blocked Member');
+        final avatar =
+            item['avatar_url']?.toString() ??
+            item['avatar']?.toString() ??
+            item['profile_photo_url']?.toString() ??
+            item['photo_url']?.toString() ??
+            userObj?['avatar_url']?.toString() ??
+            userObj?['profile_photo_url']?.toString() ??
+            '';
+
+        final company =
+            item['company_name']?.toString() ??
+            item['company']?.toString() ??
+            userObj?['company_name']?.toString() ??
+            userObj?['company']?.toString();
+        final designation =
+            item['designation']?.toString() ??
+            item['title']?.toString() ??
+            userObj?['designation']?.toString();
+        final reason =
+            item['reason']?.toString() ?? item['block_reason']?.toString();
+
+        String? subtitle;
+        if (designation != null &&
+            designation.isNotEmpty &&
+            company != null &&
+            company.isNotEmpty) {
+          subtitle = '$designation • $company';
+        } else if (designation != null && designation.isNotEmpty) {
+          subtitle = designation;
+        } else if (company != null && company.isNotEmpty) {
+          subtitle = company;
+        }
 
         return BlockedUserTile(
           id: id,
           name: name,
           avatar: avatar,
+          subtitle: subtitle,
+          reason: reason,
           onUnblock: () => _unblockUser(id, name),
         );
       },

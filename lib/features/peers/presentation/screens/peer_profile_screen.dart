@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:unity_app/features/peers/presentation/widgets/peer_profile/peer_introduced_peers_card.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -35,7 +36,8 @@ class PeerProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (ctx) => TestimonialsBloc(
-        getReceivedTestimonialsUseCase: ctx.read<GetReceivedTestimonialsUseCase>(),
+        getReceivedTestimonialsUseCase: ctx
+            .read<GetReceivedTestimonialsUseCase>(),
         getGivenTestimonialsUseCase: ctx.read<GetGivenTestimonialsUseCase>(),
         getUserTestimonialsUseCase: ctx.read<GetUserTestimonialsUseCase>(),
       )..add(TestimonialsFetchUserRequested(peerId)),
@@ -56,13 +58,16 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
   @override
   void initState() {
     super.initState();
-    context.read<PeerProfileBloc>().add(PeerProfileFetchRequested(widget.peerId));
+    context.read<PeerProfileBloc>().add(
+      PeerProfileFetchRequested(widget.peerId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PeerProfileBloc, PeerProfileState>(
-      buildWhen: (prev, curr) => prev.profile?.displayName != curr.profile?.displayName,
+      buildWhen: (prev, curr) =>
+          prev.profile?.displayName != curr.profile?.displayName,
       builder: (context, state) {
         final title = state.profile?.displayName.toUpperCase() ?? 'PEER';
         return Scaffold(
@@ -73,6 +78,7 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
             showSearch: false,
             showNotifications: false,
             showProfile: false,
+            showChat: false,
             onBackTap: () => Navigator.pop(context),
             actions: [
               IconButton(
@@ -83,7 +89,9 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
           ),
           body: BlocConsumer<PeerProfileBloc, PeerProfileState>(
             listener: (context, state) {
-              if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+              if (state.errorMessage != null &&
+                  state.errorMessage!.isNotEmpty &&
+                  !state.isBlocked) {
                 AppSnackBar.showError(context, state.errorMessage!);
               }
             },
@@ -95,22 +103,139 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
   }
 
   Widget _buildBody(BuildContext context, PeerProfileState state) {
-    if (state.status == PeerProfileStatus.loading || state.status == PeerProfileStatus.initial) {
+    if (state.status == PeerProfileStatus.loading ||
+        state.status == PeerProfileStatus.initial) {
       return const PeerProfileSkeletonLoader();
     }
+    final bloc = context.read<PeerProfileBloc>();
+
+    if (state.isBlocked) {
+      final name = state.profile?.displayName ?? 'Peer';
+      final avatar = state.profile?.profilePhotoUrl;
+
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (avatar != null && avatar.isNotEmpty)
+                CircleAvatar(
+                  radius: 36,
+                  backgroundImage: NetworkImage(avatar),
+                  backgroundColor: AppColor.lightSurfaceSubtle,
+                )
+              else
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFEF2F2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.block_flipped,
+                    size: 36,
+                    color: AppColor.error,
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: AppColor.lightTextPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You have blocked this peer.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColor.error,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'You cannot view their profile details, activity, or contact them.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColor.lightTextSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: state.isBlockLoading
+                    ? null
+                    : () => _confirmUnblock(context, bloc),
+                icon: state.isBlockLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.lock_open_rounded, size: 18),
+                label: const Text(
+                  'Unblock Peer',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (state.status == PeerProfileStatus.failure || state.profile == null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline_rounded, size: 48, color: AppColor.lightTextSecondary),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: AppColor.lightTextSecondary,
+            ),
             const SizedBox(height: 12),
-            Text(state.errorMessage ?? 'Failed to load profile', style: const TextStyle(fontSize: 14, color: AppColor.lightTextSecondary), textAlign: TextAlign.center),
+            Text(
+              state.errorMessage ?? 'Failed to load profile',
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColor.lightTextSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.read<PeerProfileBloc>().add(PeerProfileFetchRequested(widget.peerId)),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColor.primaryBlue, foregroundColor: Colors.white),
-              child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.w500)),
+              onPressed: () => context.read<PeerProfileBloc>().add(
+                PeerProfileFetchRequested(widget.peerId),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.primaryBlue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text(
+                'Try Again',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ),
           ],
         ),
@@ -118,7 +243,7 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
     }
 
     final profile = state.profile!;
-    final bloc = context.read<PeerProfileBloc>();
+    final isBlocked = state.isBlocked || profile.isBlocked;
 
     return RefreshIndicator(
       color: AppColor.primaryBlue,
@@ -134,12 +259,17 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 6),
-            PeerProfileHeader(profile: profile, onBookmarkToggle: () => bloc.add(const PeerProfileBookmarkToggled())),
+            PeerProfileHeader(
+              profile: profile,
+              onBookmarkToggle: () =>
+                  bloc.add(const PeerProfileBookmarkToggled()),
+            ),
             const SizedBox(height: 12),
             PeerProfileActions(
-              profile: profile,
+              profile: isBlocked ? profile.copyWith(isBlocked: true) : profile,
               onConnect: () => bloc.add(const PeerProfileConnectRequested()),
-              onCancelRequest: () => bloc.add(const PeerProfileCancelRequestRequested()),
+              onCancelRequest: () =>
+                  bloc.add(const PeerProfileCancelRequestRequested()),
               onFollowToggle: () => bloc.add(const PeerProfileFollowToggled()),
             ),
             const SizedBox(height: 10),
@@ -148,13 +278,22 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
             PeerProfileContactCard(profile: profile),
             const SizedBox(height: 10),
             PeerProfileBusinessCard(profile: profile),
-            if (profile.circleMemberships.isNotEmpty || profile.activeCircle != null) ...[
+            if (profile.circleMemberships.isNotEmpty ||
+                profile.activeCircle != null) ...[
               const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileCirclesCard(profile: profile),
               ),
             ],
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: PeerIntroducedPeersCard(
+                peerId: profile.id,
+                peerName: profile.displayName,
+              ),
+            ),
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -165,11 +304,21 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
             ),
             if (profile.skills.isNotEmpty) ...[
               const SizedBox(height: 10),
-              PeerProfileChipsCard(icon: Icons.bar_chart_rounded, iconColor: AppColor.primaryBlue, title: 'Skills', items: profile.skills),
+              PeerProfileChipsCard(
+                icon: Icons.bar_chart_rounded,
+                iconColor: AppColor.primaryBlue,
+                title: 'Skills',
+                items: profile.skills,
+              ),
             ],
             if (profile.interests.isNotEmpty) ...[
               const SizedBox(height: 10),
-              PeerProfileChipsCard(icon: Icons.favorite_rounded, iconColor: const Color(0xFFE91E63), title: 'Interests', items: profile.interests),
+              PeerProfileChipsCard(
+                icon: Icons.favorite_rounded,
+                iconColor: const Color(0xFFE91E63),
+                title: 'Interests',
+                items: profile.interests,
+              ),
             ],
             const SizedBox(height: 10),
             PeerProfilePostsSection(
@@ -178,14 +327,16 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
               isLoading: state.isPostsLoading,
               hasMore: state.hasMorePosts,
               isLoadingMore: state.isLoadingMorePosts,
-              onLoadMore: () => bloc.add(const PeerProfilePostsLoadMoreRequested()),
+              onLoadMore: () =>
+                  bloc.add(const PeerProfilePostsLoadMoreRequested()),
               onLikeTap: (id) {
                 final matches = state.posts.where((p) => p.id == id);
                 if (matches.isNotEmpty) {
                   final post = matches.first;
                   final currentLiked = post.isLikedByMe;
                   final newLiked = !currentLiked;
-                  final newCount = (post.likesCount + (newLiked ? 1 : -1)).clamp(0, 9999999);
+                  final newCount = (post.likesCount + (newLiked ? 1 : -1))
+                      .clamp(0, 9999999);
                   bloc.add(PeerProfilePostLikeToggled(id));
                   try {
                     context.read<HomeBloc>().add(
@@ -217,10 +368,7 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
                   bloc.add(PeerProfilePostSaveToggled(id));
                   try {
                     context.read<HomeBloc>().add(
-                      HomePostSaveSyncRequested(
-                        postId: id,
-                        isSaved: newSaved,
-                      ),
+                      HomePostSaveSyncRequested(postId: id, isSaved: newSaved),
                     );
                   } catch (_) {}
                   try {
@@ -239,7 +387,11 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
             const SizedBox(height: 18),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Image.asset('assets/images/end_screen_image.png', width: double.infinity, fit: BoxFit.fitWidth),
+              child: Image.asset(
+                'assets/images/end_screen_image.png',
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+              ),
             ),
             const SizedBox(height: 32),
           ],
@@ -251,19 +403,31 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
   void _showOptionsSheet(BuildContext context) {
     final bloc = context.read<PeerProfileBloc>();
     final profile = bloc.state.profile;
-    final isConnected = profile != null && (profile.isConnected || profile.connectionStatus.toLowerCase() == 'connected');
+    final isBlocked = bloc.state.isBlocked || (profile?.isBlocked ?? false);
+    final isConnected =
+        profile != null &&
+        (profile.isConnected ||
+            profile.connectionStatus.toLowerCase() == 'connected');
 
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColor.lightSurface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.share_outlined, color: AppColor.lightTextPrimary),
-              title: const Text('Share Profile', style: TextStyle(fontWeight: FontWeight.w400)),
+              leading: const Icon(
+                Icons.share_outlined,
+                color: AppColor.lightTextPrimary,
+              ),
+              title: const Text(
+                'Share Profile',
+                style: TextStyle(fontWeight: FontWeight.w400),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 if (profile != null) {
@@ -273,16 +437,67 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
             ),
             if (isConnected)
               ListTile(
-                leading: const Icon(Icons.person_remove_outlined, color: AppColor.error),
-                title: const Text('Remove Connection', style: TextStyle(color: AppColor.error, fontWeight: FontWeight.w400)),
+                leading: const Icon(
+                  Icons.person_remove_outlined,
+                  color: AppColor.error,
+                ),
+                title: const Text(
+                  'Remove Connection',
+                  style: TextStyle(
+                    color: AppColor.error,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   _confirmRemoveConnection(context, bloc);
                 },
               ),
+            if (isBlocked)
+              ListTile(
+                leading: const Icon(
+                  Icons.lock_open_rounded,
+                  color: AppColor.primaryBlue,
+                ),
+                title: const Text(
+                  'Unblock Peer',
+                  style: TextStyle(
+                    color: AppColor.primaryBlue,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmUnblock(context, bloc);
+                },
+              )
+            else
+              ListTile(
+                leading: const Icon(
+                  Icons.block_flipped,
+                  color: AppColor.error,
+                ),
+                title: const Text(
+                  'Block Peer',
+                  style: TextStyle(
+                    color: AppColor.error,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmBlock(context, bloc);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.flag_outlined, color: AppColor.error),
-              title: const Text('Report User', style: TextStyle(color: AppColor.error, fontWeight: FontWeight.w400)),
+              title: const Text(
+                'Report User',
+                style: TextStyle(
+                  color: AppColor.error,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 AppSnackBar.showInfo(context, 'Report submitted');
@@ -294,20 +509,134 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
     );
   }
 
+  void _confirmBlock(BuildContext context, PeerProfileBloc bloc) {
+    final name = bloc.state.profile?.displayName ?? 'this peer';
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: const Text(
+          'Block Peer',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        content: Text(
+          'Are you sure you want to block $name? They will no longer be able to message you or view your profile updates.',
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColor.lightTextSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColor.lightTextSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dCtx);
+              bloc.add(const PeerProfileBlockRequested(reason: 'Spam messages'));
+            },
+            child: const Text(
+              'Block',
+              style: TextStyle(
+                color: AppColor.error,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmUnblock(BuildContext context, PeerProfileBloc bloc) {
+    final name = bloc.state.profile?.displayName ?? 'this peer';
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: const Text(
+          'Unblock Peer',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        content: Text(
+          'Are you sure you want to unblock $name? They will be able to view your profile and interact with you.',
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColor.lightTextSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColor.lightTextSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dCtx);
+              bloc.add(const PeerProfileUnblockRequested());
+            },
+            child: const Text(
+              'Unblock',
+              style: TextStyle(
+                color: AppColor.primaryBlue,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmRemoveConnection(BuildContext context, PeerProfileBloc bloc) {
     showDialog(
       context: context,
       builder: (dCtx) => AlertDialog(
-        title: const Text('Remove Connection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-        content: Text('Are you sure you want to remove ${bloc.state.profile?.displayName ?? "this user"} from your connections?', style: const TextStyle(fontSize: 14, color: AppColor.lightTextSecondary)),
+        title: const Text(
+          'Remove Connection',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        content: Text(
+          'Are you sure you want to remove ${bloc.state.profile?.displayName ?? "this user"} from your connections?',
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColor.lightTextSecondary,
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel', style: TextStyle(color: AppColor.lightTextSecondary, fontWeight: FontWeight.w500))),
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColor.lightTextSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(dCtx);
               bloc.add(const PeerProfileRemoveConnectionRequested());
             },
-            child: const Text('Remove', style: TextStyle(color: AppColor.error, fontWeight: FontWeight.w500)),
+            child: const Text(
+              'Remove',
+              style: TextStyle(
+                color: AppColor.error,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),

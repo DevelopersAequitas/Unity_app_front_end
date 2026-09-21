@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unity_app/core/constants/app_colors.dart';
+import 'package:unity_app/core/utils/app_date_formatter.dart';
 
 class MeetingDatePickerField extends StatelessWidget {
   final DateTime selectedDate;
@@ -22,13 +23,6 @@ class MeetingDatePickerField extends StatelessWidget {
     if (picked != null) {
       onDateSelected(picked);
     }
-  }
-
-  String _formatDate(DateTime d) {
-    final y = d.year.toString().padLeft(4, '0');
-    final m = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return '$y-$m-$day';
   }
 
   @override
@@ -64,7 +58,7 @@ class MeetingDatePickerField extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  _formatDate(selectedDate),
+                  AppDateFormatter.format(selectedDate),
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textPrimary,

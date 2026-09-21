@@ -16,7 +16,13 @@ class SettingsQuietHoursCard extends StatelessWidget {
     required this.onUpdateQuietHours,
   });
 
-  bool get _isEnabled => quietHoursStart != null && quietHoursEnd != null;
+  bool get _isEnabled =>
+      quietHoursStart != null &&
+      quietHoursStart!.isNotEmpty &&
+      quietHoursStart != 'null' &&
+      quietHoursEnd != null &&
+      quietHoursEnd!.isNotEmpty &&
+      quietHoursEnd != 'null';
 
   Future<void> _pickTime(BuildContext context, bool isStart) async {
     final currentStr = isStart ? (quietHoursStart ?? '22:00') : (quietHoursEnd ?? '07:00');

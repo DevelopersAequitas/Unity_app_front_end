@@ -1,5 +1,6 @@
 import 'dart:io';
 import '../../domain/entities/business_deal_entity.dart';
+import '../../domain/entities/business_deal_leaderboard_entity.dart';
 import '../../domain/entities/create_business_deal_params.dart';
 import '../../domain/entities/paginated_business_deals_entity.dart';
 import '../../domain/repositories/business_deals_repository.dart';
@@ -9,6 +10,12 @@ class BusinessDealsRepositoryImpl implements BusinessDealsRepository {
   final BusinessDealsRemoteDataSource remoteDataSource;
 
   BusinessDealsRepositoryImpl({required this.remoteDataSource});
+
+  @override
+  Future<List<BusinessDealLeaderboardEntity>> getBusinessDealsLeaderboard() async {
+    final models = await remoteDataSource.getBusinessDealsLeaderboard();
+    return models.map((m) => m.toEntity()).toList();
+  }
 
   @override
   Future<PaginatedBusinessDealsEntity> getUserBusinessDeals(

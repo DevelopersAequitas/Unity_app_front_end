@@ -9,6 +9,9 @@ class HighlightTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final int maxLines;
   final String? Function(String?)? validator;
+  final Widget? suffixIcon;
+  final VoidCallback? onTap;
+  final bool readOnly;
 
   const HighlightTextField({
     super.key,
@@ -18,6 +21,9 @@ class HighlightTextField extends StatelessWidget {
     this.keyboardType,
     this.maxLines = 1,
     this.validator,
+    this.suffixIcon,
+    this.onTap,
+    this.readOnly = false,
   });
 
   @override
@@ -39,6 +45,8 @@ class HighlightTextField extends StatelessWidget {
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
+          onTap: onTap,
+          readOnly: readOnly,
           style: AppTypography.bodyMedium.copyWith(
             color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
             fontWeight: FontWeight.w500,
@@ -49,6 +57,7 @@ class HighlightTextField extends StatelessWidget {
               color: (isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary)
                   .withValues(alpha: 0.6),
             ),
+            suffixIcon: suffixIcon,
             filled: true,
             fillColor: isDark ? AppColor.darkSurface : AppColor.lightSurface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

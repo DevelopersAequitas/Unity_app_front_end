@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/create_business_deal_params.dart';
+import '../models/business_deal_leaderboard_model.dart';
 import '../models/business_deal_model.dart';
 import '../models/paginated_business_deals_model.dart';
 
@@ -34,6 +35,8 @@ abstract class BusinessDealsRemoteDataSource {
     int perPage = 20,
   });
 
+  Future<List<BusinessDealLeaderboardModel>> getBusinessDealsLeaderboard();
+
   Future<BusinessDealModel> getBusinessDealDetail(String id);
 
   Future<BusinessDealModel> createBusinessDeal(CreateBusinessDealParams params);
@@ -50,6 +53,25 @@ class BusinessDealsRemoteDataSourceImpl
   final DioClient dioClient;
 
   BusinessDealsRemoteDataSourceImpl({required this.dioClient});
+
+  @override
+  Future<List<BusinessDealLeaderboardModel>> getBusinessDealsLeaderboard() async {
+    final response = await dioClient.dio.get(ApiEndpoints.leaderboardBusinessDeals);
+    final data = response.data['data'] ?? response.data;
+    List<dynamic> items = [];
+    if (data is Map<String, dynamic> && data['items'] is List) {
+      items = data['items'] as List;
+    } else if (data is List) {
+      items = data;
+    }
+    return items.asMap().entries.map((entry) {
+      final item = entry.value as Map<String, dynamic>;
+      return BusinessDealLeaderboardModel.fromJson(
+        item,
+        fallbackRank: entry.key + 1,
+      );
+    }).toList();
+  }
 
   @override
   Future<PaginatedBusinessDealsModel> getUserBusinessDeals(

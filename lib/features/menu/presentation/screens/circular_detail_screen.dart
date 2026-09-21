@@ -3,6 +3,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 
 class CircularDetailScreen extends StatefulWidget {
   final String circularId;
@@ -122,7 +123,7 @@ class _CircularDetailScreenState extends State<CircularDetailScreen> {
                         if (createdAt.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Text(
-                            'Published on $createdAt',
+                            'Published on ${AppDateFormatter.formatDateTime(createdAt)}',
                             style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextDisabled),
                           ),
                         ],

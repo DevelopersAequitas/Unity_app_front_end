@@ -2,6 +2,7 @@ import '../../domain/entities/create_peer_referral_params.dart';
 import '../../domain/entities/create_referral_params.dart';
 import '../../domain/entities/paginated_referrals_entity.dart';
 import '../../domain/entities/referral_entity.dart';
+import '../../domain/entities/referral_leaderboard_entity.dart';
 import '../../domain/entities/referral_stats_entity.dart';
 import '../../domain/entities/referral_status_entity.dart';
 import '../../domain/repositories/referrals_repository.dart';
@@ -57,4 +58,11 @@ class ReferralsRepositoryImpl implements ReferralsRepository {
   Future<ReferralEntity> getReferralDetail(String id) {
     return remoteDataSource.getReferralDetail(id);
   }
+
+  @override
+  Future<List<ReferralLeaderboardEntity>> getReferralsLeaderboard({int limit = 50}) async {
+    final models = await remoteDataSource.getReferralsLeaderboard(limit: limit);
+    return models.map((m) => m.toEntity()).toList();
+  }
 }
+

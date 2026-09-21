@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/referral_entity.dart';
+import '../../domain/entities/referral_leaderboard_entity.dart';
 import '../../domain/entities/referral_pagination_entity.dart';
 import '../../domain/entities/referral_stats_entity.dart';
 import '../../domain/entities/referral_status_entity.dart';
@@ -11,8 +12,10 @@ class ReferralsState extends Equatable {
   final ReferralTab activeTab;
   final ReferralsStatus receivedStatus;
   final ReferralsStatus givenStatus;
+  final ReferralsStatus leaderboardStatus;
   final List<ReferralEntity> receivedReferrals;
   final List<ReferralEntity> givenReferrals;
+  final List<ReferralLeaderboardEntity> leaderboardList;
   final ReferralPaginationEntity receivedPagination;
   final ReferralPaginationEntity givenPagination;
   final ReferralStatsEntity stats;
@@ -27,8 +30,10 @@ class ReferralsState extends Equatable {
     this.activeTab = ReferralTab.received,
     this.receivedStatus = ReferralsStatus.initial,
     this.givenStatus = ReferralsStatus.initial,
+    this.leaderboardStatus = ReferralsStatus.initial,
     this.receivedReferrals = const [],
     this.givenReferrals = const [],
+    this.leaderboardList = const [],
     this.receivedPagination = const ReferralPaginationEntity(),
     this.givenPagination = const ReferralPaginationEntity(),
     this.stats = const ReferralStatsEntity(),
@@ -46,14 +51,12 @@ class ReferralsState extends Equatable {
   });
 
   bool _matchesFilter(ReferralEntity item) {
-    // 1. Status Filter
     if (statusFilter != null && statusFilter!.isNotEmpty) {
       if (item.statusName.toLowerCase() != statusFilter!.toLowerCase()) {
         return false;
       }
     }
 
-    // 2. Search Query
     if (searchQuery.trim().isEmpty) return true;
     final q = searchQuery.trim().toLowerCase();
     final name = item.peerName.toLowerCase();
@@ -88,8 +91,22 @@ class ReferralsState extends Equatable {
     return list.where(_matchesFilter).toList();
   }
 
-  ReferralsStatus get currentStatus =>
-      activeTab == ReferralTab.received ? receivedStatus : givenStatus;
+  List<ReferralLeaderboardEntity> get filteredLeaderboardList {
+    if (searchQuery.trim().isEmpty) return leaderboardList;
+    final q = searchQuery.trim().toLowerCase();
+    return leaderboardList.where((b) {
+      return b.displayName.toLowerCase().contains(q) ||
+          (b.companyName ?? '').toLowerCase().contains(q) ||
+          (b.designation ?? '').toLowerCase().contains(q) ||
+          (b.city ?? '').toLowerCase().contains(q) ||
+          (b.category ?? '').toLowerCase().contains(q);
+    }).toList();
+  }
+
+  ReferralsStatus get currentStatus {
+    if (activeTab == ReferralTab.leaderboard) return leaderboardStatus;
+    return activeTab == ReferralTab.received ? receivedStatus : givenStatus;
+  }
 
   ReferralPaginationEntity get currentPagination =>
       activeTab == ReferralTab.received ? receivedPagination : givenPagination;
@@ -98,8 +115,10 @@ class ReferralsState extends Equatable {
     ReferralTab? activeTab,
     ReferralsStatus? receivedStatus,
     ReferralsStatus? givenStatus,
+    ReferralsStatus? leaderboardStatus,
     List<ReferralEntity>? receivedReferrals,
     List<ReferralEntity>? givenReferrals,
+    List<ReferralLeaderboardEntity>? leaderboardList,
     ReferralPaginationEntity? receivedPagination,
     ReferralPaginationEntity? givenPagination,
     ReferralStatsEntity? stats,
@@ -115,8 +134,10 @@ class ReferralsState extends Equatable {
       activeTab: activeTab ?? this.activeTab,
       receivedStatus: receivedStatus ?? this.receivedStatus,
       givenStatus: givenStatus ?? this.givenStatus,
+      leaderboardStatus: leaderboardStatus ?? this.leaderboardStatus,
       receivedReferrals: receivedReferrals ?? this.receivedReferrals,
       givenReferrals: givenReferrals ?? this.givenReferrals,
+      leaderboardList: leaderboardList ?? this.leaderboardList,
       receivedPagination: receivedPagination ?? this.receivedPagination,
       givenPagination: givenPagination ?? this.givenPagination,
       stats: stats ?? this.stats,
@@ -134,8 +155,10 @@ class ReferralsState extends Equatable {
         activeTab,
         receivedStatus,
         givenStatus,
+        leaderboardStatus,
         receivedReferrals,
         givenReferrals,
+        leaderboardList,
         receivedPagination,
         givenPagination,
         stats,

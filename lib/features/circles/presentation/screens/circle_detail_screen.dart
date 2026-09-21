@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
@@ -47,6 +48,17 @@ class CircleDetailScreen extends StatelessWidget {
         showProfile: false,
         onBackTap: () => Navigator.of(context).pop(),
         actions: [
+          IconButton(
+            icon: Icon(Icons.chat_bubble_outline_rounded, size: 20, color: iconColor),
+            tooltip: 'Circle Chat',
+            onPressed: () => Navigator.of(context).pushNamed(
+              AppRoutes.circleChat,
+              arguments: {
+                'circle_id': entity.id,
+                'circle_name': entity.name,
+              },
+            ),
+          ),
           IconButton(
             icon: Icon(Icons.share_outlined, size: 20, color: iconColor),
             onPressed: () {},

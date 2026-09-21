@@ -8,8 +8,6 @@ class ProfileCompletenessResult {
   final int interestsPercentage;
   final int socialPercentage;
   final int mediaPercentage;
-  final int circlePercentage;
-  final int additionalPercentage;
 
   const ProfileCompletenessResult({
     required this.overallPercentage,
@@ -19,8 +17,6 @@ class ProfileCompletenessResult {
     required this.interestsPercentage,
     required this.socialPercentage,
     required this.mediaPercentage,
-    required this.circlePercentage,
-    required this.additionalPercentage,
   });
 
   int getSectionPercentage(String sectionKey) {
@@ -37,10 +33,6 @@ class ProfileCompletenessResult {
         return socialPercentage;
       case 'media':
         return mediaPercentage;
-      case 'circle':
-        return circlePercentage;
-      case 'additional':
-        return additionalPercentage;
       default:
         return 0;
     }
@@ -60,12 +52,10 @@ class ProfileCompletenessCalculator {
         interestsPercentage: 0,
         socialPercentage: 0,
         mediaPercentage: 0,
-        circlePercentage: 0,
-        additionalPercentage: 0,
       );
     }
 
-    // 1. Personal Information (10 key fields)
+    // 1. Personal Information (key fields)
     final personalFields = [
       _hasValue(profile.profilePhotoUrl),
       _hasValue(profile.coverPhotoUrl),
@@ -77,11 +67,12 @@ class ProfileCompletenessCalculator {
       _hasValue(profile.dob),
       _hasValue(profile.gender),
       _hasValue(profile.city?.name) || _hasValue(profile.state),
-      _hasValue(profile.preferredLanguage),
+      _hasValue(profile.bio),
+      _hasValue(profile.superpower),
     ];
     final personalPercent = _calcPercent(personalFields);
 
-    // 2. Business Information (11 key fields)
+    // 2. Business Information (key fields)
     final businessFields = [
       _hasValue(profile.companyName),
       _hasValue(profile.designation),
@@ -100,7 +91,7 @@ class ProfileCompletenessCalculator {
     ];
     final businessPercent = _calcPercent(businessFields);
 
-    // 3. Professional Journey (6 fields)
+    // 3. Professional Journey (key fields)
     final professionalFields = [
       profile.experienceYears != null && profile.experienceYears! > 0,
       _hasValue(profile.experienceSummary),
@@ -111,17 +102,18 @@ class ProfileCompletenessCalculator {
     ];
     final professionalPercent = _calcPercent(professionalFields);
 
-    // 4. Interests & Goals (5 fields)
+    // 4. Interests & Goals (key fields)
     final interestsFields = [
       profile.interests.isNotEmpty,
-      profile.hobbiesInterests.isNotEmpty,
       profile.iCanHelpWith.isNotEmpty,
       profile.iAmLookingFor.isNotEmpty,
       profile.collaborationGoals.isNotEmpty,
+      _hasValue(profile.preferredMeetingFormat),
+      profile.willingToMentor || profile.openToCrossCityCollaboration || profile.openToSpeakingAtEvents,
     ];
     final interestsPercent = _calcPercent(interestsFields);
 
-    // 5. Social & Links (6 fields)
+    // 5. Social & Links (key fields)
     final socialFields = [
       _hasValue(profile.socialLinks?.website),
       _hasValue(profile.socialLinks?.linkedin),
@@ -132,7 +124,7 @@ class ProfileCompletenessCalculator {
     ];
     final socialPercent = _calcPercent(socialFields);
 
-    // 6. Media & Portfolio (3 fields)
+    // 6. Media & Portfolio (key fields)
     final mediaFields = [
       _hasValue(profile.profileVideoUrl),
       profile.media.isNotEmpty,
@@ -140,35 +132,14 @@ class ProfileCompletenessCalculator {
     ];
     final mediaPercent = _calcPercent(mediaFields);
 
-    // 7. Circle & Membership (3 fields)
-    final circleFields = [
-      profile.activeCircle != null,
-      _hasValue(profile.membershipStatusLabel) || _hasValue(profile.membershipStatus),
-      profile.circleMemberships.isNotEmpty,
-    ];
-    final circlePercent = _calcPercent(circleFields);
-
-    // 8. Additional Information (6 fields)
-    final additionalFields = [
-      _hasValue(profile.bio),
-      _hasValue(profile.superpower),
-      _hasValue(profile.preferredMeetingFormat),
-      profile.willingToMentor,
-      profile.openToCrossCityCollaboration,
-      profile.openToSpeakingAtEvents,
-    ];
-    final additionalPercent = _calcPercent(additionalFields);
-
-    // Overall completion percentage is the balanced average across all sections
+    // Overall completion percentage is the balanced average across all 6 sections
     final overall = ((personalPercent +
                 businessPercent +
                 professionalPercent +
                 interestsPercent +
                 socialPercent +
-                mediaPercent +
-                circlePercent +
-                additionalPercent) /
-            8)
+                mediaPercent) /
+            6)
         .round()
         .clamp(0, 100);
 
@@ -180,8 +151,6 @@ class ProfileCompletenessCalculator {
       interestsPercentage: interestsPercent,
       socialPercentage: socialPercent,
       mediaPercentage: mediaPercent,
-      circlePercentage: circlePercent,
-      additionalPercentage: additionalPercent,
     );
   }
 

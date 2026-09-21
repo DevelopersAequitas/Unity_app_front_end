@@ -2,9 +2,11 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/certification_question_model.dart';
 import '../models/leadership_certification_result_model.dart';
+import '../models/leadership_submissions_response_model.dart';
 
 abstract class LeadershipCertificationRemoteDataSource {
   Future<List<CertificationQuestionModel>> getQuestions();
+  Future<LeadershipSubmissionsResponseModel> getSubmissions({int page = 1});
   Future<LeadershipCertificationResultModel> submitCertification(
     Map<String, dynamic> data,
   );
@@ -18,106 +20,63 @@ class LeadershipCertificationRemoteDataSourceImpl
 
   static const List<Map<String, dynamic>> defaultQuestionsJson = [
     {
-      'field': 'team_struggling_action',
-      'question': 'What do you do when a team peer is struggling?',
+      'key': 'team_struggling_action',
+      'question': 'When a team member is struggling with a task, what do you usually do?',
       'options': [
-        'Offer help and ask what\'s stopping them',
-        'Tell them to figure it out',
-        'Ignore and wait for results',
-        'Replace them with someone else',
+        'Offer help and ask what’s stopping them',
+        'Take over the task and complete it myself',
+        'Wait until the deadline to address the issue',
+        'Assign the task to someone else without discussion',
       ],
     },
     {
-      'field': 'leader_definition',
-      'question': 'How would you define a true leader?',
+      'key': 'leader_definition',
+      'question': 'In your view, what defines a true leader?',
       'options': [
         'Helps others succeed',
-        'Someone who gives orders',
-        'A person with the highest title',
-        'One who works alone and delivers',
+        'Holds the highest authority in the room',
+        'Focuses solely on individual performance',
+        'Commands and gives orders without feedback',
       ],
     },
     {
-      'field': 'junior_challenged_idea',
-      'question': 'A junior challenges your idea in a meeting. What do you do?',
+      'key': 'junior_challenged_idea',
+      'question': 'If a junior team member challenges your idea, how do you respond?',
       'options': [
         'Think openly and discuss',
-        'Dismiss it politely',
-        'Get defensive',
-        'Ignore and move on',
+        'Dismiss their opinion immediately',
+        'Insist on your authority and experience',
+        'Ignore the input and proceed as planned',
       ],
     },
     {
-      'field': 'leader_when_wrong',
-      'question': 'What does a leader do when they are wrong?',
+      'key': 'leader_when_wrong',
+      'question': 'What should a leader do when things go wrong or a mistake occurs?',
       'options': [
         'Takes responsibility and finds a solution',
-        'Blames the team',
-        'Stays silent',
-        'Justifies their decision',
+        'Blame team members or external factors',
+        'Hide the mistake to protect reputation',
+        'Wait for someone else to resolve the problem',
       ],
     },
     {
-      'field': 'team_motivation',
-      'question': 'How do you keep your team motivated?',
+      'key': 'team_motivation',
+      'question': 'What is the most effective way to keep your team motivated?',
       'options': [
         'Appreciation, trust and clear goals',
-        'Strict deadlines',
-        'Bonuses only',
-        'By monitoring them closely',
+        'Strict monitoring and penalties',
+        'Only offering monetary incentives',
+        'Creating aggressive competition among members',
       ],
     },
     {
-      'field': 'leadership_meaning',
-      'question': 'What does leadership mean to you?',
+      'key': 'leadership_meaning',
+      'question': 'What does leadership mean to you fundamentally?',
       'options': [
         'Taking people forward together',
-        'Being in charge',
-        'Making all decisions alone',
-        'Getting the best results at any cost',
-      ],
-    },
-    {
-      'field': 'different_background_team_first_step',
-      'question':
-          'You are leading a team from very different backgrounds. What is your first step?',
-      'options': [
-        'Know them and align goals',
-        'Divide tasks immediately',
-        'Let them figure out roles',
-        'Focus only on performance metrics',
-      ],
-    },
-    {
-      'field': 'group_task_approach',
-      'question': 'How do you approach a group task?',
-      'options': [
-        'Involve everyone and guide the team',
-        'Do most of it yourself',
-        'Delegate and disengage',
-        'Wait for instructions from above',
-      ],
-    },
-    {
-      'field': 'team_credit_sharing',
-      'question':
-          'When your project achieves huge success, how do you handle recognition?',
-      'options': [
-        'Give maximum credit to the team publicly',
-        'Accept praise on behalf of yourself',
-        'Distribute credit equally regardless of effort',
-        'Highlight only your core contributions',
-      ],
-    },
-    {
-      'field': 'conflict_resolution',
-      'question':
-          'Two core team members are in a deadlock conflict. What is your intervention?',
-      'options': [
-        'Facilitate a private dialogue focused on shared vision',
-        'Choose a side quickly to avoid project delays',
-        'Let them resolve it among themselves entirely',
-        'Reassign both to different departments immediately',
+        'Holding power and control over others',
+        'Achieving personal recognition and titles',
+        'Managing tasks without personal connection',
       ],
     },
   ];
@@ -130,8 +89,15 @@ class LeadershipCertificationRemoteDataSourceImpl
       );
       final body = response.data;
       if (body is Map<String, dynamic>) {
-        final dynamic rawList =
-            body['data'] ?? body['questions'] ?? body['items'];
+        dynamic rawList;
+        if (body['data'] is Map<String, dynamic>) {
+          rawList = body['data']['questions'] ?? body['data']['items'];
+        } else if (body['data'] is List) {
+          rawList = body['data'];
+        } else {
+          rawList = body['questions'] ?? body['items'];
+        }
+
         if (rawList is List && rawList.isNotEmpty) {
           return rawList
               .map(
@@ -158,6 +124,21 @@ class LeadershipCertificationRemoteDataSourceImpl
   }
 
   @override
+  Future<LeadershipSubmissionsResponseModel> getSubmissions({int page = 1}) async {
+    try {
+      final response = await dioClient.dio.get(
+        ApiEndpoints.leadershipCertification,
+        queryParameters: {'page': page},
+      );
+      final body = response.data;
+      if (body is Map<String, dynamic>) {
+        return LeadershipSubmissionsResponseModel.fromJson(body);
+      }
+    } catch (_) {}
+    return const LeadershipSubmissionsResponseModel();
+  }
+
+  @override
   Future<LeadershipCertificationResultModel> submitCertification(
     Map<String, dynamic> data,
   ) async {
@@ -169,26 +150,30 @@ class LeadershipCertificationRemoteDataSourceImpl
       final body = response.data;
       if (body is Map<String, dynamic>) {
         final dynamic rawData = body['data'] ?? body;
-        return LeadershipCertificationResultModel.fromJson(
-          Map<String, dynamic>.from(rawData as Map),
-        );
+        if (rawData is Map<String, dynamic>) {
+          return LeadershipCertificationResultModel.fromJson(rawData);
+        }
       }
-    } catch (_) {}
+    } catch (e) {
+      rethrow;
+    }
 
     final answers = data['answers'] as Map? ?? data;
     int score = 0;
     answers.forEach((k, v) {
       if (v != null && v.toString().isNotEmpty) {
-        score += 1;
+        score += 4;
       }
     });
-    final totalQ = defaultQuestionsJson.length;
-    final percentage = (totalQ > 0) ? ((score / totalQ) * 100).round() : 100;
-    final tier = percentage >= 80
-        ? 'Distinguished Leader'
-        : percentage >= 60
-        ? 'Certified Leader'
-        : 'Emerging Leader';
+    final totalQ = 25;
+    final percentage = (totalQ > 0) ? ((score / 100) * 100).round() : 100;
+    final tier = percentage >= 81
+        ? 'Established Leader'
+        : percentage >= 61
+        ? 'Growing Leader'
+        : percentage >= 40
+        ? 'Aspiring Leader'
+        : 'Needs Improvement';
 
     return LeadershipCertificationResultModel(
       id: 'cert-${DateTime.now().millisecondsSinceEpoch}',
@@ -203,3 +188,4 @@ class LeadershipCertificationRemoteDataSourceImpl
     );
   }
 }
+

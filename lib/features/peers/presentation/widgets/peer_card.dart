@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/widgets/app_avatar.dart';
 import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
@@ -8,11 +9,12 @@ class PeerCard extends StatelessWidget {
   final bool isCurrentUser;
   final VoidCallback? onConnect;
   final VoidCallback? onFollow;
-  final VoidCallback onMessage;
+  final VoidCallback? onMessage;
   final VoidCallback onBookmark;
   final VoidCallback? onScheduleP2P;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? margin;
+  final EdgeInsetsGeometry? padding;
   final bool showBorder;
 
   const PeerCard({
@@ -21,18 +23,20 @@ class PeerCard extends StatelessWidget {
     this.isCurrentUser = false,
     this.onConnect,
     this.onFollow,
-    required this.onMessage,
+    this.onMessage,
     required this.onBookmark,
     this.onScheduleP2P,
     this.onTap,
     this.margin,
+    this.padding,
     this.showBorder = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 2.5),
+      margin:
+          margin ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 2.5),
       decoration: BoxDecoration(
         color: showBorder ? AppColor.lightSurface : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
@@ -54,7 +58,9 @@ class PeerCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding:
+                padding ??
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -76,7 +82,8 @@ class PeerCard extends StatelessWidget {
         (peer.designation != null && peer.designation!.trim().isNotEmpty) ||
         (peer.companyName != null && peer.companyName!.trim().isNotEmpty);
     final hasCity = peer.city != null && peer.city!.trim().isNotEmpty;
-    final hasCategory = peer.category != null && peer.category!.trim().isNotEmpty;
+    final hasCategory =
+        peer.category != null && peer.category!.trim().isNotEmpty;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +150,9 @@ class PeerCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 1),
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColor.primaryBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -175,9 +184,11 @@ class PeerCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         [
-                          if (peer.designation != null && peer.designation!.trim().isNotEmpty)
+                          if (peer.designation != null &&
+                              peer.designation!.trim().isNotEmpty)
                             peer.designation!.trim(),
-                          if (peer.companyName != null && peer.companyName!.trim().isNotEmpty)
+                          if (peer.companyName != null &&
+                              peer.companyName!.trim().isNotEmpty)
                             peer.companyName!.trim(),
                         ].join(' · '),
                         style: const TextStyle(
@@ -230,12 +241,17 @@ class PeerCard extends StatelessWidget {
                     if (hasCategory) ...[
                       Flexible(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColor.badgeBlueBg,
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: AppColor.primaryBlue.withValues(alpha: 0.15),
+                              color: AppColor.primaryBlue.withValues(
+                                alpha: 0.15,
+                              ),
                               width: 0.8,
                             ),
                           ),
@@ -316,11 +332,13 @@ class PeerCard extends StatelessWidget {
 
   Widget _buildActions(BuildContext context) {
     final statusLower = peer.connectionStatus.toLowerCase();
-    final isPending = peer.isRequested ||
+    final isPending =
+        peer.isRequested ||
         statusLower == 'pending' ||
         statusLower == 'pending_sent' ||
         statusLower == 'requested';
-    final isConnected = peer.isConnected ||
+    final isConnected =
+        peer.isConnected ||
         statusLower == 'connected' ||
         statusLower == 'approved' ||
         statusLower == 'accepted';
@@ -336,7 +354,9 @@ class PeerCard extends StatelessWidget {
               gradient: (!isPending) ? AppColor.brandGradient : null,
               color: isPending ? AppColor.lightSurfaceSubtle : null,
               borderRadius: BorderRadius.circular(7),
-              border: isPending ? Border.all(color: AppColor.lightBorder) : null,
+              border: isPending
+                  ? Border.all(color: AppColor.lightBorder)
+                  : null,
             ),
             child: Material(
               color: AppColor.transparent,
@@ -471,7 +491,19 @@ class PeerCard extends StatelessWidget {
             child: Material(
               color: AppColor.transparent,
               child: InkWell(
-                onTap: onMessage,
+                onTap:
+                    onMessage ??
+                    () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.directChat,
+                        arguments: {
+                          'peer_id': peer.id,
+                          'peer_name': peer.displayName,
+                          'peer_avatar': peer.profilePhotoUrl,
+                        },
+                      );
+                    },
                 borderRadius: BorderRadius.circular(7),
                 child: const Center(
                   child: Row(

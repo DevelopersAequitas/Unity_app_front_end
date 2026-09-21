@@ -9,6 +9,7 @@ class AppCacheBoxes {
   static const String notificationsBox = 'peers_notifications_box';
   static const String circlesBox = 'peers_circles_box';
   static const String leaderboardBox = 'peers_leaderboard_box';
+  static const String chatBox = 'peers_chat_box';
 }
 
 class AppCacheKeys {
@@ -43,4 +44,11 @@ class AppCacheKeys {
   static const String impactLeaderboard = 'cached_impact_leaderboard';
   static const String coinGuidelines = 'cached_coin_guidelines';
   static const String impactGuidelines = 'cached_impact_guidelines';
+
+  // Chat Caching
+  static const String directConversations = 'cached_direct_conversations';
+  static String directMessages(String chatId) => 'cached_direct_msgs_$chatId';
+  static String circleMessages(String circleId) => 'cached_circle_msgs_$circleId';
+  static String leadershipMessages(String circleId) =>
+      'cached_leadership_msgs_$circleId';
 }

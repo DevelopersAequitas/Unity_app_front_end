@@ -3,6 +3,7 @@ import '../../domain/entities/referral_entity.dart';
 import '../../domain/usecases/get_given_referrals_usecase.dart';
 import '../../domain/usecases/get_received_referrals_usecase.dart';
 import '../../domain/usecases/get_referral_statuses_usecase.dart';
+import '../../domain/usecases/get_referrals_leaderboard_usecase.dart';
 import '../../domain/usecases/get_referrals_stats_usecase.dart';
 import '../../domain/usecases/update_referral_status_usecase.dart';
 import 'referrals_event.dart';
@@ -14,6 +15,7 @@ class ReferralsBloc extends Bloc<ReferralsEvent, ReferralsState> {
   final GetReferralsStatsUseCase getReferralsStatsUseCase;
   final GetReferralStatusesUseCase getReferralStatusesUseCase;
   final UpdateReferralStatusUseCase updateReferralStatusUseCase;
+  final GetReferralsLeaderboardUseCase getReferralsLeaderboardUseCase;
 
   ReferralsBloc({
     required this.getReceivedReferralsUseCase,
@@ -21,6 +23,7 @@ class ReferralsBloc extends Bloc<ReferralsEvent, ReferralsState> {
     required this.getReferralsStatsUseCase,
     required this.getReferralStatusesUseCase,
     required this.updateReferralStatusUseCase,
+    required this.getReferralsLeaderboardUseCase,
   }) : super(const ReferralsState()) {
     on<ReferralsTabChanged>(_onTabChanged);
     on<ReferralsFetchStatsRequested>(_onFetchStats);
@@ -28,6 +31,7 @@ class ReferralsBloc extends Bloc<ReferralsEvent, ReferralsState> {
     on<ReferralsLoadMoreReceivedRequested>(_onLoadMoreReceived);
     on<ReferralsFetchGivenRequested>(_onFetchGiven);
     on<ReferralsLoadMoreGivenRequested>(_onLoadMoreGiven);
+    on<ReferralsFetchLeaderboardRequested>(_onFetchLeaderboard);
     on<ReferralsStatusesFetchRequested>(_onFetchStatuses);
     on<ReferralStatusUpdated>(_onStatusUpdated);
     on<ReferralCreatedLocally>(_onCreatedLocally);
@@ -53,6 +57,32 @@ class ReferralsBloc extends Bloc<ReferralsEvent, ReferralsState> {
     } else if (event.tab == ReferralTab.received &&
         state.receivedStatus == ReferralsStatus.initial) {
       add(const ReferralsFetchReceivedRequested());
+    } else if (event.tab == ReferralTab.leaderboard &&
+        state.leaderboardStatus == ReferralsStatus.initial) {
+      add(const ReferralsFetchLeaderboardRequested());
+    }
+  }
+
+  Future<void> _onFetchLeaderboard(
+    ReferralsFetchLeaderboardRequested event,
+    Emitter<ReferralsState> emit,
+  ) async {
+    if (state.leaderboardList.isEmpty || event.forceRefresh) {
+      emit(state.copyWith(leaderboardStatus: ReferralsStatus.loading));
+    }
+    try {
+      final list = await getReferralsLeaderboardUseCase();
+      emit(state.copyWith(
+        leaderboardStatus: ReferralsStatus.success,
+        leaderboardList: list,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        leaderboardStatus: state.leaderboardList.isNotEmpty
+            ? ReferralsStatus.success
+            : ReferralsStatus.failure,
+        errorMessage: e.toString(),
+      ));
     }
   }
 

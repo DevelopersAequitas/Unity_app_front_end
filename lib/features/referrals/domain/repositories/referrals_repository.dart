@@ -2,6 +2,7 @@ import '../entities/create_peer_referral_params.dart';
 import '../entities/create_referral_params.dart';
 import '../entities/paginated_referrals_entity.dart';
 import '../entities/referral_entity.dart';
+import '../entities/referral_leaderboard_entity.dart';
 import '../entities/referral_stats_entity.dart';
 import '../entities/referral_status_entity.dart';
 
@@ -27,4 +28,7 @@ abstract class ReferralsRepository {
   Future<void> submitPeerReferral(CreatePeerReferralParams params);
 
   Future<ReferralEntity> getReferralDetail(String id);
+
+  Future<List<ReferralLeaderboardEntity>> getReferralsLeaderboard({int limit = 50});
 }
+

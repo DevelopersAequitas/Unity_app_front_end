@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/coin_wallet_entity.dart';
 
 class CoinTransactionTile extends StatelessWidget {
@@ -62,6 +63,16 @@ class CoinTransactionTile extends StatelessWidget {
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (transaction.date.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    AppDateFormatter.format(transaction.date),
+                    style: AppTypography.bodySmall.copyWith(
+                      color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/features/profile/domain/entities/profile_entity.dart';
 
@@ -65,15 +66,40 @@ class PeerProfileStats extends StatelessWidget {
           ]),
           const SizedBox(height: 8),
           _buildStatsCard([
-            _buildCell(_formatCount(profile.badgesCount), 'Badges'),
+            _buildCell(
+              _formatCount(profile.badgesCount),
+              'Badges',
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.badges,
+                arguments: profile.id,
+              ),
+            ),
             _buildDivider(),
-            _buildCell(_formatCount(profile.p2pMeetingsCount), 'P2P'),
+            _buildCell(
+              _formatCount(profile.p2pMeetingsCount),
+              'P2P',
+              onTap: () => Navigator.pushNamed(context, AppRoutes.p2pMeetings),
+            ),
             _buildDivider(),
-            _buildCell(_formatCount(profile.referralsCount), 'Referrals'),
+            _buildCell(
+              _formatCount(profile.referralsCount),
+              'Referrals',
+              onTap: () => Navigator.pushNamed(context, AppRoutes.referrals),
+            ),
             _buildDivider(),
-            _buildCell(_formatCount(profile.businessDealsCount), 'Deals'),
+            _buildCell(
+              _formatCount(profile.businessDealsCount),
+              'Deals',
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.businessDeals),
+            ),
             _buildDivider(),
-            _buildCell(_formatCount(profile.testimonialsCount), 'Testimonials'),
+            _buildCell(
+              _formatCount(profile.testimonialsCount),
+              'Testimonials',
+              onTap: () => Navigator.pushNamed(context, AppRoutes.testimonials),
+            ),
           ]),
         ],
       ),
@@ -99,38 +125,49 @@ class PeerProfileStats extends StatelessWidget {
     );
   }
 
-  Widget _buildCell(String count, String label) {
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              count,
-              maxLines: 1,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-                color: AppColor.lightTextPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
+  Widget _buildCell(String count, String label, {VoidCallback? onTap}) {
+    final cell = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            count,
+            maxLines: 1,
             style: const TextStyle(
-              color: AppColor.lightTextTertiary,
-              fontSize: 9,
-              fontWeight: FontWeight.w400,
-              height: 1.1,
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: AppColor.lightTextPrimary,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColor.lightTextTertiary,
+            fontSize: 9,
+            fontWeight: FontWeight.w400,
+            height: 1.1,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+
+    return Expanded(
+      child: onTap != null
+          ? InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: cell,
+              ),
+            )
+          : cell,
     );
   }
 

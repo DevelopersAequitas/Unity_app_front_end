@@ -11,7 +11,9 @@ class EntrepreneurCertificationResultModel extends EntrepreneurCertificationResu
     super.percentage,
     super.certificationTier,
     super.status = 'new',
+    super.notes,
     super.certificateUrl,
+    super.certificateDownloadUrl,
     super.createdAt,
     super.updatedAt,
   });
@@ -43,6 +45,13 @@ class EntrepreneurCertificationResultModel extends EntrepreneurCertificationResu
       }
     }
 
+    String? certDownloadUrl;
+    if (json['certificate_download_url'] != null) {
+      certDownloadUrl = json['certificate_download_url']?.toString();
+    } else {
+      certDownloadUrl = certUrl;
+    }
+
     return EntrepreneurCertificationResultModel(
       id: json['id']?.toString() ?? '',
       fullName: json['full_name']?.toString() ?? json['fullName']?.toString() ?? '',
@@ -53,9 +62,12 @@ class EntrepreneurCertificationResultModel extends EntrepreneurCertificationResu
       percentage: parsedPercentage,
       certificationTier: json['certification_tier']?.toString() ??
           json['tier']?.toString() ??
-          json['certification_level']?.toString(),
+          json['certification_level']?.toString() ??
+          json['level']?.toString(),
       status: json['status']?.toString() ?? 'new',
+      notes: json['notes']?.toString(),
       certificateUrl: certUrl,
+      certificateDownloadUrl: certDownloadUrl,
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
     );
@@ -72,7 +84,9 @@ class EntrepreneurCertificationResultModel extends EntrepreneurCertificationResu
       'percentage': percentage,
       'certification_tier': certificationTier,
       'status': status,
+      'notes': notes,
       'certificate_url': certificateUrl,
+      'certificate_download_url': certificateDownloadUrl,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };

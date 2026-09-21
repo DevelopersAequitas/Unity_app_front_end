@@ -15,11 +15,9 @@ class DealDatePickerField extends StatelessWidget {
 
   Future<void> _pickDate(BuildContext context) async {
     DateTime initialDate = DateTime.now();
-    try {
-      if (dealDate.isNotEmpty) {
-        initialDate = DateTime.parse(dealDate);
-      }
-    } catch (_) {}
+    if (dealDate.isNotEmpty) {
+      initialDate = AppDateFormatter.parseUtc(dealDate) ?? DateTime.now();
+    }
 
     final picked = await showDatePicker(
       context: context,

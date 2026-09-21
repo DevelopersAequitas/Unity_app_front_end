@@ -4,38 +4,8 @@ import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/theme/app_typography.dart';
 import 'package:unity_app/core/widgets/app_avatar.dart';
 import 'package:unity_app/core/widgets/app_gradient_text.dart';
+import 'package:unity_app/core/utils/app_date_formatter.dart';
 import 'package:unity_app/features/p2p_meetings/domain/entities/p2p_meeting_entity.dart';
-
-String _formatMeetingDate(String? raw) {
-  if (raw == null || raw.isEmpty) return '';
-  try {
-    final dt = DateTime.parse(raw);
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-  } catch (_) {
-    return raw;
-  }
-}
-
-String _formatCreatedAt(String? raw) {
-  if (raw == null || raw.isEmpty) return '';
-  try {
-    final dt = DateTime.parse(raw).toLocal();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
-    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-    final minute = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year} · $hour:$minute $ampm';
-  } catch (_) {
-    return raw;
-  }
-}
 
 class P2pCompletedCard extends StatelessWidget {
   final P2pMeetingEntity meeting;
@@ -96,8 +66,8 @@ class P2pCompletedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = _formatCreatedAt(meeting.createdAt);
-    final meetingDateStr = _formatMeetingDate(meeting.meetingDate);
+    final dateStr = AppDateFormatter.formatDateTime(meeting.createdAt);
+    final meetingDateStr = AppDateFormatter.format(meeting.meetingDate);
     final designation = meeting.peerDesignation?.trim() ?? '';
     final company = meeting.peerCompany?.trim() ?? '';
     final city = meeting.peerLocation?.trim() ?? '';

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_gradient_text.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
@@ -14,32 +15,7 @@ import 'referral_detail_sheet.dart';
 import 'referral_options_sheet.dart';
 import 'referral_status_update_sheet.dart';
 
-String _formatDateTime(String? raw) {
-  if (raw == null || raw.isEmpty) return '';
-  try {
-    final dt = DateTime.parse(raw).toLocal();
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
-    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-    final minute = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year} · $hour:$minute $ampm';
-  } catch (_) {
-    return raw;
-  }
-}
+String _formatDateTime(String? raw) => AppDateFormatter.formatDateTime(raw);
 
 class ReferralCard extends StatelessWidget {
   final ReferralEntity referral;

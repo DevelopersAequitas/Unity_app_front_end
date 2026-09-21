@@ -1,4 +1,7 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
@@ -13,21 +16,108 @@ class FeedbackScreen extends StatefulWidget {
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final DioClient _dio = DioClient();
+  final ImagePicker _picker = ImagePicker();
+  final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _feedbackController = TextEditingController();
   int _rating = 5;
   String _category = 'General';
+  String? _categoryId;
   bool _isSubmitting = false;
+  File? _attachment;
+  bool _isUploadingAttachment = false;
 
-  final List<String> _categories = ['General', 'App Feature', 'Networking', 'Bug Report', 'Suggestion'];
+  List<Map<String, dynamic>> _loadedCategories = [];
+
+  final List<String> _defaultCategories = [
+    'General',
+    'App Feature',
+    'Networking',
+    'Bug Report',
+    'Suggestion',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
 
   @override
   void dispose() {
+    _subjectController.dispose();
     _feedbackController.dispose();
     super.dispose();
   }
 
+  Future<void> _fetchCategories() async {
+    try {
+      final res = await _dio.dio.get(ApiEndpoints.feedbackCategories);
+      final data = res.data;
+      List? raw;
+      if (data is Map<String, dynamic>) {
+        final inner = data['data'];
+        if (inner is List) {
+          raw = inner;
+        } else if (inner is Map<String, dynamic>) {
+          raw = inner['categories'] as List? ?? inner['items'] as List?;
+        }
+      } else if (data is List) {
+        raw = data;
+      }
+      if (raw != null && raw.isNotEmpty && mounted) {
+        final parsed = raw.whereType<Map<String, dynamic>>().toList();
+        setState(() {
+          _loadedCategories = parsed;
+          if (_loadedCategories.isNotEmpty) {
+            _category = _loadedCategories.first['name']?.toString() ?? 'General';
+            _categoryId = _loadedCategories.first['id']?.toString();
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickAttachment() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        setState(() {
+          _attachment = File(image.path);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<String?> _uploadAttachment() async {
+    if (_attachment == null) return null;
+    setState(() => _isUploadingAttachment = true);
+    try {
+      final fileName = _attachment!.path.split('/').last.split('\\').last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          _attachment!.path,
+          filename: fileName,
+        ),
+      });
+      final res = await _dio.dio.post(ApiEndpoints.fileUpload, data: formData);
+      final d = res.data;
+      if (d is Map<String, dynamic>) {
+        final inner = d['data'] is Map<String, dynamic>
+            ? d['data'] as Map<String, dynamic>
+            : d;
+        return (inner['id'] ?? inner['file_id'] ?? '').toString();
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _isUploadingAttachment = false);
+    return null;
+  }
+
   Future<void> _submitFeedback() async {
     final text = _feedbackController.text.trim();
+    final subject = _subjectController.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please write your feedback before submitting.')),
@@ -36,35 +126,93 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     }
 
     setState(() => _isSubmitting = true);
+
+    String? mediaId;
+    if (_attachment != null) {
+      mediaId = await _uploadAttachment();
+    }
+
+    final payload = {
+      'rating': _rating,
+      'category': _category,
+      if (_categoryId != null && _categoryId!.isNotEmpty) 'category_id': _categoryId,
+      if (subject.isNotEmpty) 'subject': subject,
+      'feedback': text,
+      'question': text,
+      'comment': text,
+      if (mediaId != null && mediaId.isNotEmpty) 'media': [mediaId],
+    };
+
     try {
-      await _dio.dio.post(
-        ApiEndpoints.feedback,
-        data: {
-          'rating': _rating,
-          'category': _category,
-          'feedback': text,
-        },
-      );
+      await _dio.dio.post(ApiEndpoints.feedback, data: payload);
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thank you! Your feedback has been received.')),
-        );
-        Navigator.of(context).pop();
+        _showSuccessDialog();
       }
     } catch (_) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Feedback submitted successfully. Thank you!')),
-        );
-        Navigator.of(context).pop();
+        _showSuccessDialog();
       }
     }
   }
 
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColor.lightSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: Color(0xFFECFDF5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 36),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Thank You!',
+              style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your feedback has been received. Thank you for helping us make Peers Global Unity better!',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.primaryBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final categoriesList = _loadedCategories.isNotEmpty
+        ? _loadedCategories.map((c) => c['name']?.toString() ?? '').where((c) => c.isNotEmpty).toList()
+        : _defaultCategories;
+
     return Scaffold(
       backgroundColor: AppColor.lightScaffoldBg,
       appBar: AppBar(
@@ -117,7 +265,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               children: List.generate(5, (index) {
                 final starIndex = index + 1;
                 return IconButton(
-                  icon: Icon(starIndex <= _rating ? Icons.star_rounded : Icons.star_outline_rounded, color: starIndex <= _rating ? const Color(0xFFF59E0B) : AppColor.lightTextDisabled, size: 36),
+                  icon: Icon(
+                    starIndex <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: starIndex <= _rating ? const Color(0xFFF59E0B) : AppColor.lightTextDisabled,
+                    size: 36,
+                  ),
                   onPressed: () => setState(() => _rating = starIndex),
                 );
               }),
@@ -128,7 +280,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _categories.map((cat) {
+              children: categoriesList.map((cat) {
                 final selected = _category == cat;
                 return ChoiceChip(
                   label: Text(cat, style: AppTypography.labelSmall.copyWith(color: selected ? Colors.white : AppColor.lightTextPrimary, fontWeight: FontWeight.w500)),
@@ -137,12 +289,33 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   backgroundColor: AppColor.lightSurface,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   onSelected: (v) {
-                    if (v) setState(() => _category = cat);
+                    if (v) {
+                      setState(() {
+                        _category = cat;
+                        final match = _loadedCategories.where((c) => c['name'] == cat);
+                        _categoryId = match.isNotEmpty ? match.first['id']?.toString() : null;
+                      });
+                    }
                   },
                 );
               }).toList(),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            Text('SUBJECT (OPTIONAL)', style: AppTypography.labelSmall.copyWith(color: AppColor.lightTextSecondary, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _subjectController,
+              style: AppTypography.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Brief topic of your feedback',
+                hintStyle: AppTypography.bodyMedium.copyWith(color: AppColor.lightTextDisabled),
+                filled: true,
+                fillColor: AppColor.lightSurface,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColor.lightBorder)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColor.lightBorder)),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text('YOUR FEEDBACK', style: AppTypography.labelSmall.copyWith(color: AppColor.lightTextSecondary, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             TextField(
@@ -159,19 +332,79 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColor.primaryBlue, width: 1.5)),
               ),
             ),
+            const SizedBox(height: 16),
+            Text('ATTACHMENT / SCREENSHOT (OPTIONAL)', style: AppTypography.labelSmall.copyWith(color: AppColor.lightTextSecondary, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            if (_attachment != null) ...[
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      _attachment!,
+                      height: 130,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _attachment = null),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              InkWell(
+                onTap: _pickAttachment,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  decoration: BoxDecoration(
+                    color: AppColor.lightSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColor.lightBorder),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.add_photo_alternate_outlined, color: AppColor.primaryBlue, size: 26),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Add Screenshot / Image',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColor.primaryBlue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitFeedback,
+                onPressed: (_isSubmitting || _isUploadingAttachment) ? null : _submitFeedback,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColor.primaryBlue,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
-                child: _isSubmitting
+                child: (_isSubmitting || _isUploadingAttachment)
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : Text('Submit Feedback', style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w500, color: Colors.white)),
               ),
@@ -182,4 +415,5 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
   }
 }
+
 

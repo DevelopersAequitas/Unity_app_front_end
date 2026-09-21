@@ -50,19 +50,43 @@ class ProfileStatsRow extends StatelessWidget {
     return Column(
       children: [
         _buildStatsCard([
-          _buildCell(context, _formatCount(profile.lifeImpactedCount), 'Lives Impacted'),
+          _buildCell(
+            context,
+            _formatCount(profile.lifeImpactedCount),
+            'Lives Impacted',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.lifeImpact),
+          ),
           _buildDivider(),
-          _buildCell(context, _formatCount(profile.connectionCount), 'Connections'),
+          _buildCell(
+            context,
+            _formatCount(profile.connectionCount),
+            'Connections',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.connections),
+          ),
           _buildDivider(),
           _buildCell(context, _formatCount(profile.followersCount), 'Followers'),
           _buildDivider(),
           _buildCell(context, _formatCount(profile.followingCount), 'Following'),
           _buildDivider(),
-          _buildCell(context, _formatCount(profile.coinsBalance), 'Coins'),
+          _buildCell(
+            context,
+            _formatCount(profile.coinsBalance),
+            'Coins',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.coins),
+          ),
         ]),
         const SizedBox(height: 8),
         _buildStatsCard([
-          _buildCell(context, _formatCount(profile.badgesCount), 'Badges'),
+          _buildCell(
+            context,
+            _formatCount(profile.badgesCount),
+            'Badges',
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.badges,
+              arguments: profile.id,
+            ),
+          ),
           _buildDivider(),
           _buildCell(
             context,

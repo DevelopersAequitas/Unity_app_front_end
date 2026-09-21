@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/peer_request_entity.dart';
 import 'peer_model.dart';
 
@@ -19,10 +20,6 @@ class PeerRequestModel {
     if (isSent) {
       if (json['user'] is Map) {
         peerMap = json['user'] as Map<String, dynamic>;
-      } else if (json['addressee'] is Map) {
-        peerMap = json['addressee'] as Map<String, dynamic>;
-      } else if (json['receiver'] is Map) {
-        peerMap = json['receiver'] as Map<String, dynamic>;
       } else if (json['to_user'] is Map) {
         peerMap = json['to_user'] as Map<String, dynamic>;
       } else if (json['member'] is Map) {
@@ -31,11 +28,7 @@ class PeerRequestModel {
         peerMap = json;
       }
     } else {
-      if (json['requester'] is Map) {
-        peerMap = json['requester'] as Map<String, dynamic>;
-      } else if (json['sender'] is Map) {
-        peerMap = json['sender'] as Map<String, dynamic>;
-      } else if (json['user'] is Map) {
+      if (json['user'] is Map) {
         peerMap = json['user'] as Map<String, dynamic>;
       } else if (json['from_user'] is Map) {
         peerMap = json['from_user'] as Map<String, dynamic>;
@@ -49,9 +42,7 @@ class PeerRequestModel {
     return PeerRequestModel(
       id: json['id']?.toString() ?? '',
       isApproved: json['is_approved'] == true,
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
-          : null,
+      createdAt: AppDateFormatter.parseUtc(json['created_at']),
       peer: PeerModel.fromJson(peerMap),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/usecases/get_business_deals_leaderboard_usecase.dart';
 import '../../domain/usecases/get_given_business_deals_usecase.dart';
 import '../../domain/usecases/get_received_business_deals_usecase.dart';
 import '../../domain/usecases/get_user_business_deals_usecase.dart';
@@ -9,13 +10,16 @@ class BusinessDealsBloc extends Bloc<BusinessDealsEvent, BusinessDealsState> {
   final GetReceivedBusinessDealsUseCase getReceivedBusinessDealsUseCase;
   final GetGivenBusinessDealsUseCase getGivenBusinessDealsUseCase;
   final GetUserBusinessDealsUseCase getUserBusinessDealsUseCase;
+  final GetBusinessDealsLeaderboardUseCase getBusinessDealsLeaderboardUseCase;
 
   BusinessDealsBloc({
     required this.getReceivedBusinessDealsUseCase,
     required this.getGivenBusinessDealsUseCase,
     required this.getUserBusinessDealsUseCase,
+    required this.getBusinessDealsLeaderboardUseCase,
   }) : super(const BusinessDealsState()) {
     on<BusinessDealsTabChanged>(_onTabChanged);
+    on<BusinessDealsFetchLeaderboardRequested>(_onFetchLeaderboard);
     on<BusinessDealsFetchReceivedRequested>(_onFetchReceived);
     on<BusinessDealsLoadMoreReceivedRequested>(_onLoadMoreReceived);
     on<BusinessDealsFetchGivenRequested>(_onFetchGiven);
@@ -39,6 +43,32 @@ class BusinessDealsBloc extends Bloc<BusinessDealsEvent, BusinessDealsState> {
     } else if (event.tab == BusinessDealTab.received &&
         state.receivedStatus == BusinessDealsStatus.initial) {
       add(const BusinessDealsFetchReceivedRequested());
+    } else if (event.tab == BusinessDealTab.leaderboard &&
+        state.leaderboardStatus == BusinessDealsStatus.initial) {
+      add(const BusinessDealsFetchLeaderboardRequested());
+    }
+  }
+
+  Future<void> _onFetchLeaderboard(
+    BusinessDealsFetchLeaderboardRequested event,
+    Emitter<BusinessDealsState> emit,
+  ) async {
+    if (state.leaderboardList.isEmpty || event.forceRefresh) {
+      emit(state.copyWith(leaderboardStatus: BusinessDealsStatus.loading));
+    }
+    try {
+      final items = await getBusinessDealsLeaderboardUseCase();
+      emit(state.copyWith(
+        leaderboardStatus: BusinessDealsStatus.success,
+        leaderboardList: items,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        leaderboardStatus: state.leaderboardList.isNotEmpty
+            ? BusinessDealsStatus.success
+            : BusinessDealsStatus.failure,
+        errorMessage: e.toString(),
+      ));
     }
   }
 

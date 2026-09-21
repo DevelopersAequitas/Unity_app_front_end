@@ -2,6 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/features/circles/domain/usecases/cancel_circle_join_request_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_join_request_status_usecase.dart';
+import 'package:unity_app/features/profile/domain/usecases/upload_file_usecase.dart';
+import '../../features/events/domain/repositories/events_repository.dart';
+import '../../features/events/domain/usecases/check_payment_status_usecase.dart';
+import '../../features/events/domain/usecases/get_event_detail_usecase.dart';
+import '../../features/events/domain/usecases/get_events_usecase.dart' as events_uc;
+import '../../features/events/domain/usecases/get_my_events_with_qr_usecase.dart';
+import '../../features/events/domain/usecases/register_event_usecase.dart';
+import '../../features/events/domain/usecases/register_visitor_event_usecase.dart';
+import '../../features/events/presentation/bloc/events_bloc.dart';
+import '../../features/events/presentation/bloc/events_event.dart';
+import '../../features/events/presentation/bloc/event_detail_bloc.dart';
+import '../../features/events/presentation/bloc/my_events_bloc.dart';
+import '../../features/events/presentation/bloc/my_events_event.dart';
 import '../../features/membership/domain/usecases/get_membership_plans_usecase.dart';
 import '../../features/menu/domain/repositories/menu_repository.dart';
 import '../../features/menu/domain/usecases/get_menu_summary_usecase.dart';
@@ -10,13 +23,17 @@ import '../../features/menu/presentation/bloc/menu_event.dart';
 import '../../features/membership/domain/usecases/get_subscription_history_usecase.dart';
 import '../../features/membership/domain/usecases/initiate_plan_checkout_usecase.dart';
 import '../../features/membership/domain/usecases/verify_checkout_status_usecase.dart';
+import '../../features/requirements/presentation/bloc/requirements_bloc.dart';
+import '../../features/requirements/presentation/bloc/requirements_event.dart';
 import '../../features/testimonials/domain/usecases/create_testimonial_usecase.dart';
 import '../../features/testimonials/domain/usecases/get_given_testimonials_usecase.dart';
 import '../../features/testimonials/domain/usecases/get_received_testimonials_usecase.dart';
+import '../../features/testimonials/domain/usecases/get_testimonials_leaderboard_usecase.dart';
 import '../../features/testimonials/domain/usecases/get_user_testimonials_usecase.dart';
 import '../../features/business_deal/domain/usecases/create_business_deal_usecase.dart';
 import '../../features/business_deal/domain/usecases/upload_business_deal_creative_usecase.dart';
 import '../../features/business_deal/domain/usecases/get_business_deal_detail_usecase.dart';
+import '../../features/business_deal/domain/usecases/get_business_deals_leaderboard_usecase.dart';
 import '../../features/business_deal/domain/usecases/get_given_business_deals_usecase.dart';
 import '../../features/business_deal/domain/usecases/get_received_business_deals_usecase.dart';
 import '../../features/business_deal/domain/usecases/get_user_business_deals_usecase.dart';
@@ -24,6 +41,7 @@ import '../../features/referrals/domain/usecases/create_referral_usecase.dart';
 import '../../features/referrals/domain/usecases/get_given_referrals_usecase.dart';
 import '../../features/referrals/domain/usecases/get_received_referrals_usecase.dart';
 import '../../features/referrals/domain/usecases/get_referral_statuses_usecase.dart';
+import '../../features/referrals/domain/usecases/get_referrals_leaderboard_usecase.dart';
 import '../../features/referrals/domain/usecases/get_referrals_stats_usecase.dart';
 import '../../features/referrals/domain/usecases/submit_peer_referral_usecase.dart';
 import '../../features/referrals/domain/usecases/update_referral_status_usecase.dart';
@@ -33,6 +51,7 @@ import '../../features/p2p_meetings/domain/usecases/cancel_p2p_meeting_request_u
 import '../../features/p2p_meetings/domain/usecases/get_p2p_meeting_requests_inbox_usecase.dart';
 import '../../features/p2p_meetings/domain/usecases/get_p2p_meeting_requests_sent_usecase.dart';
 import '../../features/p2p_meetings/domain/usecases/get_p2p_meetings_history_usecase.dart';
+import '../../features/p2p_meetings/domain/usecases/get_p2p_meetings_leaderboard_usecase.dart';
 import '../../features/p2p_meetings/domain/usecases/get_pending_reschedule_requests_received_usecase.dart';
 import '../../features/p2p_meetings/domain/usecases/get_single_p2p_meeting_request_usecase.dart';
 import '../../features/p2p_meetings/domain/usecases/get_single_p2p_meeting_usecase.dart';
@@ -56,16 +75,20 @@ import '../../features/home/domain/usecases/toggle_post_like_usecase.dart';
 import '../../features/home/domain/usecases/toggle_post_save_usecase.dart';
 import '../../features/home/domain/usecases/update_post_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
+import '../../features/peers/domain/usecases/block_peer_usecase.dart';
 import '../../features/peers/domain/usecases/cancel_sent_connection_request_usecase.dart';
-import '../../features/peers/domain/usecases/get_all_peers_usecase.dart';
-import '../../features/peers/domain/usecases/get_my_connections_usecase.dart';
 import '../../features/peers/domain/usecases/follow_user_usecase.dart';
-import '../../features/profile/domain/usecases/upload_file_usecase.dart';
+import '../../features/peers/domain/usecases/get_all_peers_usecase.dart';
+import '../../features/peers/domain/usecases/get_blocked_peers_usecase.dart';
+import '../../features/peers/domain/usecases/get_member_introduced_peers_usecase.dart';
 import '../../features/peers/domain/usecases/get_member_posts_usecase.dart';
 import '../../features/peers/domain/usecases/get_member_profile_usecase.dart';
+import '../../features/peers/domain/usecases/get_my_connections_usecase.dart';
+import '../../features/peers/domain/usecases/get_peer_block_status_usecase.dart';
 import '../../features/peers/domain/usecases/remove_connection_usecase.dart';
 import '../../features/peers/domain/usecases/send_connection_request_usecase.dart';
 import '../../features/peers/domain/usecases/toggle_peer_bookmark_usecase.dart';
+import '../../features/peers/domain/usecases/unblock_peer_usecase.dart';
 import '../../features/peers/domain/usecases/unfollow_user_usecase.dart';
 import '../../features/peers/presentation/bloc/connections_bloc.dart';
 import '../../features/peers/presentation/bloc/matches_bloc.dart';
@@ -110,6 +133,7 @@ import '../../features/highlights/presentation/bloc/life_impact/life_impact_bloc
 import '../../features/highlights/presentation/bloc/life_impact/life_impact_event.dart';
 import '../../features/highlights/presentation/bloc/coins/coins_bloc.dart';
 import '../../features/highlights/presentation/bloc/coins/coins_event.dart';
+import '../../features/milestones/presentation/bloc/milestone_bloc.dart';
 import '../../features/highlights/presentation/bloc/leadership_certification/leadership_certification_bloc.dart';
 import '../../features/highlights/presentation/bloc/leadership_certification/leadership_certification_event.dart';
 import '../../features/highlights/presentation/bloc/entrepreneur_certification/entrepreneur_certification_bloc.dart';
@@ -126,8 +150,19 @@ import '../../features/highlights/presentation/bloc/vyapaar_jagat/vyapaar_jagat_
 import '../../features/highlights/presentation/bloc/vyapaar_jagat/vyapaar_jagat_event.dart';
 import '../../features/highlights/presentation/bloc/post_ask/post_ask_bloc.dart';
 import '../../features/highlights/presentation/bloc/post_ask/post_ask_event.dart';
+import '../../features/highlights/presentation/bloc/register_visitor/register_visitor_bloc.dart';
+import '../../features/highlights/presentation/bloc/register_visitor/register_visitor_event.dart';
+import '../../features/highlights/domain/usecases/upload_claim_proof_usecase.dart';
+import '../../features/collaborations/presentation/bloc/collaborations_bloc.dart';
+import '../../features/collaborations/presentation/bloc/collaborations_event.dart';
 import '../../features/menu/presentation/bloc/settings/settings_bloc.dart';
 import '../../features/menu/presentation/bloc/settings/settings_event.dart';
+
+// Chat BLoCs
+import '../../features/chat/presentation/bloc/chat_list/chat_list_bloc.dart';
+import '../../features/chat/presentation/bloc/direct_chat/direct_chat_bloc.dart';
+import '../../features/chat/presentation/bloc/circle_chat/circle_chat_bloc.dart';
+import '../../features/chat/presentation/bloc/leadership_chat/leadership_chat_bloc.dart';
 import 'app_dependencies.dart';
 
 class AppProviders extends StatelessWidget {
@@ -150,6 +185,9 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<GetMemberPostsUseCase>.value(
           value: dependencies.getMemberPostsUseCase,
         ),
+        RepositoryProvider<GetMemberIntroducedPeersUseCase>.value(
+          value: dependencies.getMemberIntroducedPeersUseCase,
+        ),
         RepositoryProvider<FollowUserUseCase>.value(
           value: dependencies.followUserUseCase,
         ),
@@ -167,6 +205,18 @@ class AppProviders extends StatelessWidget {
         ),
         RepositoryProvider<TogglePeerBookmarkUseCase>.value(
           value: dependencies.togglePeerBookmarkUseCase,
+        ),
+        RepositoryProvider<BlockPeerUseCase>.value(
+          value: dependencies.blockPeerUseCase,
+        ),
+        RepositoryProvider<UnblockPeerUseCase>.value(
+          value: dependencies.unblockPeerUseCase,
+        ),
+        RepositoryProvider<GetBlockedPeersUseCase>.value(
+          value: dependencies.getBlockedPeersUseCase,
+        ),
+        RepositoryProvider<GetPeerBlockStatusUseCase>.value(
+          value: dependencies.getPeerBlockStatusUseCase,
         ),
         RepositoryProvider<TogglePostLikeUseCase>.value(
           value: dependencies.togglePostLikeUseCase,
@@ -237,6 +287,9 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<GetHighlightSectionsUseCase>.value(
           value: dependencies.getHighlightSectionsUseCase,
         ),
+        RepositoryProvider<UploadClaimProofUseCase>.value(
+          value: dependencies.uploadClaimProofUseCase,
+        ),
         RepositoryProvider<GetMyJoinRequestsUseCase>.value(
           value: dependencies.getMyJoinRequestsUseCase,
         ),
@@ -276,6 +329,9 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<CreateTestimonialUseCase>.value(
           value: dependencies.createTestimonialUseCase,
         ),
+        RepositoryProvider<GetTestimonialsLeaderboardUseCase>.value(
+          value: dependencies.getTestimonialsLeaderboardUseCase,
+        ),
         RepositoryProvider<GetUserBusinessDealsUseCase>.value(
           value: dependencies.getUserBusinessDealsUseCase,
         ),
@@ -293,6 +349,9 @@ class AppProviders extends StatelessWidget {
         ),
         RepositoryProvider<UploadBusinessDealCreativeUseCase>.value(
           value: dependencies.uploadBusinessDealCreativeUseCase,
+        ),
+        RepositoryProvider<GetBusinessDealsLeaderboardUseCase>.value(
+          value: dependencies.getBusinessDealsLeaderboardUseCase,
         ),
         RepositoryProvider<GetReceivedReferralsUseCase>.value(
           value: dependencies.getReceivedReferralsUseCase,
@@ -314,6 +373,9 @@ class AppProviders extends StatelessWidget {
         ),
         RepositoryProvider<SubmitPeerReferralUseCase>.value(
           value: dependencies.submitPeerReferralUseCase,
+        ),
+        RepositoryProvider<GetReferralsLeaderboardUseCase>.value(
+          value: dependencies.getReferralsLeaderboardUseCase,
         ),
         RepositoryProvider<GetCoinsLeaderboardUseCase>.value(
           value: dependencies.getCoinsLeaderboardUseCase,
@@ -348,6 +410,9 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<GetSingleP2pMeetingRequestUseCase>.value(
           value: dependencies.getSingleP2pMeetingRequestUseCase,
         ),
+        RepositoryProvider<GetP2pMeetingsLeaderboardUseCase>.value(
+          value: dependencies.getP2pMeetingsLeaderboardUseCase,
+        ),
         RepositoryProvider<AcceptP2pMeetingRequestUseCase>.value(
           value: dependencies.acceptP2pMeetingRequestUseCase,
         ),
@@ -378,13 +443,35 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<UploadProfileMediaUseCase>.value(
           value: dependencies.uploadProfileMediaUseCase,
         ),
+        RepositoryProvider<EventsRepository>.value(
+          value: dependencies.eventsRepository,
+        ),
+        RepositoryProvider<events_uc.GetEventsUseCase>.value(
+          value: dependencies.getEventsAllUseCase,
+        ),
+        RepositoryProvider<GetEventDetailUseCase>.value(
+          value: dependencies.getEventDetailUseCase,
+        ),
+        RepositoryProvider<RegisterEventUseCase>.value(
+          value: dependencies.registerEventUseCase,
+        ),
+        RepositoryProvider<RegisterVisitorEventUseCase>.value(
+          value: dependencies.registerVisitorEventUseCase,
+        ),
+        RepositoryProvider<CheckPaymentStatusUseCase>.value(
+          value: dependencies.checkPaymentStatusUseCase,
+        ),
+        RepositoryProvider<GetMyEventsWithQrUseCase>.value(
+          value: dependencies.getMyEventsWithQrUseCase,
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<CirclesBloc>(
             create: (_) => CirclesBloc(
               getMyCirclesUseCase: dependencies.getMyCirclesUseCase,
-              getCircleCategoriesUseCase: dependencies.getCircleCategoriesUseCase,
+              getCircleCategoriesUseCase:
+                  dependencies.getCircleCategoriesUseCase,
               getCircleDetailUseCase: dependencies.getCircleDetailUseCase,
               getCachedCirclesUseCase: dependencies.getCachedCirclesUseCase,
               getMyJoinRequestsUseCase: dependencies.getMyJoinRequestsUseCase,
@@ -393,9 +480,12 @@ class AppProviders extends StatelessWidget {
           BlocProvider<NotificationsBloc>(
             create: (_) => NotificationsBloc(
               getNotificationsUseCase: dependencies.getNotificationsUseCase,
-              markNotificationReadUseCase: dependencies.markNotificationReadUseCase,
-              markAllNotificationsReadUseCase: dependencies.markAllNotificationsReadUseCase,
-              getCachedNotificationsUseCase: dependencies.getCachedNotificationsUseCase,
+              markNotificationReadUseCase:
+                  dependencies.markNotificationReadUseCase,
+              markAllNotificationsReadUseCase:
+                  dependencies.markAllNotificationsReadUseCase,
+              getCachedNotificationsUseCase:
+                  dependencies.getCachedNotificationsUseCase,
             )..add(const NotificationsFetchRequested()),
           ),
           BlocProvider<AuthBloc>(
@@ -410,9 +500,12 @@ class AppProviders extends StatelessWidget {
               registerUseCase: dependencies.registerUseCase,
               getMainCategoriesUseCase: dependencies.getMainCategoriesUseCase,
               getSubcategoriesUseCase: dependencies.getSubcategoriesUseCase,
-              saveRegistrationDraftUseCase: dependencies.saveRegistrationDraftUseCase,
-              getRegistrationDraftUseCase: dependencies.getRegistrationDraftUseCase,
-              clearRegistrationDraftUseCase: dependencies.clearRegistrationDraftUseCase,
+              saveRegistrationDraftUseCase:
+                  dependencies.saveRegistrationDraftUseCase,
+              getRegistrationDraftUseCase:
+                  dependencies.getRegistrationDraftUseCase,
+              clearRegistrationDraftUseCase:
+                  dependencies.clearRegistrationDraftUseCase,
             ),
           ),
           BlocProvider<HomeBloc>(
@@ -423,14 +516,17 @@ class AppProviders extends StatelessWidget {
               togglePostSaveUseCase: dependencies.togglePostSaveUseCase,
               deletePostUseCase: dependencies.deletePostUseCase,
               updatePostUseCase: dependencies.updatePostUseCase,
-              getCachedTimelineFeedUseCase: dependencies.getCachedTimelineFeedUseCase,
-              getCachedBrandPartnersUseCase: dependencies.getCachedBrandPartnersUseCase,
+              getCachedTimelineFeedUseCase:
+                  dependencies.getCachedTimelineFeedUseCase,
+              getCachedBrandPartnersUseCase:
+                  dependencies.getCachedBrandPartnersUseCase,
             ),
           ),
           BlocProvider<PeersBloc>(
             create: (_) => PeersBloc(
               getAllPeersUseCase: dependencies.getAllPeersUseCase,
-              sendConnectionRequestUseCase: dependencies.sendConnectionRequestUseCase,
+              sendConnectionRequestUseCase:
+                  dependencies.sendConnectionRequestUseCase,
               togglePeerBookmarkUseCase: dependencies.togglePeerBookmarkUseCase,
               followUserUseCase: dependencies.followUserUseCase,
               unfollowUserUseCase: dependencies.unfollowUserUseCase,
@@ -446,11 +542,16 @@ class AppProviders extends StatelessWidget {
           ),
           BlocProvider<PeerRequestsBloc>(
             create: (_) => PeerRequestsBloc(
-              getConnectionRequestsUseCase: dependencies.getConnectionRequestsUseCase,
-              getSentConnectionRequestsUseCase: dependencies.getSentConnectionRequestsUseCase,
-              acceptConnectionRequestUseCase: dependencies.acceptConnectionRequestUseCase,
-              declineConnectionRequestUseCase: dependencies.declineConnectionRequestUseCase,
-              cancelSentConnectionRequestUseCase: dependencies.cancelSentConnectionRequestUseCase,
+              getConnectionRequestsUseCase:
+                  dependencies.getConnectionRequestsUseCase,
+              getSentConnectionRequestsUseCase:
+                  dependencies.getSentConnectionRequestsUseCase,
+              acceptConnectionRequestUseCase:
+                  dependencies.acceptConnectionRequestUseCase,
+              declineConnectionRequestUseCase:
+                  dependencies.declineConnectionRequestUseCase,
+              cancelSentConnectionRequestUseCase:
+                  dependencies.cancelSentConnectionRequestUseCase,
             ),
           ),
           BlocProvider<NearMeBloc>(
@@ -458,20 +559,22 @@ class AppProviders extends StatelessWidget {
               getNearbyPeersUseCase: dependencies.getNearbyPeersUseCase,
               followUserUseCase: dependencies.followUserUseCase,
               unfollowUserUseCase: dependencies.unfollowUserUseCase,
-              sendConnectionRequestUseCase: dependencies.sendConnectionRequestUseCase,
+              sendConnectionRequestUseCase:
+                  dependencies.sendConnectionRequestUseCase,
               togglePeerBookmarkUseCase: dependencies.togglePeerBookmarkUseCase,
             ),
           ),
           BlocProvider<MatchesBloc>(
             create: (_) => MatchesBloc(
               getMatchPeersUseCase: dependencies.getMatchPeersUseCase,
-              sendConnectionRequestUseCase: dependencies.sendConnectionRequestUseCase,
+              sendConnectionRequestUseCase:
+                  dependencies.sendConnectionRequestUseCase,
             ),
           ),
           BlocProvider<ProfileBloc>(
-            create: (_) => ProfileBloc(
-              getProfileUseCase: dependencies.getProfileUseCase,
-            )..add(const ProfileFetchRequested()),
+            create: (_) =>
+                ProfileBloc(getProfileUseCase: dependencies.getProfileUseCase)
+                  ..add(const ProfileFetchRequested()),
           ),
           BlocProvider<ProfileEditBloc>(
             create: (context) => ProfileEditBloc(
@@ -498,7 +601,8 @@ class AppProviders extends StatelessWidget {
           ),
           BlocProvider<HighlightsBloc>(
             create: (_) => HighlightsBloc(
-              getHighlightSectionsUseCase: dependencies.getHighlightSectionsUseCase,
+              getHighlightSectionsUseCase:
+                  dependencies.getHighlightSectionsUseCase,
             )..add(const HighlightsFetchRequested()),
           ),
           BlocProvider<MyNetworkBloc>(
@@ -511,30 +615,50 @@ class AppProviders extends StatelessWidget {
           BlocProvider<TopBuildersBloc>(
             create: (_) => TopBuildersBloc(
               getTopBuildersUseCase: dependencies.getTopBuildersUseCase,
-              getMyIntroducedPeersUseCase: dependencies.getMyIntroducedPeersUseCase,
+              getMyIntroducedPeersUseCase:
+                  dependencies.getMyIntroducedPeersUseCase,
             )..add(const FetchTopBuildersDataEvent()),
           ),
           BlocProvider<LastMonthActivityBloc>(
             create: (_) => LastMonthActivityBloc(
-              getLastMonthActivityUseCase: dependencies.getLastMonthActivityUseCase,
+              getLastMonthActivityUseCase:
+                  dependencies.getLastMonthActivityUseCase,
             )..add(const FetchLastMonthActivityEvent()),
           ),
           BlocProvider<GratitudeScriptBloc>(
             create: (_) => GratitudeScriptBloc(
               getGratitudeScriptUseCase: dependencies.getGratitudeScriptUseCase,
-              saveGratitudeScriptUseCase: dependencies.saveGratitudeScriptUseCase,
+              saveGratitudeScriptUseCase:
+                  dependencies.saveGratitudeScriptUseCase,
             )..add(const FetchGratitudeScriptEvent()),
           ),
           BlocProvider<LifeImpactBloc>(
             create: (_) => LifeImpactBloc(
-              getLifeImpactHistoryUseCase: dependencies.getLifeImpactHistoryUseCase,
+              getLifeImpactHistoryUseCase:
+                  dependencies.getLifeImpactHistoryUseCase,
+              getLifeImpactActionsUseCase:
+                  dependencies.getLifeImpactActionsUseCase,
               submitLifeImpactUseCase: dependencies.submitLifeImpactUseCase,
-            )..add(const FetchLifeImpactHistoryEvent()),
+            )
+              ..add(const FetchLifeImpactHistoryEvent())
+              ..add(const FetchLifeImpactActionsEvent()),
           ),
           BlocProvider<CoinsBloc>(
             create: (_) => CoinsBloc(
               getCoinWalletDataUseCase: dependencies.getCoinWalletDataUseCase,
-            )..add(const FetchCoinsWalletEvent()),
+              getCoinClaimActivitiesUseCase: dependencies.getCoinClaimActivitiesUseCase,
+              submitCoinClaimUseCase: dependencies.submitCoinClaimUseCase,
+              getCoinClaimsUseCase: dependencies.getCoinClaimsUseCase,
+            )
+              ..add(const FetchCoinsWalletEvent())
+              ..add(const FetchCoinClaimActivitiesEvent())
+              ..add(const FetchCoinClaimsEvent()),
+          ),
+          BlocProvider<MilestoneBloc>(
+            create: (_) => MilestoneBloc(
+              getLatestMilestoneUseCase: dependencies.getLatestMilestoneUseCase,
+              getMilestoneHistoryUseCase: dependencies.getMilestoneHistoryUseCase,
+            ),
           ),
           BlocProvider<MenuBloc>(
             create: (_) => MenuBloc(
@@ -543,54 +667,73 @@ class AppProviders extends StatelessWidget {
           ),
           BlocProvider<SettingsBloc>(
             create: (_) => SettingsBloc(
-              getNotificationPreferencesUseCase: dependencies.getNotificationPreferencesUseCase,
-              updateNotificationPreferencesUseCase: dependencies.updateNotificationPreferencesUseCase,
+              getNotificationPreferencesUseCase:
+                  dependencies.getNotificationPreferencesUseCase,
+              updateNotificationPreferencesUseCase:
+                  dependencies.updateNotificationPreferencesUseCase,
             )..add(const FetchSettingsEvent()),
           ),
           BlocProvider<LeadershipCertificationBloc>(
             create: (_) => LeadershipCertificationBloc(
-              getQuestionsUseCase: dependencies.getLeadershipCertificationQuestionsUseCase,
-              submitCertificationUseCase: dependencies.submitLeadershipCertificationUseCase,
-            )..add(const LoadLeadershipQuestionsEvent()),
+              getQuestionsUseCase:
+                  dependencies.getLeadershipCertificationQuestionsUseCase,
+              getSubmissionsUseCase:
+                  dependencies.getLeadershipCertificationSubmissionsUseCase,
+              submitCertificationUseCase:
+                  dependencies.submitLeadershipCertificationUseCase,
+            )..add(const LoadLeadershipInitialDataEvent()),
           ),
           BlocProvider<EntrepreneurCertificationBloc>(
             create: (_) => EntrepreneurCertificationBloc(
-              getQuestionsUseCase: dependencies.getEntrepreneurCertificationQuestionsUseCase,
-              submitCertificationUseCase: dependencies.submitEntrepreneurCertificationUseCase,
-            )..add(const LoadEntrepreneurQuestionsEvent()),
+              getQuestionsUseCase:
+                  dependencies.getEntrepreneurCertificationQuestionsUseCase,
+              getSubmissionsUseCase:
+                  dependencies.getEntrepreneurCertificationSubmissionsUseCase,
+              submitCertificationUseCase:
+                  dependencies.submitEntrepreneurCertificationUseCase,
+            )..add(const LoadEntrepreneurInitialDataEvent()),
           ),
           BlocProvider<LeadershipRoleBloc>(
             create: (_) => LeadershipRoleBloc(
-              submitLeadershipInterestUseCase: dependencies.submitLeadershipInterestUseCase,
+              submitLeadershipInterestUseCase:
+                  dependencies.submitLeadershipInterestUseCase,
             ),
           ),
           BlocProvider<RecommendPeerBloc>(
             create: (_) => RecommendPeerBloc(
-              submitPeerRecommendationUseCase: dependencies.submitPeerRecommendationUseCase,
+              submitPeerRecommendationUseCase:
+                  dependencies.submitPeerRecommendationUseCase,
             ),
           ),
           BlocProvider<MentorBloc>(
             create: (_) => MentorBloc(
-              submitMentorApplicationUseCase: dependencies.submitMentorApplicationUseCase,
-              getMentorSubmissionsUseCase: dependencies.getMentorSubmissionsUseCase,
+              submitMentorApplicationUseCase:
+                  dependencies.submitMentorApplicationUseCase,
+              getMentorSubmissionsUseCase:
+                  dependencies.getMentorSubmissionsUseCase,
             )..add(const FetchMentorHistoryEvent()),
           ),
           BlocProvider<SpeakerBloc>(
             create: (_) => SpeakerBloc(
-              submitSpeakerApplicationUseCase: dependencies.submitSpeakerApplicationUseCase,
-              getSpeakerSubmissionsUseCase: dependencies.getSpeakerSubmissionsUseCase,
+              submitSpeakerApplicationUseCase:
+                  dependencies.submitSpeakerApplicationUseCase,
+              getSpeakerSubmissionsUseCase:
+                  dependencies.getSpeakerSubmissionsUseCase,
             )..add(const FetchSpeakerHistoryEvent()),
           ),
           BlocProvider<PartnerWithUsBloc>(
             create: (_) => PartnerWithUsBloc(
-              submitPartnerWithUsUseCase: dependencies.submitPartnerWithUsUseCase,
-              getPartnerWithUsSubmissionsUseCase: dependencies.getPartnerWithUsSubmissionsUseCase,
+              submitPartnerWithUsUseCase:
+                  dependencies.submitPartnerWithUsUseCase,
+              getPartnerWithUsSubmissionsUseCase:
+                  dependencies.getPartnerWithUsSubmissionsUseCase,
             )..add(const FetchPartnerWithUsHistoryEvent()),
           ),
           BlocProvider<VyapaarJagatBloc>(
             create: (_) => VyapaarJagatBloc(
               submitStoryUseCase: dependencies.submitVyapaarJagatStoryUseCase,
-              getStoryStatusUseCase: dependencies.getVyapaarJagatStoryStatusUseCase,
+              getStoryStatusUseCase:
+                  dependencies.getVyapaarJagatStoryStatusUseCase,
             )..add(const FetchStoryStatusEvent()),
           ),
           BlocProvider<PostAskBloc>(
@@ -600,6 +743,99 @@ class AppProviders extends StatelessWidget {
               completeAskUseCase: dependencies.completeAskUseCase,
               uploadProfileMediaUseCase: dependencies.uploadProfileMediaUseCase,
             )..add(const FetchMyAsksEvent()),
+          ),
+          BlocProvider<RegisterVisitorBloc>(
+            create: (_) => RegisterVisitorBloc(
+              submitRegisterVisitorUseCase: dependencies.submitRegisterVisitorUseCase,
+              getRegisterVisitorSubmissionsUseCase: dependencies.getRegisterVisitorSubmissionsUseCase,
+              getEventsUseCase: dependencies.getEventsUseCase,
+            )
+              ..add(const FetchRegisterVisitorHistoryEvent())
+              ..add(const FetchEventsEvent()),
+          ),
+          BlocProvider<CollaborationsBloc>(
+            create: (_) => CollaborationsBloc(
+              getIndustriesTree: dependencies.getIndustriesTreeUseCase,
+              getCollaborationTypes: dependencies.getCollaborationTypesUseCase,
+              submitCollaboration: dependencies.submitCollaborationUseCase,
+              getCollaborationHistory:
+                  dependencies.getCollaborationHistoryUseCase,
+              acceptCollaboration: dependencies.acceptCollaborationUseCase,
+            )..add(const LoadCollaborationsInitialData()),
+          ),
+          BlocProvider<RequirementsBloc>(
+            create: (_) => RequirementsBloc(
+              getOpenRequirements: dependencies.getOpenRequirementsUseCase,
+              getMyRequirements: dependencies.getMyRequirementsUseCase,
+              createRequirement: dependencies.createRequirementUseCase,
+              completeRequirement: dependencies.completeRequirementUseCase,
+              fulfillRequirement: dependencies.fulfillRequirementUseCase,
+              uploadProfileMediaUseCase: dependencies.uploadProfileMediaUseCase,
+            )..add(const FetchOpenRequirementsEvent()),
+          ),
+          BlocProvider<ChatListBloc>(
+            create: (_) => ChatListBloc(
+              getDirectChatsUseCase: dependencies.getDirectChatsUseCase,
+            ),
+          ),
+          BlocProvider<DirectChatBloc>(
+            create: (_) => DirectChatBloc(
+              getOrCreateDirectChatUseCase:
+                  dependencies.getOrCreateDirectChatUseCase,
+              getDirectChatDetailUseCase:
+                  dependencies.getDirectChatDetailUseCase,
+              getDirectMessagesUseCase: dependencies.getDirectMessagesUseCase,
+              sendDirectMessageUseCase: dependencies.sendDirectMessageUseCase,
+              markDirectChatReadUseCase:
+                  dependencies.markDirectChatReadUseCase,
+              setTypingStatusUseCase: dependencies.setTypingStatusUseCase,
+              deleteDirectMessageUseCase:
+                  dependencies.deleteDirectMessageUseCase,
+            ),
+          ),
+          BlocProvider<CircleChatBloc>(
+            create: (_) => CircleChatBloc(
+              getCircleMessagesUseCase: dependencies.getCircleMessagesUseCase,
+              sendCircleMessageUseCase: dependencies.sendCircleMessageUseCase,
+              markCircleMessagesReadUseCase:
+                  dependencies.markCircleMessagesReadUseCase,
+              getCircleMessageReadsUseCase:
+                  dependencies.getCircleMessageReadsUseCase,
+              deleteCircleMessageUseCase:
+                  dependencies.deleteCircleMessageUseCase,
+            ),
+          ),
+          BlocProvider<LeadershipChatBloc>(
+            create: (_) => LeadershipChatBloc(
+              getLeadershipRosterUseCase:
+                  dependencies.getLeadershipRosterUseCase,
+              getLeadershipMessagesUseCase:
+                  dependencies.getLeadershipMessagesUseCase,
+              sendLeadershipMessageUseCase:
+                  dependencies.sendLeadershipMessageUseCase,
+              markLeadershipMessagesReadUseCase:
+                  dependencies.markLeadershipMessagesReadUseCase,
+              deleteLeadershipMessageUseCase:
+                  dependencies.deleteLeadershipMessageUseCase,
+            ),
+          ),
+          BlocProvider<EventsBloc>(
+            create: (_) => EventsBloc(
+              getEventsUseCase: dependencies.getEventsAllUseCase,
+            )..add(const FetchAllEventsEvent()),
+          ),
+          BlocProvider<EventDetailBloc>(
+            create: (_) => EventDetailBloc(
+              getEventDetailUseCase: dependencies.getEventDetailUseCase,
+              registerEventUseCase: dependencies.registerEventUseCase,
+              registerVisitorEventUseCase: dependencies.registerVisitorEventUseCase,
+              checkPaymentStatusUseCase: dependencies.checkPaymentStatusUseCase,
+            ),
+          ),
+          BlocProvider<MyEventsBloc>(
+            create: (_) => MyEventsBloc(
+              getMyEventsWithQrUseCase: dependencies.getMyEventsWithQrUseCase,
+            )..add(const FetchMyEventsEvent()),
           ),
         ],
         child: child,

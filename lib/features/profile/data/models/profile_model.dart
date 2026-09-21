@@ -115,6 +115,7 @@ class ProfileModel extends ProfileEntity {
     super.isRequested = false,
     super.connectionStatus = 'none',
     super.isOnline = false,
+    super.isBlocked = false,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -484,6 +485,10 @@ class ProfileModel extends ProfileEntity {
           root['is_online'] == 1 ||
           root['is_online'] == '1' ||
           root['online_status'] == 'online',
+      isBlocked: root['is_blocked'] == true ||
+          root['is_blocked_by_me'] == true ||
+          root['blocked'] == true ||
+          root['block_status'] == 'blocked',
     );
   }
 

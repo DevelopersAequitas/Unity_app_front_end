@@ -2,6 +2,7 @@ import 'dart:io';
 import '../../domain/entities/create_p2p_meeting_params.dart';
 import '../../domain/entities/create_p2p_meeting_request_params.dart';
 import '../../domain/entities/p2p_meeting_entity.dart';
+import '../../domain/entities/p2p_meeting_leaderboard_entity.dart';
 import '../../domain/entities/p2p_meeting_request_entity.dart';
 import '../../domain/entities/p2p_meeting_user_summary_entity.dart';
 import '../../domain/entities/p2p_reschedule_request_entity.dart';
@@ -13,8 +14,15 @@ class P2pMeetingsRepositoryImpl implements P2pMeetingsRepository {
   final P2pMeetingsRemoteDataSource _remoteDataSource;
 
   P2pMeetingsRepositoryImpl({
-    required this._remoteDataSource,
-  });
+    required P2pMeetingsRemoteDataSource remoteDataSource,
+    // ignore: prefer_initializing_formals
+  }) : _remoteDataSource = remoteDataSource;
+
+  @override
+  Future<List<P2pMeetingLeaderboardEntity>> getP2pMeetingsLeaderboard() async {
+    final models = await _remoteDataSource.getP2pMeetingsLeaderboard();
+    return models.map((m) => m.toEntity()).toList();
+  }
 
   @override
   Future<List<P2pMeetingEntity>> getP2pMeetingsHistory({

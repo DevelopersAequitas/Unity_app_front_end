@@ -4,6 +4,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../widgets/tutorial_video_card.dart';
 
 class TutorialsScreen extends StatefulWidget {
   const TutorialsScreen({super.key});
@@ -34,10 +35,22 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
       final data = res.data;
       List<dynamic> raw = [];
       if (data is Map<String, dynamic>) {
-        raw = data['data']?['items'] as List? ?? data['items'] as List? ?? [];
+        final innerData = data['data'];
+        if (innerData is Map<String, dynamic>) {
+          raw =
+              innerData['tutorials'] as List? ??
+              innerData['items'] as List? ??
+              innerData['videos'] as List? ??
+              [];
+        } else if (innerData is List) {
+          raw = innerData;
+        } else {
+          raw = data['tutorials'] as List? ?? data['items'] as List? ?? [];
+        }
       } else if (data is List) {
         raw = data;
       }
+
       if (mounted) {
         setState(() {
           _tutorials = raw.whereType<Map<String, dynamic>>().toList();
@@ -56,8 +69,8 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
 
   Future<void> _openTutorial(String url) async {
     if (url.isEmpty) return;
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
@@ -77,7 +90,11 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
         backgroundColor: AppColor.lightSurface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColor.lightTextPrimary),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColor.lightTextPrimary,
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -93,10 +110,10 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
     if (_isLoading) {
       return ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: 4,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemCount: 3,
+        separatorBuilder: (context, index) => const SizedBox(height: 16),
         itemBuilder: (context, index) => Container(
-          height: 76,
+          height: 220,
           decoration: BoxDecoration(
             color: AppColor.lightSurface,
             borderRadius: BorderRadius.circular(16),
@@ -113,11 +130,23 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.lightTextTertiary),
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 40,
+                color: AppColor.lightTextTertiary,
+              ),
               const SizedBox(height: 8),
-              Text(_errorMessage!, style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary)),
+              Text(
+                _errorMessage!,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColor.lightTextSecondary,
+                ),
+              ),
               const SizedBox(height: 12),
-              OutlinedButton(onPressed: _fetchTutorials, child: const Text('Try Again')),
+              OutlinedButton(
+                onPressed: _fetchTutorials,
+                child: const Text('Try Again'),
+              ),
             ],
           ),
         ),
@@ -138,7 +167,11 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
                   color: AppColor.primaryBlue.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.school_outlined, size: 28, color: AppColor.primaryBlue),
+                child: const Icon(
+                  Icons.school_outlined,
+                  size: 28,
+                  color: AppColor.primaryBlue,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -151,7 +184,9 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
               const SizedBox(height: 8),
               Text(
                 'Helpful guides on maximizing your Unity network will be published here.',
-                style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColor.lightTextSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -163,63 +198,20 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _tutorials.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-
         final item = _tutorials[index];
-        final title = item['title']?.toString() ?? 'Tutorial';
-        final duration = item['duration']?.toString() ?? '';
-        final url = item['url']?.toString() ?? item['video_url']?.toString() ?? '';
+        final url =
+            item['youtube_url']?.toString() ??
+            item['video_url']?.toString() ??
+            item['url']?.toString() ??
+            (item['video_id'] != null
+                ? 'https://www.youtube.com/watch?v=${item['video_id']}'
+                : '');
 
-        return InkWell(
+        return TutorialVideoCard(
+          tutorial: item,
           onTap: () => _openTutorial(url),
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColor.lightSurface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColor.lightBorder),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColor.primaryBlue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.play_circle_outline_rounded, color: AppColor.primaryBlue, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: AppTypography.bodyLarge.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: AppColor.lightTextPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (duration.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          duration,
-                          style: AppTypography.labelSmall.copyWith(color: AppColor.lightTextSecondary),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const Icon(Icons.open_in_new_rounded, size: 16, color: AppColor.lightTextDisabled),
-              ],
-            ),
-          ),
         );
       },
     );

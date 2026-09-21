@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:unity_app/features/business_deal/domain/usecases/get_business_deals_leaderboard_usecase.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
@@ -30,10 +31,12 @@ class PeerBusinessDealsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (ctx) => BusinessDealsBloc(
-        getReceivedBusinessDealsUseCase:
-            ctx.read<GetReceivedBusinessDealsUseCase>(),
+        getReceivedBusinessDealsUseCase: ctx
+            .read<GetReceivedBusinessDealsUseCase>(),
         getGivenBusinessDealsUseCase: ctx.read<GetGivenBusinessDealsUseCase>(),
         getUserBusinessDealsUseCase: ctx.read<GetUserBusinessDealsUseCase>(),
+        getBusinessDealsLeaderboardUseCase: ctx
+            .read<GetBusinessDealsLeaderboardUseCase>(),
       )..add(BusinessDealsFetchUserRequested(peerId)),
       child: _PeerBusinessDealsView(peerId: peerId, peerName: peerName),
     );
@@ -44,10 +47,7 @@ class _PeerBusinessDealsView extends StatefulWidget {
   final String peerId;
   final String peerName;
 
-  const _PeerBusinessDealsView({
-    required this.peerId,
-    required this.peerName,
-  });
+  const _PeerBusinessDealsView({required this.peerId, required this.peerName});
 
   @override
   State<_PeerBusinessDealsView> createState() => _PeerBusinessDealsViewState();
@@ -67,9 +67,9 @@ class _PeerBusinessDealsViewState extends State<_PeerBusinessDealsView> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      context
-          .read<BusinessDealsBloc>()
-          .add(BusinessDealsLoadMoreUserRequested(widget.peerId));
+      context.read<BusinessDealsBloc>().add(
+        BusinessDealsLoadMoreUserRequested(widget.peerId),
+      );
     }
   }
 
@@ -106,7 +106,10 @@ class _PeerBusinessDealsViewState extends State<_PeerBusinessDealsView> {
           Container(width: 1, height: 24, color: AppColor.lightBorder),
           _buildStatItem('Received', (received ?? 0).toString()),
           Container(width: 1, height: 24, color: AppColor.lightBorder),
-          _buildStatItem('Total Deals', (total ?? (given ?? 0) + (received ?? 0)).toString()),
+          _buildStatItem(
+            'Total Deals',
+            (total ?? (given ?? 0) + (received ?? 0)).toString(),
+          ),
         ],
       ),
     );
@@ -155,15 +158,15 @@ class _PeerBusinessDealsViewState extends State<_PeerBusinessDealsView> {
           setState(() => _isSearching = true);
         },
         onSearchChanged: (query) {
-          context
-              .read<BusinessDealsBloc>()
-              .add(BusinessDealsSearchChanged(query));
+          context.read<BusinessDealsBloc>().add(
+            BusinessDealsSearchChanged(query),
+          );
         },
         onSearchClose: () {
           _searchController.clear();
-          context
-              .read<BusinessDealsBloc>()
-              .add(const BusinessDealsSearchChanged(''));
+          context.read<BusinessDealsBloc>().add(
+            const BusinessDealsSearchChanged(''),
+          );
           setState(() => _isSearching = false);
         },
         showNotifications: false,
@@ -194,8 +197,8 @@ class _PeerBusinessDealsViewState extends State<_PeerBusinessDealsView> {
                 return BusinessDealErrorView(
                   onRetry: () {
                     context.read<BusinessDealsBloc>().add(
-                          BusinessDealsFetchUserRequested(widget.peerId),
-                        );
+                      BusinessDealsFetchUserRequested(widget.peerId),
+                    );
                   },
                 );
               }
@@ -212,8 +215,8 @@ class _PeerBusinessDealsViewState extends State<_PeerBusinessDealsView> {
               return RefreshIndicator(
                 onRefresh: () async {
                   context.read<BusinessDealsBloc>().add(
-                        BusinessDealsFetchUserRequested(widget.peerId),
-                      );
+                    BusinessDealsFetchUserRequested(widget.peerId),
+                  );
                 },
                 color: AppColor.primaryBlue,
                 child: Column(

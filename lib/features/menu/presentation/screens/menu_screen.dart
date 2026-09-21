@@ -16,6 +16,7 @@ import '../widgets/menu_item_tile.dart';
 import '../widgets/menu_section_card.dart';
 import '../widgets/menu_social_section.dart';
 import '../widgets/menu_logout_dialog.dart';
+import '../../../highlights/presentation/screens/welcome_creative_template_screen.dart';
 import 'activity_summary_screen.dart';
 import 'blocked_users_screen.dart';
 import 'circulars_screen.dart';
@@ -91,6 +92,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 MenuSectionCard(
                   title: 'COMMUNITY & EVENTS',
                   children: [
+                    MenuItemTile(icon: Icons.palette_outlined, title: 'Welcome Creative', iconColor: AppColor.primaryBlue, onTap: () => _navigateTo(const WelcomeCreativeTemplateScreen())),
                     MenuItemTile(icon: Icons.campaign_outlined, title: 'Circulars & Notices', iconColor: AppColor.primaryBlue, badgeCount: s.unreadCircularsCount, onTap: () => _navigateTo(const CircularsScreen())),
                     MenuItemTile(icon: Icons.photo_library_outlined, title: 'Event Gallery', iconColor: AppColor.primaryPink, onTap: () => _navigateTo(const EventGalleryScreen())),
                     MenuItemTile(icon: Icons.play_circle_outline_rounded, title: 'Event Videos', iconColor: AppColor.primaryBlue, onTap: () => _navigateTo(const EventVideosScreen())),

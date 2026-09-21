@@ -15,27 +15,29 @@ class TestimonialsBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+            width: 0.8,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColor.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, -3),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
-        border: Border(
-          top: BorderSide(color: AppColor.lightBorder, width: 0.8),
-        ),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
           height: 60,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Expanded(
                 child: _buildNavItem(
@@ -45,13 +47,20 @@ class TestimonialsBottomNav extends StatelessWidget {
                   onTap: () => onTabChanged(TestimonialTab.received),
                 ),
               ),
-              const SizedBox(width: 56), // Space for centered FAB
               Expanded(
                 child: _buildNavItem(
                   label: 'Given',
                   icon: Icons.send_outlined,
                   isSelected: activeTab == TestimonialTab.given,
                   onTap: () => onTabChanged(TestimonialTab.given),
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                  label: 'Leaderboard',
+                  icon: Icons.leaderboard_outlined,
+                  isSelected: activeTab == TestimonialTab.leaderboard,
+                  onTap: () => onTabChanged(TestimonialTab.leaderboard),
                 ),
               ),
             ],

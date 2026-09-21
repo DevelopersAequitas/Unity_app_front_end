@@ -12,12 +12,20 @@ class P2pMeetingsFetchRequested extends P2pMeetingsEvent {
   const P2pMeetingsFetchRequested();
 }
 
+class P2pMeetingsFetchLeaderboardRequested extends P2pMeetingsEvent {
+  final bool forceRefresh;
+  const P2pMeetingsFetchLeaderboardRequested({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
+}
+
 class P2pMeetingsRefreshRequested extends P2pMeetingsEvent {
   const P2pMeetingsRefreshRequested();
 }
 
 class P2pMeetingsTopTabChanged extends P2pMeetingsEvent {
-  final String topTab; // 'completed' or 'scheduled'
+  final String topTab; // 'completed', 'scheduled', or 'leaderboard'
   const P2pMeetingsTopTabChanged(this.topTab);
 
   @override

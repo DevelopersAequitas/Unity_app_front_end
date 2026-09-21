@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/router/app_router.dart';
 import '../../../../../core/theme/app_color.dart';
 import '../../../../../core/widgets/app_snack_bar.dart';
 import '../../../../peers/domain/entities/peer_entity.dart';
@@ -208,9 +209,14 @@ class CircleClosedCategoryActions extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => AppSnackBar.showInfo(
+                onTap: () => Navigator.pushNamed(
                   context,
-                  'Messaging ${peer.displayName}',
+                  AppRoutes.directChat,
+                  arguments: {
+                    'peer_id': peer.id,
+                    'peer_name': peer.displayName,
+                    'peer_avatar': peer.profilePhotoUrl,
+                  },
                 ),
                 borderRadius: BorderRadius.circular(6),
                 child: Center(

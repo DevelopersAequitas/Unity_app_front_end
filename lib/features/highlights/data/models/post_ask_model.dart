@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/post_ask_entity.dart';
 
 class PostAskModel extends PostAskEntity {
@@ -17,12 +18,7 @@ class PostAskModel extends PostAskEntity {
   });
 
   factory PostAskModel.fromJson(Map<String, dynamic> json) {
-    DateTime? parsedDate;
-    if (json['created_at'] != null) {
-      parsedDate = DateTime.tryParse(json['created_at'].toString());
-    } else if (json['createdAt'] != null) {
-      parsedDate = DateTime.tryParse(json['createdAt'].toString());
-    }
+    final parsedDate = AppDateFormatter.parseUtc(json['created_at'] ?? json['createdAt']);
 
     String? mediaId;
     String? mediaUrl;

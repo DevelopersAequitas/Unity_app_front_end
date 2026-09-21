@@ -40,6 +40,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   late TextEditingController _countryController;
   late TextEditingController _pincodeController;
   late TextEditingController _addressController;
+  late TextEditingController _bioController;
+  late TextEditingController _superpowerController;
 
   String? _gender;
   DateTime? _dob;
@@ -78,6 +80,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     _countryController = TextEditingController(text: p.country ?? '');
     _pincodeController = TextEditingController(text: p.pincode ?? '');
     _addressController = TextEditingController(text: p.address ?? '');
+    _bioController = TextEditingController(text: p.bio ?? '');
+    _superpowerController = TextEditingController(text: p.superpower ?? '');
 
     _gender = p.gender;
     if (p.dob != null && p.dob!.isNotEmpty) {
@@ -102,6 +106,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     _countryController.dispose();
     _pincodeController.dispose();
     _addressController.dispose();
+    _bioController.dispose();
+    _superpowerController.dispose();
     super.dispose();
   }
 
@@ -167,6 +173,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
       'pincode': _pincodeController.text.trim(),
       'address': _addressController.text.trim(),
       'preferred_language': _preferredLanguage,
+      'bio': _bioController.text.trim(),
+      'superpower': _superpowerController.text.trim(),
     };
 
     context.read<ProfileEditBloc>().add(
@@ -382,6 +390,30 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                     controller: _pincodeController,
                     label: 'Pincode',
                     keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // About & Superpower
+                  Text(
+                    'ABOUT & SUPERPOWER',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColor.textTertiary,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  _buildTextField(
+                    controller: _bioController,
+                    label: 'Bio',
+                    maxLines: 3,
+                    helperText: 'A short summary about yourself',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildTextField(
+                    controller: _superpowerController,
+                    label: 'Core Strength / Superpower',
+                    helperText: 'e.g. Scaling B2B Sales, Product Design',
                   ),
                   const SizedBox(height: AppSpacing.xl),
 

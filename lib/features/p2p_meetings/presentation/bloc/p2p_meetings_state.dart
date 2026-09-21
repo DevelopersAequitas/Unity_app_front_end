@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/p2p_meeting_entity.dart';
+import '../../domain/entities/p2p_meeting_leaderboard_entity.dart';
 import '../../domain/entities/p2p_meeting_request_entity.dart';
 import '../../domain/entities/p2p_reschedule_request_entity.dart';
 
@@ -7,7 +8,7 @@ enum P2pMeetingsStatus { initial, loading, success, failure, actionSuccess }
 
 class P2pMeetingsState extends Equatable {
   final P2pMeetingsStatus status;
-  final String topTab; // 'completed' or 'scheduled'
+  final String topTab; // 'completed', 'scheduled', or 'leaderboard'
   final String completedSubTab; // 'i_initiated' or 'peer_initiated'
   final String scheduledSubTab; // 'received', 'sent', 'reschedules'
   final String searchQuery;
@@ -16,6 +17,7 @@ class P2pMeetingsState extends Equatable {
   final List<P2pMeetingRequestEntity> receivedRequests;
   final List<P2pMeetingRequestEntity> sentRequests;
   final List<P2pRescheduleRequestEntity> rescheduleRequests;
+  final List<P2pMeetingLeaderboardEntity> leaderboardList;
   final String? errorMessage;
   final String? successMessage;
 
@@ -30,6 +32,7 @@ class P2pMeetingsState extends Equatable {
     this.receivedRequests = const [],
     this.sentRequests = const [],
     this.rescheduleRequests = const [],
+    this.leaderboardList = const [],
     this.errorMessage,
     this.successMessage,
   });
@@ -75,6 +78,18 @@ class P2pMeetingsState extends Equatable {
     }).toList();
   }
 
+  List<P2pMeetingLeaderboardEntity> get filteredLeaderboardList {
+    if (searchQuery.trim().isEmpty) return leaderboardList;
+    final q = searchQuery.trim().toLowerCase();
+    return leaderboardList.where((b) {
+      return b.displayName.toLowerCase().contains(q) ||
+          (b.companyName ?? '').toLowerCase().contains(q) ||
+          (b.designation ?? '').toLowerCase().contains(q) ||
+          (b.city ?? '').toLowerCase().contains(q) ||
+          (b.category ?? '').toLowerCase().contains(q);
+    }).toList();
+  }
+
   P2pMeetingsState copyWith({
     P2pMeetingsStatus? status,
     String? topTab,
@@ -86,6 +101,7 @@ class P2pMeetingsState extends Equatable {
     List<P2pMeetingRequestEntity>? receivedRequests,
     List<P2pMeetingRequestEntity>? sentRequests,
     List<P2pRescheduleRequestEntity>? rescheduleRequests,
+    List<P2pMeetingLeaderboardEntity>? leaderboardList,
     String? errorMessage,
     String? successMessage,
   }) {
@@ -100,6 +116,7 @@ class P2pMeetingsState extends Equatable {
       receivedRequests: receivedRequests ?? this.receivedRequests,
       sentRequests: sentRequests ?? this.sentRequests,
       rescheduleRequests: rescheduleRequests ?? this.rescheduleRequests,
+      leaderboardList: leaderboardList ?? this.leaderboardList,
       errorMessage: errorMessage,
       successMessage: successMessage,
     );
@@ -117,7 +134,9 @@ class P2pMeetingsState extends Equatable {
         receivedRequests,
         sentRequests,
         rescheduleRequests,
+        leaderboardList,
         errorMessage,
         successMessage,
       ];
 }
+

@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/mentor_submission_entity.dart';
 
 class MentorSubmissionModel extends MentorSubmissionEntity {
@@ -14,13 +15,7 @@ class MentorSubmissionModel extends MentorSubmissionEntity {
   });
 
   factory MentorSubmissionModel.fromJson(Map<String, dynamic> json) {
-    DateTime? parsedDate;
-    final createdStr = json['created_at']?.toString();
-    if (createdStr != null && createdStr.isNotEmpty) {
-      try {
-        parsedDate = DateTime.parse(createdStr);
-      } catch (_) {}
-    }
+    final parsedDate = AppDateFormatter.parseUtc(json['created_at']);
 
     return MentorSubmissionModel(
       id: json['id']?.toString(),

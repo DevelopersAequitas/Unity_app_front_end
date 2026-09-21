@@ -14,7 +14,7 @@ class CertificationQuestionModel extends CertificationQuestionEntity {
       parsedOptions = rawOptions.map((e) => e.toString()).toList();
     }
     return CertificationQuestionModel(
-      field: json['field']?.toString() ?? '',
+      field: json['key']?.toString() ?? json['field']?.toString() ?? '',
       question: json['question']?.toString() ?? '',
       options: parsedOptions,
     );

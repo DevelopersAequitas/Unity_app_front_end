@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../cache/app_cache_keys.dart';
 import '../cache/cache_store.dart';
+import '../cache/hive_cache_store.dart';
 import '../constants/app_environment.dart';
 import 'api_exception.dart';
 
@@ -27,24 +28,60 @@ class DioClient {
 
     dio.interceptors.addAll([
       if (kDebugMode)
-        LogInterceptor(
-          requestHeader: false,
-          requestBody: true,
-          responseBody: true,
-          responseHeader: false,
-          error: true,
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final p = options.path;
+            final isMuted = p.contains('/chats') ||
+                p.contains('/members/online-heartbeat') ||
+                p.contains('/me/connection-requests');
+            if (!isMuted) {
+              debugPrint('\n*** Request ***');
+              debugPrint('uri: ${options.uri}');
+              debugPrint('method: ${options.method}');
+              if (options.data != null) debugPrint('data: ${options.data}');
+            }
+            return handler.next(options);
+          },
+          onResponse: (response, handler) {
+            final p = response.requestOptions.path;
+            final isMuted = p.contains('/chats') ||
+                p.contains('/members/online-heartbeat') ||
+                p.contains('/me/connection-requests');
+            if (!isMuted) {
+              debugPrint('\n*** Response ***');
+              debugPrint('uri: ${response.requestOptions.uri}');
+              debugPrint('status: ${response.statusCode}');
+              debugPrint('Response Text:\n${response.data}\n');
+            }
+            return handler.next(response);
+          },
+          onError: (DioException error, handler) {
+            final p = error.requestOptions.path;
+            final isMuted = p.contains('/chats') ||
+                p.contains('/members/online-heartbeat') ||
+                p.contains('/me/connection-requests');
+            if (!isMuted) {
+              debugPrint('\n*** DioException ***:');
+              debugPrint('uri: ${error.requestOptions.uri}');
+              debugPrint('status: ${error.response?.statusCode}');
+              debugPrint('message: ${error.message}');
+              debugPrint('response: ${error.response?.data}\n');
+            }
+            return handler.next(error);
+          },
         ),
       QueuedInterceptorsWrapper(
         onRequest: (options, handler) async {
-          if (cacheStore != null) {
-            final token = await cacheStore!.get<String>(
+          try {
+            final store = cacheStore ?? HiveCacheStore();
+            final token = await store.get<String>(
               AppCacheBoxes.authBox,
               AppCacheKeys.authToken,
             );
             if (token != null && token.isNotEmpty) {
               options.headers['Authorization'] = 'Bearer $token';
             }
-          }
+          } catch (_) {}
           return handler.next(options);
         },
         onError: (DioException error, handler) {

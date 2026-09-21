@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/business_deal_entity.dart';
+import '../../domain/entities/business_deal_leaderboard_entity.dart';
 import '../../domain/entities/business_deal_pagination_entity.dart';
 import 'business_deals_event.dart';
 
@@ -9,9 +10,11 @@ class BusinessDealsState extends Equatable {
   final BusinessDealTab activeTab;
   final BusinessDealsStatus receivedStatus;
   final BusinessDealsStatus givenStatus;
+  final BusinessDealsStatus leaderboardStatus;
   final List<BusinessDealEntity> receivedDeals;
   final List<BusinessDealEntity> givenDeals;
   final List<BusinessDealEntity> userDeals;
+  final List<BusinessDealLeaderboardEntity> leaderboardList;
   final BusinessDealPaginationEntity receivedPagination;
   final BusinessDealPaginationEntity givenPagination;
   final BusinessDealPaginationEntity userPagination;
@@ -23,9 +26,11 @@ class BusinessDealsState extends Equatable {
     this.activeTab = BusinessDealTab.received,
     this.receivedStatus = BusinessDealsStatus.initial,
     this.givenStatus = BusinessDealsStatus.initial,
+    this.leaderboardStatus = BusinessDealsStatus.initial,
     this.receivedDeals = const [],
     this.givenDeals = const [],
     this.userDeals = const [],
+    this.leaderboardList = const [],
     this.receivedPagination = const BusinessDealPaginationEntity(),
     this.givenPagination = const BusinessDealPaginationEntity(),
     this.userPagination = const BusinessDealPaginationEntity(),
@@ -37,23 +42,14 @@ class BusinessDealsState extends Equatable {
   bool _matchesQuery(BusinessDealEntity deal, String query) {
     if (query.trim().isEmpty) return true;
     final q = query.trim().toLowerCase();
-    final name = deal.peerName.toLowerCase();
-    final city = (deal.city ?? deal.peerLocation ?? '').toLowerCase();
-    final company = (deal.peerCompany ?? '').toLowerCase();
-    final designation = (deal.peerDesignation ?? '').toLowerCase();
-    final category = (deal.category ?? '').toLowerCase();
-    final comment = (deal.comment ?? '').toLowerCase();
-    final amount = deal.dealAmount.toString();
-    final businessType = deal.businessTypeLabel.toLowerCase();
-
-    return name.contains(q) ||
-        city.contains(q) ||
-        company.contains(q) ||
-        designation.contains(q) ||
-        category.contains(q) ||
-        comment.contains(q) ||
-        amount.contains(q) ||
-        businessType.contains(q);
+    return deal.peerName.toLowerCase().contains(q) ||
+        (deal.city ?? deal.peerLocation ?? '').toLowerCase().contains(q) ||
+        (deal.peerCompany ?? '').toLowerCase().contains(q) ||
+        (deal.peerDesignation ?? '').toLowerCase().contains(q) ||
+        (deal.category ?? '').toLowerCase().contains(q) ||
+        (deal.comment ?? '').toLowerCase().contains(q) ||
+        deal.dealAmount.toString().contains(q) ||
+        deal.businessTypeLabel.toLowerCase().contains(q);
   }
 
   List<BusinessDealEntity> get currentList {
@@ -64,8 +60,28 @@ class BusinessDealsState extends Equatable {
     return list.where((d) => _matchesQuery(d, searchQuery)).toList();
   }
 
-  BusinessDealsStatus get currentStatus =>
-      activeTab == BusinessDealTab.received ? receivedStatus : givenStatus;
+  List<BusinessDealLeaderboardEntity> get filteredLeaderboardList {
+    if (searchQuery.trim().isEmpty) return leaderboardList;
+    final q = searchQuery.trim().toLowerCase();
+    return leaderboardList.where((b) {
+      return b.displayName.toLowerCase().contains(q) ||
+          (b.companyName ?? '').toLowerCase().contains(q) ||
+          (b.designation ?? '').toLowerCase().contains(q) ||
+          (b.city ?? '').toLowerCase().contains(q) ||
+          (b.category ?? '').toLowerCase().contains(q);
+    }).toList();
+  }
+
+  BusinessDealsStatus get currentStatus {
+    switch (activeTab) {
+      case BusinessDealTab.received:
+        return receivedStatus;
+      case BusinessDealTab.given:
+        return givenStatus;
+      case BusinessDealTab.leaderboard:
+        return leaderboardStatus;
+    }
+  }
 
   BusinessDealPaginationEntity get currentPagination =>
       activeTab == BusinessDealTab.received ? receivedPagination : givenPagination;
@@ -79,9 +95,11 @@ class BusinessDealsState extends Equatable {
     BusinessDealTab? activeTab,
     BusinessDealsStatus? receivedStatus,
     BusinessDealsStatus? givenStatus,
+    BusinessDealsStatus? leaderboardStatus,
     List<BusinessDealEntity>? receivedDeals,
     List<BusinessDealEntity>? givenDeals,
     List<BusinessDealEntity>? userDeals,
+    List<BusinessDealLeaderboardEntity>? leaderboardList,
     BusinessDealPaginationEntity? receivedPagination,
     BusinessDealPaginationEntity? givenPagination,
     BusinessDealPaginationEntity? userPagination,
@@ -93,9 +111,11 @@ class BusinessDealsState extends Equatable {
       activeTab: activeTab ?? this.activeTab,
       receivedStatus: receivedStatus ?? this.receivedStatus,
       givenStatus: givenStatus ?? this.givenStatus,
+      leaderboardStatus: leaderboardStatus ?? this.leaderboardStatus,
       receivedDeals: receivedDeals ?? this.receivedDeals,
       givenDeals: givenDeals ?? this.givenDeals,
       userDeals: userDeals ?? this.userDeals,
+      leaderboardList: leaderboardList ?? this.leaderboardList,
       receivedPagination: receivedPagination ?? this.receivedPagination,
       givenPagination: givenPagination ?? this.givenPagination,
       userPagination: userPagination ?? this.userPagination,
@@ -110,9 +130,11 @@ class BusinessDealsState extends Equatable {
         activeTab,
         receivedStatus,
         givenStatus,
+        leaderboardStatus,
         receivedDeals,
         givenDeals,
         userDeals,
+        leaderboardList,
         receivedPagination,
         givenPagination,
         userPagination,
@@ -121,3 +143,4 @@ class BusinessDealsState extends Equatable {
         errorMessage,
       ];
 }
+

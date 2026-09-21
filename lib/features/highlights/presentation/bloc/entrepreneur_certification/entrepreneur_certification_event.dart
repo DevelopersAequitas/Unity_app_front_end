@@ -7,8 +7,25 @@ abstract class EntrepreneurCertificationEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class LoadEntrepreneurInitialDataEvent extends EntrepreneurCertificationEvent {
+  const LoadEntrepreneurInitialDataEvent();
+}
+
 class LoadEntrepreneurQuestionsEvent extends EntrepreneurCertificationEvent {
   const LoadEntrepreneurQuestionsEvent();
+}
+
+class LoadEntrepreneurSubmissionsEvent extends EntrepreneurCertificationEvent {
+  final int page;
+  final bool isRefresh;
+
+  const LoadEntrepreneurSubmissionsEvent({
+    this.page = 1,
+    this.isRefresh = false,
+  });
+
+  @override
+  List<Object?> get props => [page, isRefresh];
 }
 
 class AnswerEntrepreneurQuestionEvent extends EntrepreneurCertificationEvent {
@@ -24,7 +41,31 @@ class AnswerEntrepreneurQuestionEvent extends EntrepreneurCertificationEvent {
   List<Object?> get props => [field, answer];
 }
 
-class SubmitEntrepreneurCertificationEvent extends EntrepreneurCertificationEvent {
+class SetEntrepreneurQuestionnaireStepEvent
+    extends EntrepreneurCertificationEvent {
+  final int step;
+
+  const SetEntrepreneurQuestionnaireStepEvent(this.step);
+
+  @override
+  List<Object?> get props => [step];
+}
+
+class SelectEntrepreneurTabEvent extends EntrepreneurCertificationEvent {
+  final int tabIndex;
+
+  const SelectEntrepreneurTabEvent(this.tabIndex);
+
+  @override
+  List<Object?> get props => [tabIndex];
+}
+
+class RetakeEntrepreneurAssessmentEvent extends EntrepreneurCertificationEvent {
+  const RetakeEntrepreneurAssessmentEvent();
+}
+
+class SubmitEntrepreneurCertificationEvent
+    extends EntrepreneurCertificationEvent {
   final String fullName;
   final String businessName;
   final String email;

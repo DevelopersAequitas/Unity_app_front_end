@@ -14,37 +14,36 @@ class ProfileCompletionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColor.borderSubtle),
+        color: AppColor.lightSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColor.lightBorder),
         boxShadow: [
           BoxShadow(
-            color: AppColor.black.withValues(alpha: 0.02),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Circular Progress Indicator
           SizedBox(
-            width: 58,
-            height: 58,
+            width: 52,
+            height: 52,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 58,
-                  height: 58,
+                  width: 52,
+                  height: 52,
                   child: CircularProgressIndicator(
                     value: percentage / 100.0,
-                    strokeWidth: 5,
-                    backgroundColor: AppColor.borderSubtle,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColor.primary),
+                    strokeWidth: 4.5,
+                    backgroundColor: AppColor.lightSurfaceSubtle,
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColor.primaryBlue),
                   ),
                 ),
                 ShaderMask(
@@ -52,9 +51,9 @@ class ProfileCompletionCard extends StatelessWidget {
                   child: Text(
                     '$percentage%',
                     style: AppTypography.labelLarge.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w500,
                       color: Colors.white,
-                      fontSize: 13,
+                      fontSize: 12.5,
                     ),
                   ),
                 ),
@@ -62,8 +61,6 @@ class ProfileCompletionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.md),
-
-          // Details text
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,17 +69,19 @@ class ProfileCompletionCard extends StatelessWidget {
                 Text(
                   'Profile Completeness',
                   style: AppTypography.titleSmall.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColor.textPrimary,
-                    letterSpacing: -0.2,
+                    fontWeight: FontWeight.w500,
+                    color: AppColor.lightTextPrimary,
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
-                  'Complete your profile to improve visibility and networking opportunities.',
+                  percentage == 100
+                      ? 'Your profile is fully complete and verified.'
+                      : 'Complete all sections to maximize your network visibility.',
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColor.textTertiary,
-                    fontSize: 11,
+                    color: AppColor.lightTextTertiary,
+                    fontSize: 11.5,
                     height: 1.3,
                   ),
                 ),

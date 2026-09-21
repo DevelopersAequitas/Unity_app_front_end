@@ -12,12 +12,14 @@ class ProfileHeaderCard extends StatelessWidget {
   final ProfileEntity profile;
   final VoidCallback onEditPhoto;
   final VoidCallback onEditCover;
+  final VoidCallback onEditProfile;
 
   const ProfileHeaderCard({
     super.key,
     required this.profile,
     required this.onEditPhoto,
     required this.onEditCover,
+    required this.onEditProfile,
   });
 
   String? get _effectiveVideoUrl {
@@ -189,63 +191,20 @@ class ProfileHeaderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (_effectiveVideoUrl != null)
-                  Positioned(
-                    right: 16,
-                    bottom: 0,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          IntroVideoPlayerDialog.show(
-                            context,
-                            videoUrl: _effectiveVideoUrl!,
-                            title: profile.displayName,
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: AppColor.brandGradient,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColor.primaryPink.withValues(
-                                  alpha: 0.35,
-                                ),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.play_circle_fill_rounded,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                'Intro Video',
-                                style: AppTypography.labelSmall.copyWith(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                Positioned(
+                  right: 14,
+                  bottom: 2,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_effectiveVideoUrl != null) ...[
+                        _buildIntroVideoBtn(context),
+                        const SizedBox(width: 6),
+                      ],
+                      _buildEditProfileBtn(context),
+                    ],
                   ),
+                ),
               ],
             ),
           ),
@@ -457,6 +416,119 @@ class ProfileHeaderCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIntroVideoBtn(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          IntroVideoPlayerDialog.show(
+            context,
+            videoUrl: _effectiveVideoUrl!,
+            title: profile.displayName,
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 9,
+            vertical: 5,
+          ),
+          decoration: BoxDecoration(
+            gradient: AppColor.brandGradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColor.primaryPink.withValues(alpha: 0.3),
+                blurRadius: 4,
+                offset: const Offset(0, 1.5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.play_circle_fill_rounded,
+                size: 13,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 3.5),
+              Text(
+                'Intro Video',
+                style: AppTypography.labelSmall.copyWith(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditProfileBtn(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onEditProfile,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: AppColor.brandGradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColor.primaryPink.withValues(alpha: 0.15),
+                blurRadius: 4,
+                offset: const Offset(0, 1.5),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(1),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 9,
+              vertical: 4.5,
+            ),
+            decoration: BoxDecoration(
+              color: AppColor.lightSurface,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: ShaderMask(
+              blendMode: BlendMode.srcIn,
+              shaderCallback: (bounds) => AppColor.brandGradient.createShader(
+                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.edit_outlined,
+                    size: 12.5,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 3.5),
+                  Text(
+                    'Edit Profile',
+                    style: AppTypography.labelSmall.copyWith(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

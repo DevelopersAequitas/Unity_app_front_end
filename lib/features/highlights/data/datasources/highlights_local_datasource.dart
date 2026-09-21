@@ -54,12 +54,11 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         isLocked: true,
       ),
       HighlightSectionModel(
-        id: 'open_requirement',
-        title: 'Open Requirement',
+        id: 'open_asks',
+        title: 'Open Asks',
         category: 'Highlights',
-        icon: Icons.assignment_rounded,
+        icon: Icons.campaign_rounded,
         accentColor: Color(0xFFF97316),
-        isLocked: true,
       ),
       HighlightSectionModel(
         id: 'collaborations',
@@ -168,13 +167,13 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         icon: Icons.sync_alt_rounded,
         accentColor: Color(0xFF3B82F6),
       ),
-      HighlightSectionModel(
-        id: 'collaboration_ask',
-        title: 'Collaboration Ask',
-        category: 'Core Collaboration Actions',
-        icon: Icons.help_center_rounded,
-        accentColor: Color(0xFFEA580C),
-      ),
+      // HighlightSectionModel(
+      //   id: 'collaboration_ask',
+      //   title: 'Collaboration Ask',
+      //   category: 'Core Collaboration Actions',
+      //   icon: Icons.help_center_rounded,
+      //   accentColor: Color(0xFFEA580C),
+      // ),
       HighlightSectionModel(
         id: 'register_visitor',
         title: 'Register Visitor',

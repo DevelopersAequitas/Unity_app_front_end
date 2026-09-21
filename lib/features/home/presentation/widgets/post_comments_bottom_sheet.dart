@@ -2,24 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/widgets/app_gradient_text.dart';
 import '../../domain/entities/post_comment_entity.dart';
 import '../../domain/usecases/add_post_comment_usecase.dart';
 import '../../domain/usecases/get_post_comments_usecase.dart';
 
-String _formatTimeAgo(String raw) {
-  try {
-    final dt = DateTime.parse(raw).toLocal();
-    final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${dt.day}/${dt.month}/${dt.year}';
-  } catch (_) {
-    return raw;
-  }
-}
+String _formatTimeAgo(String raw) => AppDateFormatter.formatTimeAgo(raw);
 
 class PostCommentsBottomSheet extends StatefulWidget {
   final String postId;

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/referral_entity.dart';
 
-enum ReferralTab { received, given }
+enum ReferralTab { received, given, leaderboard }
 
 abstract class ReferralsEvent extends Equatable {
   const ReferralsEvent();
@@ -16,6 +16,14 @@ class ReferralsTabChanged extends ReferralsEvent {
 
   @override
   List<Object?> get props => [tab];
+}
+
+class ReferralsFetchLeaderboardRequested extends ReferralsEvent {
+  final bool forceRefresh;
+  const ReferralsFetchLeaderboardRequested({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
 }
 
 class ReferralsFetchStatsRequested extends ReferralsEvent {

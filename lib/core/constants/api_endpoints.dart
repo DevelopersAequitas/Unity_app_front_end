@@ -39,7 +39,8 @@ class ApiEndpoints {
   static String followUser(String userId) => '/users/$userId/follow';
   static String unfollowUser(String userId) => '/users/$userId/unfollow';
   static String memberFollow(String memberId) => '/members/$memberId/follow';
-  static String memberUnfollow(String memberId) => '/members/$memberId/unfollow';
+  static String memberUnfollow(String memberId) =>
+      '/members/$memberId/unfollow';
   static const String connections = '/connections';
   static const String connectionRequests = '/me/connection-requests';
   static const String sentConnectionRequests = '/connections/sent';
@@ -49,13 +50,20 @@ class ApiEndpoints {
   static String cancelSentConnection(String requestId) =>
       '/connections/sent/$requestId';
   static String memberBookmark(String id) => '/members/$id/bookmark';
+  static String memberIntroducedPeers(String memberId) =>
+      '/members/$memberId/introduced-peers';
+  static String blockPeer(String peerId) => '/peers/$peerId/block';
+  static String unblockPeer(String peerId) => '/peers/$peerId/block';
+  static const String blockedPeers = '/blocked-peers';
+  static String peerBlockStatus(String peerId) => '/peers/$peerId/block-status';
 
   // Online & Presence Status
   static const String onlineHeartbeat = '/members/online-heartbeat';
   static const String onlineOffline = '/members/online-offline';
   static const String updateOnlineStatus = '/members/update-online-status';
   static const String membersOnlineStatus = '/members/online-status';
-  static const String connectionsOnlineStatus = '/members/my-connections-online-status';
+  static const String connectionsOnlineStatus =
+      '/members/my-connections-online-status';
   static String memberOnlineStatus(String id) => '/members/$id/online-status';
 
   // Profile & Uploads
@@ -75,12 +83,16 @@ class ApiEndpoints {
   static const String circleCategories = '/circle-categories';
   static String circleDetail(String id) => '/circles/$id';
   static String circleMembers(String id) => '/circles/$id/members';
-  static String circleOpenCategories(String circleId) => '/circles/$circleId/open-categories';
-  static String circleClosedCategories(String circleId) => '/circles/$circleId/closed-categories';
+  static String circleOpenCategories(String circleId) =>
+      '/circles/$circleId/open-categories';
+  static String circleClosedCategories(String circleId) =>
+      '/circles/$circleId/closed-categories';
   static const String circleJoinRequests = '/circle-join-requests';
   static const String myCircleJoinRequests = '/circle-join-requests/my';
-  static String circleJoinRequestStatus(String id) => '/circle-join-requests/$id/status';
-  static String cancelCircleJoinRequest(String id) => '/circle-join-requests/$id';
+  static String circleJoinRequestStatus(String id) =>
+      '/circle-join-requests/$id/status';
+  static String cancelCircleJoinRequest(String id) =>
+      '/circle-join-requests/$id';
 
   // Membership & Billing (Zoho)
   static const String zohoPlans = '/zoho/plans';
@@ -94,43 +106,60 @@ class ApiEndpoints {
       '/billing/checkout/$hostedPageId';
   static const String subscriptionsHistory = '/billing/subscriptions-history';
   static const String billingInvoices = '/billing/invoices';
-  static String billingInvoiceDetail(String invoiceId) => '/billing/invoices/$invoiceId';
-  static String billingInvoicePdf(String invoiceId) => '/billing/invoices/$invoiceId/pdf';
+  static String billingInvoiceDetail(String invoiceId) =>
+      '/billing/invoices/$invoiceId';
+  static String billingInvoicePdf(String invoiceId) =>
+      '/billing/invoices/$invoiceId/pdf';
 
   // Testimonials
   static const String testimonials = '/testimonials';
-  static String userTestimonials(String userId) => '/users/$userId/testimonials';
-  static const String receivedTestimonials = '/activities/testimonials?filter=received';
-  static const String givenTestimonials = '/activities/testimonials?filter=given';
+  static String userTestimonials(String userId) =>
+      '/users/$userId/testimonials';
+  static const String receivedTestimonials =
+      '/activities/testimonials?filter=received';
+  static const String givenTestimonials =
+      '/activities/testimonials?filter=given';
   static const String testimonialsReceived = '/testimonials/received';
   static const String testimonialsGiven = '/testimonials/given';
 
   // Business Deals
   static const String businessDeals = '/activities/business-deals';
-  static String singleBusinessDeal(String id) => '/activities/business-deals/$id';
-  static const String receivedBusinessDeals = '/activities/business-deals?filter=received';
-  static const String givenBusinessDeals = '/activities/business-deals?filter=given';
-  static String userBusinessDeals(String userId) => '/users/$userId/business-deals';
+  static String singleBusinessDeal(String id) =>
+      '/activities/business-deals/$id';
+  static const String receivedBusinessDeals =
+      '/activities/business-deals?filter=received';
+  static const String givenBusinessDeals =
+      '/activities/business-deals?filter=given';
+  static String userBusinessDeals(String userId) =>
+      '/users/$userId/business-deals';
 
   // Referrals
   static const String activitiesReferrals = '/activities/referrals';
   static const String referralStatuses = '/activities/referrals/statuses';
-  static String updateReferralStatus(String id) => '/activities/referrals/$id/status';
+  static String updateReferralStatus(String id) =>
+      '/activities/referrals/$id/status';
   static const String referralsStats = '/referrals/stats';
   static const String peerReferrals = '/peer-referrals';
-  static const String receivedReferrals = '/activities/referrals?filter=received';
+  static const String receivedReferrals =
+      '/activities/referrals?filter=received';
   static const String givenReferrals = '/activities/referrals?filter=given';
 
   // Leaderboards & Coins & Impacts
   static const String leaderboardCoins = '/leaderboards/coins';
   static const String leaderboardImpacts = '/leaderboards/impacts';
+  static const String leaderboardBusinessDeals = '/leaderboards/business-deals';
+  static const String leaderboardP2pMeetings = '/leaderboards/p2p-meetings';
+  static const String leaderboardTestimonials = '/leaderboards/testimonials';
+  static const String leaderboardReferrals = '/leaderboards/referrals';
   static const String coinGuidelines = '/coin-guidelines';
   static const String impactGuidelines = '/impact-guidelines';
 
   // P2P / 121 Meetings - Completed & History
   static const String activitiesP2pMeetings = '/activities/p2p-meetings';
-  static const String givenP2pMeetings = '/activities/p2p-meetings?filter=given';
-  static const String receivedP2pMeetings = '/activities/p2p-meetings?filter=received';
+  static const String givenP2pMeetings =
+      '/activities/p2p-meetings?filter=given';
+  static const String receivedP2pMeetings =
+      '/activities/p2p-meetings?filter=received';
   static String singleP2pMeeting(String id) => '/activities/p2p-meetings/$id';
   static String userP2pMeetings(String userId) => '/p2p-meetings/user/$userId';
 
@@ -138,17 +167,58 @@ class ApiEndpoints {
   static const String p2pMeetingRequests = '/p2p-meeting-requests';
   static const String p2pMeetingRequestsInbox = '/p2p-meeting-requests/inbox';
   static const String p2pMeetingRequestsSent = '/p2p-meeting-requests/sent';
-  static String singleP2pMeetingRequest(String id) => '/p2p-meeting-requests/$id';
-  static String acceptP2pMeetingRequest(String id) => '/p2p-meeting-requests/$id/accept';
-  static String rejectP2pMeetingRequest(String id) => '/p2p-meeting-requests/$id/reject';
-  static String cancelP2pMeetingRequest(String id) => '/p2p-meeting-requests/$id/cancel';
-  static String rescheduleP2pMeetingRequest(String id) => '/p2p-meeting-requests/$id/reschedule';
-  static const String pendingRescheduleRequestsReceived = '/p2p-meeting-reschedule-requests/pending-received';
-  static String approveRescheduleRequest(String id) => '/p2p-meeting-reschedule-requests/$id/approve';
-  static String rejectRescheduleRequest(String id) => '/p2p-meeting-reschedule-requests/$id/reject';
+  static String singleP2pMeetingRequest(String id) =>
+      '/p2p-meeting-requests/$id';
+  static String acceptP2pMeetingRequest(String id) =>
+      '/p2p-meeting-requests/$id/accept';
+  static String rejectP2pMeetingRequest(String id) =>
+      '/p2p-meeting-requests/$id/reject';
+  static String cancelP2pMeetingRequest(String id) =>
+      '/p2p-meeting-requests/$id/cancel';
+  static String rescheduleP2pMeetingRequest(String id) =>
+      '/p2p-meeting-requests/$id/reschedule';
+  static const String pendingRescheduleRequestsReceived =
+      '/p2p-meeting-reschedule-requests/pending-received';
+  static String approveRescheduleRequest(String id) =>
+      '/p2p-meeting-reschedule-requests/$id/approve';
+  static String rejectRescheduleRequest(String id) =>
+      '/p2p-meeting-reschedule-requests/$id/reject';
   static const String activityCreatives = '/activity-creatives';
 
+  // Events System
+  static const String eventsAll = '/events/all';
+  static String publicEventOccurrence(String eventId, String occurrenceId) =>
+      '/public/events/$eventId/occurrences/$occurrenceId';
+  static String privateEventDetail(String eventId) => '/events/$eventId';
+  static String publicEventRegistrationForm(
+    String eventId,
+    String occurrenceId,
+  ) => '/public/events/$eventId/occurrences/$occurrenceId/registration-form';
+  static String eventRegister(String eventId, String occurrenceId) =>
+      '/events/$eventId/occurrences/$occurrenceId/register';
+  static String eventRegistrationRequest(String eventId, String occurrenceId) =>
+      '/events/$eventId/occurrences/$occurrenceId/registration-request';
+  static String eventVisitorRegister(String eventId, String occurrenceId) =>
+      '/events/$eventId/occurrences/$occurrenceId/visitor-register';
+  static String eventPaymentStatus(String registrationId) =>
+      '/events/registrations/$registrationId/payment-status';
+  static String eventRazorpayVerify(String registrationId) =>
+      '/events/registrations/$registrationId/razorpay/verify';
+  static String eventInvoice(String registrationId) =>
+      '/events/registrations/$registrationId/invoice';
+  static const String myRegistrations = '/events/my-registrations';
+  static const String myRegistrationRequests =
+      '/events/registration-requests/my';
+  static const String myEventsWithQr = '/my/events-with-qr';
+  static const String eventFeedbackCheckPending =
+      '/event-feedbacks/check-pending';
+  static const String eventFeedbacks = '/event-feedbacks';
+  static const String myEventFeedbacks = '/event-feedbacks/my';
+  static String eventFeedbacksForEvent(String eventId) =>
+      '/event-feedbacks/event/$eventId';
+
   // Menu & Inner Screens
+  static const String events = '/events';
   static const String circulars = '/circulars';
   static String circularDetail(String id) => '/circulars/$id';
   static const String eventGalleries = '/events/galleries';
@@ -156,7 +226,7 @@ class ApiEndpoints {
   static const String eventVideos = '/events/videos';
   static const String tutorials = '/tutorials';
   static const String myInvoices = '/my/invoices';
-  static String downloadInvoice(String id) => '/my/invoices/$id/download';
+  static String downloadInvoice(String id) => '/billing/invoices/$id/pdf';
   static const String blockedUsers = '/blocked-users';
   static String unblockUser(String id) => '/blocked-users/$id';
   static const String feedback = '/feedback';
@@ -170,7 +240,8 @@ class ApiEndpoints {
   static const String industryInsights = '/insights/industry';
   static const String dailySummary = '/activities/daily-summary';
   static const String myGlobalPeerCertificate = '/my/global-peer-certificate';
-  static const String regenerateGlobalPeerCertificate = '/my/global-peer-certificate/regenerate';
+  static const String regenerateGlobalPeerCertificate =
+      '/my/global-peer-certificate/regenerate';
   static const String becomeAMentor = '/become-a-mentor';
   static const String becomeASpeaker = '/become-a-speaker';
   static const String partnerWithUs = '/partner-with-us';
@@ -178,11 +249,13 @@ class ApiEndpoints {
   static const String storyStatus = '/story-status';
 
   // Requirements & Asks
+  static const String timelineRequirements = '/timeline/requirements';
   static const String activitiesRequirements = '/activities/requirements';
   static const String myRequirements = '/activities/requirements?filter=my';
   static const String incompletedRequirements = '/requirements/incompleted';
   static String singleRequirement(String id) => '/activities/requirements/$id';
   static String closeRequirement(String id) => '/requirements/$id/close';
+  static String fulfillRequirement(String id) => '/requirements/$id/fulfill';
 
   // Highlights & Impact Sub-Features
   static const String referralMembers = '/referrals/members';
@@ -193,19 +266,86 @@ class ApiEndpoints {
   static const String peerMonthlyImpactScript = '/peer-monthly-impact-script';
   static const String lifeImpactHistory = '/life-impact/history';
   static const String lifeImpact = '/life-impact';
-  static const String lifeImpactActions = '/life-impact/actions';
+  static const String lifeImpactActions = '/impacts/actions';
   static const String coinsHistory = '/coins/history';
   static const String coinsBalance = '/coins/balance';
+  static const String coinClaims = '/coin-claims';
+  static const String coinClaimActivities = '/coin-claims/activities';
+  static const String myCoinClaims = '/coin-claims/my';
   static const String milestones = '/milestones';
+  static String latestMilestone(String userId) =>
+      '/users/$userId/milestone/latest';
+  static String milestoneHistory(String userId) =>
+      '/users/$userId/milestone/history';
 
   // Certifications
   static const String leadershipCertification = '/leadership-certification';
-  static const String leadershipCertificationQuestions = '/leadership-certification/questions';
+  static const String leadershipCertificationQuestions =
+      '/leadership-certification/questions';
   static const String entrepreneurCertification = '/entrepreneur-certification';
-  static const String entrepreneurCertificationQuestions = '/entrepreneur-certification/questions';
-  static String userCertifications(String userId) => '/certifications/user/$userId';
+  static const String entrepreneurCertificationQuestions =
+      '/entrepreneur-certification/questions';
+  static String userCertifications(String userId) =>
+      '/certifications/user/$userId';
 
-  // Leadership Role & Recommend Peer
+  // Leadership Role & Recommend Peer & Register Visitor
   static const String leaderInterest = '/forms/leader-interest';
   static const String recommendPeer = '/forms/recommend-peer';
-}  
+  static const String registerVisitor = '/forms/register-visitor';
+  static const String registerVisitorMy = '/forms/register-visitor/my';
+
+  // Collaborations
+  static const String industriesTree = '/industries/tree';
+  static const String collaborationTypes = '/collaboration-types';
+  static const String collaborations = '/collaborations';
+  static const String collaborationHistory = '/collaborations/history';
+  static String acceptCollaboration(String id) => '/collaborations/$id/accept';
+  static const String collaborationAsk = '/forms/collaboration-ask';
+  static const String collaborationAsks = '/collaboration-asks';
+
+  // Chat System (Direct 1-to-1, Circle Group, Circle Leadership)
+  static const String chats = '/chats';
+  static String chatDetail(String id) => '/chats/$id';
+  static String chatMessages(String chatId) => '/chats/$chatId/messages';
+  static String sendChatMessage(String chatId) => '/chats/$chatId/messages';
+  static String markChatRead(String chatId) => '/chats/$chatId/mark-read';
+  static String chatTypingStart(String chatId) => '/chats/$chatId/typing/start';
+  static String chatTypingStop(String chatId) => '/chats/$chatId/typing/stop';
+  static String deleteMessageForMe(String messageId) =>
+      '/messages/$messageId/delete-for-me';
+  static String deleteMessageForEveryone(String messageId) =>
+      '/messages/$messageId/delete-for-everyone';
+
+  // Circle Group Chat
+  static String circleChatMessages(String circleId) =>
+      '/circles/$circleId/chat/messages';
+  static String sendCircleChatMessage(String circleId) =>
+      '/circles/$circleId/chat/messages';
+  static String markCircleChatRead(String circleId) =>
+      '/circles/$circleId/chat/messages/read';
+  static String circleMessageReads(String circleId, String messageId) =>
+      '/circles/$circleId/chat/messages/$messageId/reads';
+  static String deleteCircleMessageForMe(String circleId, String messageId) =>
+      '/circles/$circleId/chat/messages/$messageId/delete-for-me';
+  static String deleteCircleMessageForAll(String circleId, String messageId) =>
+      '/circles/$circleId/chat/messages/$messageId';
+
+  // Circle Leadership Chat
+  static String circleLeadershipMembers(String circleId) =>
+      '/circles/$circleId/leadership-chat/members';
+  static String circleLeadershipMessages(String circleId) =>
+      '/circles/$circleId/leadership-chat/messages';
+  static String sendCircleLeadershipMessage(String circleId) =>
+      '/circles/$circleId/leadership-chat/messages';
+  static String markCircleLeadershipRead(String circleId) =>
+      '/circles/$circleId/leadership-chat/messages/read';
+  static String deleteCircleLeadershipMessageForMe(
+    String circleId,
+    String messageId,
+  ) => '/circles/$circleId/leadership-chat/messages/$messageId/delete-for-me';
+  static String deleteCircleLeadershipMessageForEveryone(
+    String circleId,
+    String messageId,
+  ) =>
+      '/circles/$circleId/leadership-chat/messages/$messageId/delete-for-everyone';
+}

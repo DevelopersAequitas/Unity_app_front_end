@@ -5,6 +5,7 @@ import '../../domain/usecases/cancel_p2p_meeting_request_usecase.dart';
 import '../../domain/usecases/get_p2p_meeting_requests_inbox_usecase.dart';
 import '../../domain/usecases/get_p2p_meeting_requests_sent_usecase.dart';
 import '../../domain/usecases/get_p2p_meetings_history_usecase.dart';
+import '../../domain/usecases/get_p2p_meetings_leaderboard_usecase.dart';
 import '../../domain/usecases/get_pending_reschedule_requests_received_usecase.dart';
 import '../../domain/usecases/reject_p2p_meeting_request_usecase.dart';
 import '../../domain/usecases/reject_reschedule_request_usecase.dart';
@@ -18,6 +19,7 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
   final GetP2pMeetingRequestsSentUseCase getP2pMeetingRequestsSentUseCase;
   final GetPendingRescheduleRequestsReceivedUseCase
       getPendingRescheduleRequestsReceivedUseCase;
+  final GetP2pMeetingsLeaderboardUseCase getP2pMeetingsLeaderboardUseCase;
   final AcceptP2pMeetingRequestUseCase acceptP2pMeetingRequestUseCase;
   final RejectP2pMeetingRequestUseCase rejectP2pMeetingRequestUseCase;
   final CancelP2pMeetingRequestUseCase cancelP2pMeetingRequestUseCase;
@@ -30,6 +32,7 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
     required this.getP2pMeetingRequestsInboxUseCase,
     required this.getP2pMeetingRequestsSentUseCase,
     required this.getPendingRescheduleRequestsReceivedUseCase,
+    required this.getP2pMeetingsLeaderboardUseCase,
     required this.acceptP2pMeetingRequestUseCase,
     required this.rejectP2pMeetingRequestUseCase,
     required this.cancelP2pMeetingRequestUseCase,
@@ -38,8 +41,9 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
     required this.requestRescheduleP2pMeetingUseCase,
   }) : super(const P2pMeetingsState()) {
     on<P2pMeetingsFetchRequested>(_onFetchRequested);
+    on<P2pMeetingsFetchLeaderboardRequested>(_onFetchLeaderboardRequested);
     on<P2pMeetingsRefreshRequested>(_onRefreshRequested);
-    on<P2pMeetingsTopTabChanged>((e, emit) => emit(state.copyWith(topTab: e.topTab)));
+    on<P2pMeetingsTopTabChanged>(_onTopTabChanged);
     on<P2pMeetingsCompletedSubTabChanged>((e, emit) => emit(state.copyWith(completedSubTab: e.subTab)));
     on<P2pMeetingsScheduledSubTabChanged>((e, emit) => emit(state.copyWith(scheduledSubTab: e.subTab)));
     on<P2pMeetingsSearchChanged>((e, emit) => emit(state.copyWith(searchQuery: e.query)));
@@ -49,6 +53,36 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
     on<P2pMeetingRescheduleRequested>(_onRescheduleRequested);
     on<P2pMeetingRescheduleApproved>(_onRescheduleApproved);
     on<P2pMeetingRescheduleRejected>(_onRescheduleRejected);
+  }
+
+  void _onTopTabChanged(
+    P2pMeetingsTopTabChanged event,
+    Emitter<P2pMeetingsState> emit,
+  ) {
+    emit(state.copyWith(topTab: event.topTab));
+    if (event.topTab == 'leaderboard' && state.leaderboardList.isEmpty) {
+      add(const P2pMeetingsFetchLeaderboardRequested());
+    }
+  }
+
+  Future<void> _onFetchLeaderboardRequested(
+    P2pMeetingsFetchLeaderboardRequested event,
+    Emitter<P2pMeetingsState> emit,
+  ) async {
+    if (!event.forceRefresh && state.leaderboardList.isNotEmpty) return;
+    emit(state.copyWith(status: P2pMeetingsStatus.loading));
+    try {
+      final list = await getP2pMeetingsLeaderboardUseCase();
+      emit(state.copyWith(
+        status: P2pMeetingsStatus.success,
+        leaderboardList: list,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        status: P2pMeetingsStatus.failure,
+        errorMessage: 'Failed to load leaderboard: $e',
+      ));
+    }
   }
 
   Future<void> _onFetchRequested(

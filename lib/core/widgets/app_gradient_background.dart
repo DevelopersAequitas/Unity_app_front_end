@@ -3,18 +3,11 @@ import '../theme/app_color.dart';
 
 /// A full-screen gradient background widget.
 ///
-/// Wraps [child] in a [DecoratedBox] that paints a subtle top-to-bottom
-/// gradient: white → faint blue-tinted white in light mode, or deep slate →
-/// slightly lighter slate in dark mode. The gradient is intentionally very
-/// subtle (B2B premium — not consumer confetti).
+/// Wraps [child] in a [SizedBox.expand] + [DecoratedBox] that paints a subtle
+/// top-to-bottom gradient: white → faint blue-tinted white in light mode, or
+/// deep slate → slightly lighter slate in dark mode.
 ///
-/// Usage in a [Scaffold] body:
-/// ```dart
-/// body: AppGradientBackground(child: YourContent()),
-/// ```
-///
-/// The [Scaffold]'s `backgroundColor` must be set to `Colors.transparent` (or
-/// omitted — the gradient fills the whole area) for it to show through.
+/// Always fills 100% of the available width and height so screens never cut off.
 class AppGradientBackground extends StatelessWidget {
   final Widget child;
 
@@ -23,11 +16,13 @@ class AppGradientBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: isDark ? AppColor.darkBgGradient : AppColor.lightBgGradient,
+    return SizedBox.expand(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: isDark ? AppColor.darkBgGradient : AppColor.lightBgGradient,
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 }

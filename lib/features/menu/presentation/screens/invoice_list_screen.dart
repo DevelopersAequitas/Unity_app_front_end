@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/constants/app_environment.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/app_date_formatter.dart';
+import '../../../../core/widgets/app_gradient_background.dart';
 import '../widgets/invoice_item_card.dart';
 
 class InvoiceListScreen extends StatefulWidget {
@@ -33,18 +37,24 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     try {
       dynamic res;
       try {
-        res = await _dio.dio.get(ApiEndpoints.myInvoices);
-      } catch (_) {
         res = await _dio.dio.get(ApiEndpoints.billingInvoices);
+      } catch (_) {
+        res = await _dio.dio.get(ApiEndpoints.myInvoices);
       }
       final data = res?.data;
       List<dynamic> raw = [];
       if (data is Map<String, dynamic>) {
-        raw = data['data']?['invoices'] as List? ??
-            data['data']?['items'] as List? ??
-            data['invoices'] as List? ??
-            data['data'] as List? ??
-            [];
+        if (data['data'] is Map<String, dynamic>) {
+          raw = data['data']['items'] as List? ??
+              data['data']['invoices'] as List? ??
+              [];
+        } else if (data['data'] is List) {
+          raw = data['data'] as List;
+        } else if (data['items'] is List) {
+          raw = data['items'] as List;
+        } else if (data['invoices'] is List) {
+          raw = data['invoices'] as List;
+        }
       } else if (data is List) {
         raw = data;
       }
@@ -64,40 +74,63 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     }
   }
 
-  Future<void> _downloadPdf(String invoiceId) async {
-    final downloadPath = ApiEndpoints.downloadInvoice(invoiceId);
-    final url = downloadPath.startsWith('http')
-        ? downloadPath
-        : '${ApiEndpoints.baseUrl}$downloadPath';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  Future<void> _downloadPdf(String invoiceId, String? directUrl) async {
+    try {
+      String url = '';
+      if (directUrl != null && directUrl.trim().isNotEmpty && directUrl.startsWith('http')) {
+        url = directUrl.trim();
+      } else if (invoiceId.isNotEmpty) {
+        final downloadPath = ApiEndpoints.downloadInvoice(invoiceId);
+        url = downloadPath.startsWith('http')
+            ? downloadPath
+            : '${AppEnvironment.baseUrl}$downloadPath';
+      }
+      if (url.isNotEmpty) {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      }
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColor.darkBackground : AppColor.lightBackground;
+    final textPrimary = isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
+
     return Scaffold(
-      backgroundColor: AppColor.lightScaffoldBg,
+      backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
-          'Membership Invoices',
+          'Invoices & Receipts',
           style: AppTypography.titleMedium.copyWith(
             fontWeight: FontWeight.w500,
-            color: AppColor.lightTextPrimary,
+            color: textPrimary,
           ),
         ),
-        backgroundColor: AppColor.lightSurface,
+        backgroundColor: bgColor,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColor.lightTextPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: textPrimary),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _fetchInvoices,
-        color: AppColor.primaryBlue,
-        child: _buildBody(),
+      body: AppGradientBackground(
+        child: RefreshIndicator(
+          onRefresh: _fetchInvoices,
+          color: AppColor.primaryBlue,
+          child: _buildBody(),
+        ),
       ),
     );
   }
@@ -106,10 +139,10 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     if (_isLoading) {
       return ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: 3,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) => Container(
-          height: 80,
+        itemCount: 4,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (_, _) => Container(
+          height: 72,
           decoration: BoxDecoration(
             color: AppColor.lightSurface,
             borderRadius: BorderRadius.circular(16),
@@ -161,9 +194,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                   color: AppColor.lightTextPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                'Your payment history and receipts will be stored here.',
+                'Your payment history and receipts will appear here.',
                 style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary),
                 textAlign: TextAlign.center,
               ),
@@ -175,15 +208,22 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: _invoices.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final item = _invoices[index];
-        final id = item['id']?.toString() ?? '';
-        final number = item['invoice_number']?.toString() ?? item['number']?.toString() ?? 'INV-#$index';
-        final date = item['date']?.toString() ?? item['invoice_date']?.toString() ?? '';
-        final amount = item['total']?.toString() ?? item['amount']?.toString() ?? '₹0';
+        final id = item['invoice_id']?.toString() ?? item['id']?.toString() ?? '';
+        final number = item['invoice_number']?.toString() ?? item['number']?.toString() ?? 'INV-#${index + 1}';
+        final rawDate = item['due_date']?.toString() ?? item['date']?.toString() ?? item['created_time']?.toString();
+        final date = rawDate != null && rawDate.isNotEmpty ? AppDateFormatter.format(rawDate) : '';
+        final currency = item['currency_code']?.toString() ?? 'INR';
+        final symbol = currency == 'INR' ? '₹' : '$currency ';
+        final total = item['total']?.toString() ?? item['amount']?.toString() ?? '0';
+        final amount = '$symbol$total';
         final status = item['status']?.toString().toLowerCase() ?? 'paid';
+        final pdfUrl = item['pdf_url']?.toString() ?? item['invoice_url']?.toString();
+        final hasDownload = (pdfUrl != null && pdfUrl.isNotEmpty) || id.isNotEmpty;
 
         return InvoiceItemCard(
           id: id,
@@ -191,7 +231,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
           date: date,
           amount: amount,
           status: status,
-          onDownload: () => _downloadPdf(id),
+          onDownload: hasDownload ? () => _downloadPdf(id, pdfUrl) : null,
         );
       },
     );

@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/partner_with_us_entity.dart';
 
 class PartnerWithUsModel extends PartnerWithUsEntity {
@@ -19,13 +20,7 @@ class PartnerWithUsModel extends PartnerWithUsEntity {
   });
 
   factory PartnerWithUsModel.fromJson(Map<String, dynamic> json) {
-    DateTime? parsedDate;
-    final createdStr = json['created_at']?.toString();
-    if (createdStr != null && createdStr.isNotEmpty) {
-      try {
-        parsedDate = DateTime.parse(createdStr);
-      } catch (_) {}
-    }
+    final parsedDate = AppDateFormatter.parseUtc(json['created_at']);
 
     return PartnerWithUsModel(
       id: json['id']?.toString(),

@@ -2,12 +2,15 @@ import 'dart:io';
 import '../entities/create_p2p_meeting_params.dart';
 import '../entities/create_p2p_meeting_request_params.dart';
 import '../entities/p2p_meeting_entity.dart';
+import '../entities/p2p_meeting_leaderboard_entity.dart';
 import '../entities/p2p_meeting_request_entity.dart';
 import '../entities/p2p_meeting_user_summary_entity.dart';
 import '../entities/p2p_reschedule_request_entity.dart';
 import '../entities/reschedule_p2p_meeting_params.dart';
 
 abstract class P2pMeetingsRepository {
+  Future<List<P2pMeetingLeaderboardEntity>> getP2pMeetingsLeaderboard();
+
   // Flow 1: Completed Meetings
   Future<List<P2pMeetingEntity>> getP2pMeetingsHistory({
     required String filter, // 'given' (I Initiated) or 'received' (Peer Initiated)

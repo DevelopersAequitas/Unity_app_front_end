@@ -18,33 +18,37 @@ class ProfileSectionTile extends StatelessWidget {
     required this.subtitle,
     required this.completionPercentage,
     required this.onTap,
-    this.accentColor = AppColor.primary,
+    this.accentColor = AppColor.primaryBlue,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDone = completionPercentage == 100;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColor.borderSubtle),
+        color: AppColor.lightSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColor.lightBorder),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 11,
+            ),
             child: Row(
               children: [
-                // Icon
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
@@ -52,9 +56,7 @@ class ProfileSectionTile extends StatelessWidget {
                     color: accentColor,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm + 2),
-
-                // Title & Subtitle
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,8 +65,8 @@ class ProfileSectionTile extends StatelessWidget {
                       Text(
                         title,
                         style: AppTypography.labelLarge.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColor.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          color: AppColor.lightTextPrimary,
                           fontSize: 13,
                         ),
                       ),
@@ -72,7 +74,7 @@ class ProfileSectionTile extends StatelessWidget {
                       Text(
                         subtitle,
                         style: AppTypography.labelSmall.copyWith(
-                          color: AppColor.textTertiary,
+                          color: AppColor.lightTextTertiary,
                           fontSize: 11,
                         ),
                         maxLines: 1,
@@ -81,41 +83,36 @@ class ProfileSectionTile extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                const SizedBox(width: AppSpacing.xs),
-
-                // Percentage Badge
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
-                    color: completionPercentage == 100
+                    color: isDone
                         ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                        : AppColor.backgroundSubtle,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                        : AppColor.lightSurfaceSubtle,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: completionPercentage == 100
-                          ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                          : AppColor.borderSubtle,
+                      color: isDone
+                          ? const Color(0xFF10B981).withValues(alpha: 0.25)
+                          : AppColor.lightBorder,
                     ),
                   ),
                   child: Text(
                     '$completionPercentage%',
                     style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: completionPercentage == 100
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      color: isDone
                           ? const Color(0xFF10B981)
-                          : (completionPercentage > 50 ? AppColor.primary : AppColor.textTertiary),
+                          : (completionPercentage > 0 ? AppColor.primaryBlue : AppColor.lightTextTertiary),
                     ),
                   ),
                 ),
-
-                const SizedBox(width: AppSpacing.xs),
-
+                const SizedBox(width: 6),
                 const Icon(
-                  Icons.chevron_right_rounded,
-                  size: 18,
-                  color: AppColor.textTertiary,
+                  Icons.arrow_forward_ios_rounded,
+                  size: 12,
+                  color: AppColor.lightTextTertiary,
                 ),
               ],
             ),

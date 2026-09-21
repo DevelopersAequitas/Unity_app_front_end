@@ -10,7 +10,9 @@ class EntrepreneurCertificationResultEntity extends Equatable {
   final num? percentage;
   final String? certificationTier;
   final String status;
+  final String? notes;
   final String? certificateUrl;
+  final String? certificateDownloadUrl;
   final String? createdAt;
   final String? updatedAt;
 
@@ -24,7 +26,9 @@ class EntrepreneurCertificationResultEntity extends Equatable {
     this.percentage,
     this.certificationTier,
     this.status = 'new',
+    this.notes,
     this.certificateUrl,
+    this.certificateDownloadUrl,
     this.createdAt,
     this.updatedAt,
   });
@@ -40,7 +44,9 @@ class EntrepreneurCertificationResultEntity extends Equatable {
         percentage,
         certificationTier,
         status,
+        notes,
         certificateUrl,
+        certificateDownloadUrl,
         createdAt,
         updatedAt,
       ];

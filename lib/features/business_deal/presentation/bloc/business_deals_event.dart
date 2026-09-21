@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/business_deal_entity.dart';
 
-enum BusinessDealTab { received, given }
+enum BusinessDealTab { received, given, leaderboard }
 
 abstract class BusinessDealsEvent extends Equatable {
   const BusinessDealsEvent();
@@ -17,6 +17,15 @@ class BusinessDealsTabChanged extends BusinessDealsEvent {
 
   @override
   List<Object?> get props => [tab];
+}
+
+class BusinessDealsFetchLeaderboardRequested extends BusinessDealsEvent {
+  final bool forceRefresh;
+
+  const BusinessDealsFetchLeaderboardRequested({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
 }
 
 class BusinessDealsFetchReceivedRequested extends BusinessDealsEvent {

@@ -10,12 +10,14 @@ import '../../features/notifications/presentation/bloc/notifications_bloc.dart';
 import '../../features/notifications/presentation/bloc/notifications_state.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_state.dart';
+import '../../features/chat/presentation/bloc/chat_list/chat_list_bloc.dart';
+import '../../features/chat/presentation/bloc/chat_list/chat_list_state.dart';
 
 /// A reusable AppBar for all tabs and screens in the app.
 ///
 /// - [title] — shown as the screen/tab name (e.g., "Home", "Peers")
 /// - [showLogo] — if true, renders the brand icon+name instead of [title]
-/// - [showSearch] / [showNotifications] / [showProfile] — toggle action icons
+/// - [showSearch] / [showChat] / [showNotifications] / [showProfile] — toggle action icons
 /// - [showBack] — renders a back chevron instead of actions (for sub-screens)
 /// - [actions] — extra action widgets appended after built-in icons
 class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
@@ -23,9 +25,11 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showLogo;
   final bool showBack;
   final bool showSearch;
+  final bool showChat;
   final bool showNotifications;
   final bool showProfile;
   final VoidCallback? onSearchTap;
+  final VoidCallback? onChatTap;
   final VoidCallback? onNotificationsTap;
   final VoidCallback? onProfileTap;
   final VoidCallback? onBackTap;
@@ -44,9 +48,11 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
     this.showLogo = false,
     this.showBack = false,
     this.showSearch = true,
+    this.showChat = true,
     this.showNotifications = true,
     this.showProfile = true,
     this.onSearchTap,
+    this.onChatTap,
     this.onNotificationsTap,
     this.onProfileTap,
     this.onBackTap,
@@ -193,6 +199,8 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
             ...?actions,
             if (showSearch)
               _IconBtn(icon: Icons.search_rounded, color: iconColor, onTap: onSearchTap),
+            if (showChat)
+              _ChatBtn(iconColor: iconColor, onTap: onChatTap),
             if (showNotifications)
               _NotificationBtn(iconColor: iconColor, onTap: onNotificationsTap),
             if (showProfile)
@@ -263,6 +271,69 @@ class _IconBtn extends StatelessWidget {
         height: kToolbarHeight,
         child: Icon(icon, size: 22, color: color),
       ),
+    );
+  }
+}
+
+class _ChatBtn extends StatelessWidget {
+  final Color iconColor;
+  final VoidCallback? onTap;
+  const _ChatBtn({required this.iconColor, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<ChatListBloc, ChatListState, int>(
+      selector: (state) => state.totalUnreadCount,
+      builder: (context, unreadCount) {
+        final badgeText = unreadCount > 99 ? '99+' : '$unreadCount';
+        return Semantics(
+          label: unreadCount > 0 ? '$unreadCount unread messages' : 'Chats',
+          button: true,
+          child: InkWell(
+            onTap: onTap ??
+                () => Navigator.of(context).pushNamed(AppRoutes.chatList),
+            borderRadius: BorderRadius.circular(24),
+            child: SizedBox(
+              width: 40,
+              height: kToolbarHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(Icons.chat_bubble_outline_rounded,
+                      size: 21, color: iconColor),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: 10,
+                      right: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
+                        constraints:
+                            const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: AppColor.primaryBlue,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Center(
+                          child: Text(
+                            badgeText,
+                            style: AppTypography.labelSmall.copyWith(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

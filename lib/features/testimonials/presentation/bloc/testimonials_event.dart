@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/testimonial_entity.dart';
 
-enum TestimonialTab { received, given }
+enum TestimonialTab { received, given, leaderboard }
 
 abstract class TestimonialsEvent extends Equatable {
   const TestimonialsEvent();
@@ -17,6 +17,15 @@ class TestimonialsTabChanged extends TestimonialsEvent {
 
   @override
   List<Object?> get props => [tab];
+}
+
+class TestimonialsFetchLeaderboardRequested extends TestimonialsEvent {
+  final bool forceRefresh;
+
+  const TestimonialsFetchLeaderboardRequested({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
 }
 
 class TestimonialsFetchReceivedRequested extends TestimonialsEvent {

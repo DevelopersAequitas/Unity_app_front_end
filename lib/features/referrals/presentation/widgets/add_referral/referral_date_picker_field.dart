@@ -15,11 +15,9 @@ class ReferralDatePickerField extends StatelessWidget {
 
   Future<void> _pickDate(BuildContext context) async {
     DateTime initialDate = DateTime.now();
-    try {
-      if (referralDate.isNotEmpty) {
-        initialDate = DateTime.parse(referralDate);
-      }
-    } catch (_) {}
+    if (referralDate.isNotEmpty) {
+      initialDate = AppDateFormatter.parseUtc(referralDate) ?? DateTime.now();
+    }
 
     final picked = await showDatePicker(
       context: context,

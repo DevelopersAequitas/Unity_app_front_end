@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:unity_app/core/theme/app_color.dart';
-import 'package:unity_app/core/theme/app_typography.dart';
+import '../../../../core/theme/app_color.dart';
+import '../../../../core/theme/app_typography.dart';
 
 class P2pMeetingsBottomNav extends StatelessWidget {
-  final int activeTab; // 0: Completed, 1: Scheduled
+  final int activeTab; // 0: Completed, 1: Schedule Invites, 2: Leaderboard
   final int? completedCount;
   final int? scheduledCount;
   final ValueChanged<int> onTabChanged;
@@ -18,27 +18,29 @@ class P2pMeetingsBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+            width: 0.8,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColor.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, -3),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
-        border: Border(
-          top: BorderSide(color: AppColor.lightBorder, width: 0.8),
-        ),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
           height: 60,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Expanded(
                 child: _buildNavItem(
@@ -49,7 +51,6 @@ class P2pMeetingsBottomNav extends StatelessWidget {
                   onTap: () => onTabChanged(0),
                 ),
               ),
-              const SizedBox(width: 56), // Space for centered FAB
               Expanded(
                 child: _buildNavItem(
                   label: 'Schedule Invites',
@@ -57,6 +58,14 @@ class P2pMeetingsBottomNav extends StatelessWidget {
                   isSelected: activeTab == 1,
                   count: scheduledCount,
                   onTap: () => onTabChanged(1),
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                  label: 'Leaderboard',
+                  icon: Icons.leaderboard_outlined,
+                  isSelected: activeTab == 2,
+                  onTap: () => onTabChanged(2),
                 ),
               ),
             ],
@@ -89,10 +98,7 @@ class P2pMeetingsBottomNav extends StatelessWidget {
                   shaderCallback: (bounds) => (isSelected
                           ? AppColor.brandGradient
                           : LinearGradient(
-                              colors: [
-                                AppColor.lightTextTertiary,
-                                AppColor.lightTextTertiary,
-                              ],
+                              colors: [AppColor.lightTextTertiary, AppColor.lightTextTertiary],
                             ))
                       .createShader(bounds),
                   child: Icon(icon, size: 22),
@@ -102,20 +108,12 @@ class P2pMeetingsBottomNav extends StatelessWidget {
                     top: -4,
                     right: -10,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 1,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColor.primaryBlue
-                            : AppColor.lightTextTertiary,
+                        color: isSelected ? AppColor.primaryBlue : AppColor.lightTextTertiary,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      constraints: const BoxConstraints(
-                        minWidth: 14,
-                        minHeight: 14,
-                      ),
+                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
                       child: Text(
                         count > 99 ? '99+' : count.toString(),
                         style: const TextStyle(
@@ -135,9 +133,7 @@ class P2pMeetingsBottomNav extends StatelessWidget {
               style: AppTypography.labelSmall.copyWith(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                color: isSelected
-                    ? AppColor.primaryBlue
-                    : AppColor.lightTextTertiary,
+                color: isSelected ? AppColor.primaryBlue : AppColor.lightTextTertiary,
               ),
             ),
           ],

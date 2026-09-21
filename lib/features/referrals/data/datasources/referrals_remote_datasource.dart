@@ -4,6 +4,7 @@ import '../../../../core/network/dio_client.dart';
 import '../../domain/entities/create_peer_referral_params.dart';
 import '../../domain/entities/create_referral_params.dart';
 import '../models/paginated_referrals_model.dart';
+import '../models/referral_leaderboard_model.dart';
 import '../models/referral_model.dart';
 import '../models/referral_stats_model.dart';
 import '../models/referral_status_model.dart';
@@ -30,6 +31,8 @@ abstract class ReferralsRemoteDataSource {
   Future<void> submitPeerReferral(CreatePeerReferralParams params);
 
   Future<ReferralModel> getReferralDetail(String id);
+
+  Future<List<ReferralLeaderboardModel>> getReferralsLeaderboard({int limit = 50});
 }
 
 class ReferralsRemoteDataSourceImpl implements ReferralsRemoteDataSource {
@@ -188,4 +191,31 @@ class ReferralsRemoteDataSourceImpl implements ReferralsRemoteDataSource {
     }
     throw Exception('Failed to load referral detail');
   }
+
+  @override
+  Future<List<ReferralLeaderboardModel>> getReferralsLeaderboard({int limit = 50}) async {
+    final response = await dioClient.dio.get(
+      ApiEndpoints.leaderboardReferrals,
+      queryParameters: {'limit': limit},
+    );
+    final data = response.data;
+    List<dynamic> listData = [];
+    if (data is List) {
+      listData = data;
+    } else if (data is Map<String, dynamic>) {
+      if (data['data'] is List) {
+        listData = data['data'] as List;
+      } else if (data['leaderboard'] is List) {
+        listData = data['leaderboard'] as List;
+      } else if (data['results'] is List) {
+        listData = data['results'] as List;
+      }
+    }
+    return listData.asMap().entries.map((entry) {
+      final index = entry.key;
+      final item = entry.value as Map<String, dynamic>;
+      return ReferralLeaderboardModel.fromJson(item, fallbackRank: index + 1);
+    }).toList();
+  }
 }
+

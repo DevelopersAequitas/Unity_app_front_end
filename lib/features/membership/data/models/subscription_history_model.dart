@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/subscription_history_entity.dart';
 
 class SubscriptionHistoryModel extends SubscriptionHistoryEntity {
@@ -12,14 +13,7 @@ class SubscriptionHistoryModel extends SubscriptionHistoryEntity {
   });
 
   factory SubscriptionHistoryModel.fromJson(Map<String, dynamic> json) {
-    DateTime? parseDate(dynamic val) {
-      if (val == null) return null;
-      try {
-        return DateTime.parse(val.toString());
-      } catch (_) {
-        return null;
-      }
-    }
+    DateTime? parseDate(dynamic val) => AppDateFormatter.parseUtc(val);
 
     String planId = '';
     String planName = 'Pro Membership';

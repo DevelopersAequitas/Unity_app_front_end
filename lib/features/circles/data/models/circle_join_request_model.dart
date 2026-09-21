@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/circle_join_request_entity.dart';
 
 class CircleJoinRequestModel extends CircleJoinRequestEntity {
@@ -41,13 +42,7 @@ class CircleJoinRequestModel extends CircleJoinRequestEntity {
   });
 
   factory CircleJoinRequestModel.fromJson(Map<String, dynamic> json) {
-    DateTime parsedDate;
-    try {
-      final raw = json['requested_at'] ?? json['created_at'];
-      parsedDate = raw != null ? DateTime.parse(raw.toString()) : DateTime.now();
-    } catch (_) {
-      parsedDate = DateTime.now();
-    }
+    final parsedDate = AppDateFormatter.parseUtc(json['requested_at'] ?? json['created_at']) ?? DateTime.now();
 
     String catId = '';
     String catName = '';
@@ -91,14 +86,7 @@ class CircleJoinRequestModel extends CircleJoinRequestEntity {
       return val.toString();
     }
 
-    DateTime? parseDate(dynamic val) {
-      if (val == null) return null;
-      try {
-        return DateTime.parse(val.toString());
-      } catch (_) {
-        return null;
-      }
-    }
+    DateTime? parseDate(dynamic val) => AppDateFormatter.parseUtc(val);
 
     final cdApprBy = extractPersonName(json['cd_approved_by']);
     final cdApprAt = parseDate(json['cd_approved_at']);

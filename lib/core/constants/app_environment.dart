@@ -214,5 +214,27 @@ class AppEnvironment {
     };
     return Uri.https(appDomain, '/share', queryParams).toString();
   }
+
+  /// 13. Requirement Deep Link
+  static String getRequirementDeepLink(String requirementId) {
+    return Uri.https(appDomain, '/share', {
+      'type': 'requirement',
+      'id': requirementId,
+    }).toString();
+  }
+
+  /// 14. Event Deep Link
+  static String getEventDeepLink(
+    String eventId, {
+    String? occurrenceId,
+  }) {
+    final queryParams = <String, String>{
+      'type': 'event',
+      'id': eventId,
+      if (occurrenceId != null && occurrenceId.isNotEmpty)
+        'occurrence_id': occurrenceId,
+    };
+    return Uri.https(appDomain, '/share', queryParams).toString();
+  }
 }
 

@@ -11,7 +11,15 @@ import '../../domain/entities/introduced_peer_entity.dart';
 
 class IntroducedPeerTile extends StatelessWidget {
   final IntroducedPeerEntity peer;
-  const IntroducedPeerTile({super.key, required this.peer});
+  final EdgeInsetsGeometry? margin;
+  final EdgeInsetsGeometry? padding;
+
+  const IntroducedPeerTile({
+    super.key,
+    required this.peer,
+    this.margin,
+    this.padding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +30,8 @@ class IntroducedPeerTile extends StatelessWidget {
     return PeerCard(
       key: ValueKey(peer.id),
       peer: peerEntity,
+      margin: margin,
+      padding: padding,
       isCurrentUser: isCurrentUser,
       onConnect: isCurrentUser
           ? null

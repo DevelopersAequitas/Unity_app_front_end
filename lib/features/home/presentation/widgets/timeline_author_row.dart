@@ -1,25 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/widgets/app_gradient_text.dart';
 import '../../domain/entities/timeline_author_entity.dart';
 
-String _formatTime(String raw) {
-  try {
-    final dt = DateTime.parse(raw).toLocal();
-    final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
-  } catch (_) {
-    return raw;
-  }
-}
+String _formatTime(String raw) => AppDateFormatter.formatTimeAgo(raw);
 
 class TimelineAuthorRow extends StatelessWidget {
   final TimelineAuthorEntity? author;

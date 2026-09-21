@@ -220,6 +220,7 @@ class _AddP2pMeetingViewState extends State<_AddP2pMeetingView> {
             showSearch: false,
             showNotifications: false,
             showProfile: false,
+            showChat: false,
             onBackTap: () => Navigator.pop(context),
           ),
           body: Form(

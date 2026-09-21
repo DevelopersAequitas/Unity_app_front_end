@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/theme/app_typography.dart';
 import 'package:unity_app/core/widgets/app_snack_bar.dart';
+import 'package:unity_app/core/utils/app_date_formatter.dart';
 import 'package:unity_app/features/p2p_meetings/domain/entities/reschedule_p2p_meeting_params.dart';
 import 'package:unity_app/features/p2p_meetings/presentation/widgets/common/p2p_meeting_location_field.dart';
 
@@ -63,14 +64,16 @@ class _P2pRescheduleModalState extends State<P2pRescheduleModal> {
     });
   }
 
-  String _formatDateTime() {
+  String _formatDisplayDateTime() {
     if (_selectedDate == null || _selectedTime == null) return '';
-    final y = _selectedDate!.year.toString().padLeft(4, '0');
-    final m = _selectedDate!.month.toString().padLeft(2, '0');
-    final d = _selectedDate!.day.toString().padLeft(2, '0');
-    final hh = _selectedTime!.hour.toString().padLeft(2, '0');
-    final mm = _selectedTime!.minute.toString().padLeft(2, '0');
-    return '$y-$m-$d $hh:$mm:00';
+    final localDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+    return AppDateFormatter.formatDateTime(localDateTime);
   }
 
   void _submit() {
@@ -79,9 +82,17 @@ class _P2pRescheduleModalState extends State<P2pRescheduleModal> {
       return;
     }
 
+    final localDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+
     widget.onSubmit(RescheduleP2pMeetingParams(
       meetingRequestId: widget.requestId,
-      newScheduledAt: _formatDateTime(),
+      newScheduledAt: AppDateFormatter.toUtcString(localDateTime),
       newPlace: _placeCtrl.text.trim().isEmpty ? null : _placeCtrl.text.trim(),
       reason: _reasonCtrl.text.trim().isEmpty ? null : _reasonCtrl.text.trim(),
     ));
@@ -148,7 +159,7 @@ class _P2pRescheduleModalState extends State<P2pRescheduleModal> {
                       Text(
                         _selectedDate == null
                             ? 'Select New Date & Time'
-                            : _formatDateTime(),
+                            : _formatDisplayDateTime(),
                         style: TextStyle(
                           fontSize: 13,
                           color: _selectedDate == null

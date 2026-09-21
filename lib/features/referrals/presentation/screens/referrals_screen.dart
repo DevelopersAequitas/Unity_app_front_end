@@ -9,6 +9,7 @@ import '../../domain/entities/referral_entity.dart';
 import '../../domain/usecases/get_given_referrals_usecase.dart';
 import '../../domain/usecases/get_received_referrals_usecase.dart';
 import '../../domain/usecases/get_referral_statuses_usecase.dart';
+import '../../domain/usecases/get_referrals_leaderboard_usecase.dart';
 import '../../domain/usecases/get_referrals_stats_usecase.dart';
 import '../../domain/usecases/update_referral_status_usecase.dart';
 import '../bloc/referrals_bloc.dart';
@@ -17,6 +18,7 @@ import '../bloc/referrals_state.dart';
 import '../widgets/add_referral_fab.dart';
 import '../widgets/referral_empty_state.dart';
 import '../widgets/referral_error_view.dart';
+import '../widgets/referral_leaderboard_view.dart';
 import '../widgets/referral_list_view.dart';
 import '../widgets/referral_skeleton_list.dart';
 import '../widgets/referral_success_sheet.dart';
@@ -24,11 +26,7 @@ import '../widgets/referrals_bottom_nav.dart';
 
 class ReferralsScreen extends StatelessWidget {
   final bool isModal;
-
-  const ReferralsScreen({
-    super.key,
-    this.isModal = false,
-  });
+  const ReferralsScreen({super.key, this.isModal = false});
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +37,7 @@ class ReferralsScreen extends StatelessWidget {
         getReferralsStatsUseCase: ctx.read<GetReferralsStatsUseCase>(),
         getReferralStatusesUseCase: ctx.read<GetReferralStatusesUseCase>(),
         updateReferralStatusUseCase: ctx.read<UpdateReferralStatusUseCase>(),
+        getReferralsLeaderboardUseCase: ctx.read<GetReferralsLeaderboardUseCase>(),
       )
         ..add(const ReferralsFetchReceivedRequested())
         ..add(const ReferralsFetchStatsRequested())
@@ -50,7 +49,6 @@ class ReferralsScreen extends StatelessWidget {
 
 class _ReferralsView extends StatefulWidget {
   final bool isModal;
-
   const _ReferralsView({required this.isModal});
 
   @override
@@ -69,12 +67,11 @@ class _ReferralsViewState extends State<_ReferralsView> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       final bloc = context.read<ReferralsBloc>();
       if (bloc.state.activeTab == ReferralTab.received) {
         bloc.add(const ReferralsLoadMoreReceivedRequested());
-      } else {
+      } else if (bloc.state.activeTab == ReferralTab.given) {
         bloc.add(const ReferralsLoadMoreGivenRequested());
       }
     }
@@ -99,33 +96,21 @@ class _ReferralsViewState extends State<_ReferralsView> {
       final impact = (result['impactEarned'] as int?) ??
           (createdReferral is ReferralEntity ? createdReferral.impactEarned : null);
 
-      // Switch to Given tab
-      context.read<ReferralsBloc>().add(
-            const ReferralsTabChanged(ReferralTab.given),
-          );
-
+      context.read<ReferralsBloc>().add(const ReferralsTabChanged(ReferralTab.given));
       if (createdReferral is ReferralEntity) {
-        context.read<ReferralsBloc>().add(
-              ReferralCreatedLocally(createdReferral),
-            );
+        context.read<ReferralsBloc>().add(ReferralCreatedLocally(createdReferral));
       }
-
-      // Sync fresh data from backend
-      context.read<ReferralsBloc>().add(
-            const ReferralsFetchGivenRequested(forceRefresh: true),
-          );
+      context.read<ReferralsBloc>().add(const ReferralsFetchGivenRequested(forceRefresh: true));
 
       if (mounted) {
         ReferralSuccessSheet.show(
           context,
           coinsEarned: coins,
           impactEarned: impact,
-          onDone: () {
-            Navigator.pop(context); // Close celebration bottom sheet
-          },
+          onDone: () => Navigator.pop(context),
           onAddAnother: () {
-            Navigator.pop(context); // Close celebration bottom sheet
-            _openAddReferral(); // Re-open Add Referral
+            Navigator.pop(context);
+            _openAddReferral();
           },
         );
       }
@@ -158,11 +143,7 @@ class _ReferralsViewState extends State<_ReferralsView> {
           return ChoiceChip(
             label: Text(label),
             selected: isSelected,
-            onSelected: (_) {
-              context.read<ReferralsBloc>().add(
-                    ReferralsStatusFilterChanged(val),
-                  );
-            },
+            onSelected: (_) => context.read<ReferralsBloc>().add(ReferralsStatusFilterChanged(val)),
             labelStyle: TextStyle(
               fontSize: 11.5,
               fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
@@ -196,52 +177,40 @@ class _ReferralsViewState extends State<_ReferralsView> {
         isSearching: _isSearching,
         searchController: _searchController,
         searchHint: 'Search referral name, peer, city, phone...',
-        onSearchTap: () {
-          setState(() => _isSearching = true);
-        },
-        onSearchChanged: (query) {
-          context.read<ReferralsBloc>().add(ReferralsSearchChanged(query));
-        },
+        onSearchTap: () => setState(() => _isSearching = true),
+        onSearchChanged: (q) => context.read<ReferralsBloc>().add(ReferralsSearchChanged(q)),
         onSearchClose: () {
           _searchController.clear();
           context.read<ReferralsBloc>().add(const ReferralsSearchChanged(''));
           setState(() => _isSearching = false);
         },
         showNotifications: false,
-        showProfile: true,
+        showProfile: false,
+        showChat: false,
         onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
-        onBackTap:
-            Navigator.canPop(context) ? () => Navigator.pop(context) : null,
+        onBackTap: Navigator.canPop(context) ? () => Navigator.pop(context) : null,
       ),
       body: SafeArea(
         top: false,
         child: ResponsiveContainer(
           child: BlocConsumer<ReferralsBloc, ReferralsState>(
             listener: (context, state) {
-              if (state.currentStatus == ReferralsStatus.failure &&
-                  state.errorMessage != null) {
+              if (state.currentStatus == ReferralsStatus.failure && state.errorMessage != null) {
                 AppSnackBar.showError(context, state.errorMessage!);
               }
             },
             builder: (context, state) {
               final activeTab = state.activeTab;
-              final status = state.currentStatus;
-              final list = state.currentList;
 
               return Stack(
                 children: [
                   Column(
                     children: [
-                      _buildStatusFilterBar(context, state),
+                      if (activeTab != ReferralTab.leaderboard) _buildStatusFilterBar(context, state),
                       Expanded(
-                        child: _buildBodyContent(
-                          context,
-                          activeTab: activeTab,
-                          status: status,
-                          list: list,
-                          searchQuery: state.searchQuery,
-                          statusFilter: state.statusFilter,
-                        ),
+                        child: activeTab == ReferralTab.leaderboard
+                            ? const ReferralLeaderboardView()
+                            : _buildBodyContent(context, state),
                       ),
                     ],
                   ),
@@ -251,23 +220,15 @@ class _ReferralsViewState extends State<_ReferralsView> {
                     bottom: 0,
                     child: ReferralsBottomNav(
                       activeTab: activeTab,
-                      onTabChanged: (tab) {
-                        context.read<ReferralsBloc>().add(
-                              ReferralsTabChanged(tab),
-                            );
-                      },
+                      onTabChanged: (tab) => context.read<ReferralsBloc>().add(ReferralsTabChanged(tab)),
                     ),
                   ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 34,
-                    child: Center(
-                      child: AddReferralFab(
-                        onTap: _openAddReferral,
-                      ),
+                  if (activeTab != ReferralTab.leaderboard)
+                    Positioned(
+                      right: 16,
+                      bottom: 76,
+                      child: AddReferralFab(onTap: _openAddReferral),
                     ),
-                  ),
                 ],
               );
             },
@@ -277,60 +238,42 @@ class _ReferralsViewState extends State<_ReferralsView> {
     );
   }
 
-  Widget _buildBodyContent(
-    BuildContext context, {
-    required ReferralTab activeTab,
-    required ReferralsStatus status,
-    required List<ReferralEntity> list,
-    required String searchQuery,
-    String? statusFilter,
-  }) {
+  Widget _buildBodyContent(BuildContext context, ReferralsState state) {
+    final activeTab = state.activeTab;
+    final status = state.currentStatus;
+    final list = state.currentList;
+
     if (status == ReferralsStatus.loading && list.isEmpty) {
       return const ReferralSkeletonList();
     }
-
     if (status == ReferralsStatus.failure && list.isEmpty) {
       return ReferralErrorView(
         onRetry: () {
-          if (activeTab == ReferralTab.received) {
-            context.read<ReferralsBloc>().add(
-                  const ReferralsFetchReceivedRequested(forceRefresh: true),
-                );
-          } else {
-            context.read<ReferralsBloc>().add(
-                  const ReferralsFetchGivenRequested(forceRefresh: true),
-                );
-          }
+          final isRec = activeTab == ReferralTab.received;
+          context.read<ReferralsBloc>().add(isRec
+              ? const ReferralsFetchReceivedRequested(forceRefresh: true)
+              : const ReferralsFetchGivenRequested(forceRefresh: true));
         },
       );
     }
-
     if (list.isEmpty) {
       return ReferralEmptyState(
         tab: activeTab,
-        searchQuery: searchQuery,
-        statusFilter: statusFilter,
+        searchQuery: state.searchQuery,
+        statusFilter: state.statusFilter,
         onActionTap: _openAddReferral,
       );
     }
-
     return ReferralListView(
       referrals: list,
       tabType: activeTab == ReferralTab.received ? 'received' : 'given',
       scrollController: _scrollController,
-      isLoadingMore: context.select<ReferralsBloc, bool>(
-        (b) => b.state.isLoadingMore,
-      ),
+      isLoadingMore: context.select<ReferralsBloc, bool>((b) => b.state.isLoadingMore),
       onRefresh: () async {
-        if (activeTab == ReferralTab.received) {
-          context.read<ReferralsBloc>().add(
-                const ReferralsFetchReceivedRequested(forceRefresh: true),
-              );
-        } else {
-          context.read<ReferralsBloc>().add(
-                const ReferralsFetchGivenRequested(forceRefresh: true),
-              );
-        }
+        final isRec = activeTab == ReferralTab.received;
+        context.read<ReferralsBloc>().add(isRec
+            ? const ReferralsFetchReceivedRequested(forceRefresh: true)
+            : const ReferralsFetchGivenRequested(forceRefresh: true));
       },
     );
   }

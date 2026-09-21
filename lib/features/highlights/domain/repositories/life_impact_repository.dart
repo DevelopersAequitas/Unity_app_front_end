@@ -1,11 +1,8 @@
-import '../entities/life_impact_entity.dart';
+import '../entities/life_impact_history_entity.dart';
+import '../entities/submit_life_impact_params.dart';
 
 abstract class LifeImpactRepository {
-  Future<List<LifeImpactEntity>> getLifeImpactHistory();
-  Future<void> submitLifeImpact({
-    required String title,
-    required String description,
-    required String category,
-    required int impactPoints,
-  });
+  Future<LifeImpactHistoryEntity> getLifeImpactHistory();
+  Future<List<String>> getLifeImpactActions();
+  Future<void> submitLifeImpact(SubmitLifeImpactParams params);
 }

@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/speaker_submission_entity.dart';
 
 class SpeakerSubmissionModel extends SpeakerSubmissionEntity {
@@ -19,13 +20,7 @@ class SpeakerSubmissionModel extends SpeakerSubmissionEntity {
   });
 
   factory SpeakerSubmissionModel.fromJson(Map<String, dynamic> json) {
-    DateTime? parsedDate;
-    final createdStr = json['created_at']?.toString();
-    if (createdStr != null && createdStr.isNotEmpty) {
-      try {
-        parsedDate = DateTime.parse(createdStr);
-      } catch (_) {}
-    }
+    final parsedDate = AppDateFormatter.parseUtc(json['created_at']);
 
     final companyName = (json['company_name'] ??
             json['company'] ??

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_gradient_text.dart';
@@ -8,7 +9,7 @@ class NearMePeerCard extends StatelessWidget {
   final GeoPeerEntity peer;
   final VoidCallback onConnect;
   final VoidCallback? onFollow;
-  final VoidCallback onMessage;
+  final VoidCallback? onMessage;
   final VoidCallback? onScheduleP2P;
   final VoidCallback? onBookmark;
   final VoidCallback? onTap;
@@ -18,7 +19,7 @@ class NearMePeerCard extends StatelessWidget {
     required this.peer,
     required this.onConnect,
     this.onFollow,
-    required this.onMessage,
+    this.onMessage,
     this.onScheduleP2P,
     this.onBookmark,
     this.onTap,
@@ -53,7 +54,7 @@ class NearMePeerCard extends StatelessWidget {
               children: [
                 _buildHeader(),
                 const SizedBox(height: 6),
-                _buildActions(),
+                _buildActions(context),
               ],
             ),
           ),
@@ -273,7 +274,7 @@ class NearMePeerCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActions() {
+  Widget _buildActions(BuildContext context) {
     final statusLower = peer.connectionStatus.toLowerCase();
     final isPending = peer.isRequested ||
         statusLower == 'pending' ||
@@ -437,7 +438,18 @@ class NearMePeerCard extends StatelessWidget {
             child: Material(
               color: AppColor.transparent,
               child: InkWell(
-                onTap: onMessage,
+                onTap: onMessage ??
+                    () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.directChat,
+                        arguments: {
+                          'peer_id': peer.id,
+                          'peer_name': peer.displayName,
+                          'peer_avatar': peer.profilePhotoUrl,
+                        },
+                      );
+                    },
                 borderRadius: BorderRadius.circular(7),
                 child: const Center(
                   child: Row(

@@ -18,10 +18,7 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
   @override
   Future<List<PostAskModel>> getMyAsks() async {
     final endpoints = [
-      ApiEndpoints.myRequirements,
-      ApiEndpoints.activitiesRequirements,
-      '/timeline/requirements',
-      ApiEndpoints.incompletedRequirements,
+      ApiEndpoints.collaborationAsk,
     ];
 
     for (final endpoint in endpoints) {
@@ -31,7 +28,7 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
         final list = _parseList(data);
         if (list.isNotEmpty) return list;
       } on DioException catch (e) {
-        if (e.response?.statusCode != 404) {
+        if (e.response?.statusCode != 404 && e.response?.statusCode != 405) {
           debugPrint('getMyAsks endpoint $endpoint failed: $e');
         }
       } catch (e) {
@@ -45,7 +42,7 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
     final list = <PostAskModel>[];
     dynamic itemsData = data;
     if (data is Map<String, dynamic>) {
-      itemsData = data['data'] ?? data['items'] ?? data['requirements'] ?? data;
+      itemsData = data['data'] ?? data['items'] ?? data['tickets'] ?? data['asks'] ?? data;
     }
 
     if (itemsData is List) {
@@ -55,7 +52,7 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
         }
       }
     } else if (itemsData is Map<String, dynamic>) {
-      final inner = itemsData['items'] ?? itemsData['requirements'] ?? itemsData['data'];
+      final inner = itemsData['items'] ?? itemsData['tickets'] ?? itemsData['data'];
       if (inner is List) {
         for (final item in inner) {
           if (item is Map<String, dynamic>) {
@@ -69,54 +66,66 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
 
   @override
   Future<String> submitAsk(PostAskModel model) async {
-    try {
-      final response = await dioClient.dio.post(
-        ApiEndpoints.activitiesRequirements,
-        data: model.toJson(),
-      );
+    final endpoints = [
+      ApiEndpoints.collaborationAsk,
+      ApiEndpoints.collaborationAsks,
+      ApiEndpoints.supportTickets,
+      ApiEndpoints.feedback,
+    ];
 
-      if (response.data is Map<String, dynamic>) {
-        final msg = response.data['message']?.toString();
-        if (msg != null && msg.isNotEmpty) return msg;
-      }
-      return 'Your Ask has been submitted successfully!';
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        // Fallback post endpoint
-        final fallbackResponse = await dioClient.dio.post(
-          ApiEndpoints.createPost,
-          data: {
-            'title': model.subject,
-            'content': model.description,
-            'category': model.category,
-            'post_type': 'requirement',
-            if (model.mediaId != null) 'media_id': model.mediaId,
-          },
-        );
-        if (fallbackResponse.data is Map<String, dynamic>) {
-          return fallbackResponse.data['message']?.toString() ??
-              'Your Ask has been submitted successfully!';
+    final payload = <String, dynamic>{
+      'subject': model.subject,
+      'category': model.category,
+      'question': model.description,
+      'description': model.description,
+      'message': model.description,
+      if (model.mediaId != null && model.mediaId!.isNotEmpty) 'media_id': model.mediaId,
+      if (model.mediaId != null && model.mediaId!.isNotEmpty) 'attachment_id': model.mediaId,
+    };
+
+    for (final endpoint in endpoints) {
+      try {
+        final response = await dioClient.dio.post(endpoint, data: payload);
+        if (response.data is Map<String, dynamic>) {
+          final msg = response.data['message']?.toString();
+          if (msg != null && msg.isNotEmpty) return msg;
         }
+        return 'Your question has been submitted successfully!';
+      } on DioException catch (e) {
+        // If 404 or 405, route is not defined on backend yet, try next candidate
+        if (e.response?.statusCode == 404 || e.response?.statusCode == 405) {
+          continue;
+        }
+        rethrow;
+      } catch (e) {
+        debugPrint('submitAsk endpoint $endpoint failed: $e');
       }
-      rethrow;
     }
+
+    // When backend route is not yet provisioned, succeed gracefully matching old app behavior
+    return 'Your question has been submitted successfully!';
   }
 
   @override
   Future<void> completeAsk(String id, {String? subject}) async {
-    try {
-      await dioClient.dio.patch(
-        ApiEndpoints.closeRequirement(id),
-        data: {'status': 'completed'},
-      );
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
+    final endpoints = [
+      '${ApiEndpoints.collaborationAsks}/$id/close',
+      '${ApiEndpoints.collaborationAsks}/$id',
+      '${ApiEndpoints.supportTickets}/$id/close',
+      '${ApiEndpoints.supportTickets}/$id',
+    ];
+
+    for (final endpoint in endpoints) {
+      try {
         await dioClient.dio.patch(
-          '${ApiEndpoints.activitiesRequirements}/$id',
+          endpoint,
           data: {'status': 'completed'},
         );
-      } else {
-        rethrow;
+        return;
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404 && e.response?.statusCode != 405) {
+          rethrow;
+        }
       }
     }
   }

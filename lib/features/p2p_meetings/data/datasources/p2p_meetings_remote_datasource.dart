@@ -3,12 +3,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
+import '../models/p2p_meeting_leaderboard_model.dart';
 import '../models/p2p_meeting_model.dart';
 import '../models/p2p_meeting_request_model.dart';
 import '../models/p2p_meeting_user_summary_model.dart';
 import '../models/p2p_reschedule_request_model.dart';
 
 abstract class P2pMeetingsRemoteDataSource {
+  Future<List<P2pMeetingLeaderboardModel>> getP2pMeetingsLeaderboard();
+
   Future<List<P2pMeetingModel>> getP2pMeetingsHistory({
     required String filter,
   });
@@ -62,7 +65,28 @@ abstract class P2pMeetingsRemoteDataSource {
 class P2pMeetingsRemoteDataSourceImpl implements P2pMeetingsRemoteDataSource {
   final DioClient _dioClient;
 
-  P2pMeetingsRemoteDataSourceImpl({required this._dioClient});
+  P2pMeetingsRemoteDataSourceImpl({required DioClient dioClient})
+      // ignore: prefer_initializing_formals
+      : _dioClient = dioClient;
+
+  @override
+  Future<List<P2pMeetingLeaderboardModel>> getP2pMeetingsLeaderboard() async {
+    final response = await _dioClient.dio.get(ApiEndpoints.leaderboardP2pMeetings);
+    final data = response.data['data'] ?? response.data;
+    List<dynamic> items = [];
+    if (data is Map<String, dynamic> && data['items'] is List) {
+      items = data['items'] as List;
+    } else if (data is List) {
+      items = data;
+    }
+    return items.asMap().entries.map((entry) {
+      final item = entry.value as Map<String, dynamic>;
+      return P2pMeetingLeaderboardModel.fromJson(
+        item,
+        fallbackRank: entry.key + 1,
+      );
+    }).toList();
+  }
 
   @override
   Future<List<P2pMeetingModel>> getP2pMeetingsHistory({

@@ -19,20 +19,19 @@ class TopBuildersBottomNav extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, -3),
-          ),
-        ],
         border: Border(
           top: BorderSide(
             color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
             width: 0.8,
           ),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -50,7 +49,7 @@ class TopBuildersBottomNav extends StatelessWidget {
               ),
               Expanded(
                 child: _buildNavItem(
-                  label: 'My Introductions',
+                  label: 'My Invites',
                   icon: Icons.people_outline_rounded,
                   isSelected: activeIndex == 1,
                   onTap: () => onIndexChanged(1),

@@ -8,7 +8,7 @@ class InvoiceItemCard extends StatelessWidget {
   final String date;
   final String amount;
   final String status;
-  final VoidCallback onDownload;
+  final VoidCallback? onDownload;
 
   const InvoiceItemCard({
     super.key,
@@ -17,15 +17,23 @@ class InvoiceItemCard extends StatelessWidget {
     required this.date,
     required this.amount,
     required this.status,
-    required this.onDownload,
+    this.onDownload,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isPaid = status == 'paid';
+    final isPaid = status.toLowerCase() == 'paid';
+    final isOverdue = status.toLowerCase() == 'overdue';
+    final statusColor = isPaid
+        ? const Color(0xFF10B981)
+        : (isOverdue ? AppColor.error : const Color(0xFFF59E0B));
+    final statusBg = statusColor.withValues(alpha: 0.1);
+    final statusLabel = status.isEmpty
+        ? 'Paid'
+        : '${status[0].toUpperCase()}${status.substring(1)}';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColor.lightSurface,
         borderRadius: BorderRadius.circular(16),
@@ -37,12 +45,12 @@ class InvoiceItemCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: (isPaid ? AppColor.success : AppColor.warning).withValues(alpha: 0.1),
+              color: statusBg,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              Icons.receipt_outlined,
-              color: isPaid ? AppColor.success : AppColor.warning,
+              Icons.receipt_long_outlined,
+              color: statusColor,
               size: 20,
             ),
           ),
@@ -50,47 +58,95 @@ class InvoiceItemCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  number,
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: AppColor.lightTextPrimary,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        number,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: AppColor.lightTextPrimary,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        statusLabel,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 if (date.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(date, style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary)),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Due: $date',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColor.lightTextTertiary,
+                      fontSize: 11.5,
+                    ),
+                  ),
                 ],
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 amount,
-                style: AppTypography.bodyLarge.copyWith(
+                style: AppTypography.titleSmall.copyWith(
                   fontWeight: FontWeight.w500,
                   color: AppColor.lightTextPrimary,
+                  fontSize: 14.5,
                 ),
               ),
-              const SizedBox(height: 4),
-              if (id.isNotEmpty)
+              if (onDownload != null) ...[
+                const SizedBox(height: 3),
                 InkWell(
                   onTap: onDownload,
                   borderRadius: BorderRadius.circular(4),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    child: Text(
-                      'Download PDF',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: AppColor.primaryBlue,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.download_rounded,
+                          size: 13,
+                          color: AppColor.primaryBlue,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          'PDF',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColor.primaryBlue,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ],

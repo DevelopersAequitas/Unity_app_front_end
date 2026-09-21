@@ -1,3 +1,4 @@
+import '../../../highlights/domain/entities/introduced_peer_entity.dart';
 import '../../../home/domain/entities/timeline_item_entity.dart';
 import '../../../profile/domain/entities/profile_entity.dart';
 import '../../domain/entities/geo_peer_entity.dart';
@@ -250,5 +251,31 @@ class PeersRepositoryImpl implements PeersRepository {
       memberId,
       isCurrentlyBookmarked,
     );
+  }
+
+  @override
+  Future<List<IntroducedPeerEntity>> getMemberIntroducedPeers(String memberId) async {
+    final models = await remoteDataSource.getMemberIntroducedPeers(memberId);
+    return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<bool> blockPeer(String peerId, {String reason = 'Spam messages'}) {
+    return remoteDataSource.blockPeer(peerId, reason: reason);
+  }
+
+  @override
+  Future<bool> unblockPeer(String peerId) {
+    return remoteDataSource.unblockPeer(peerId);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getBlockedPeers() {
+    return remoteDataSource.getBlockedPeers();
+  }
+
+  @override
+  Future<bool> getPeerBlockStatus(String peerId) {
+    return remoteDataSource.getPeerBlockStatus(peerId);
   }
 }

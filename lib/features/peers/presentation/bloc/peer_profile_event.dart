@@ -92,3 +92,16 @@ class PeerProfileEventBusUpdateReceived extends PeerProfileEvent {
       ];
 }
 
+class PeerProfileBlockRequested extends PeerProfileEvent {
+  final String? reason;
+  const PeerProfileBlockRequested({this.reason});
+
+  @override
+  List<Object?> get props => [reason];
+}
+
+class PeerProfileUnblockRequested extends PeerProfileEvent {
+  const PeerProfileUnblockRequested();
+}
+
+

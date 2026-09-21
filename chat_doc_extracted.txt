@@ -1,0 +1,565 @@
+=== PAGE 1 ===
+PeersUnity - Complete Chat System Master Documentation
+Comprehensive Architectural Blueprint, Flow Analysis, and Full API Reference Guide with Complete JSON Request & Response
+Schemas
+Project: PeersUnity Backend & Mobile API Base URL:http://127.0.0.1:8000/api/v1 Authentication: Laravel Sanctum (Bearer
+Token)
+Real-Time Engine: Laravel Reverb / Pusher
+WebSockets
+Database: PostgreSQL / MySQL Status: Tested & Fully Operational (200 OK /
+201 Created)
+1. Executive Summary & System Overview
+This technical documentation provides the complete specification of all 3 distinct chat channels implemented in the PeersUnity
+architecture:
+1. Direct (1−to-1) Chat: Private peer-to-peer conversations with mutual block protection, media probe metadata processing, real-time read receipts,
+typing state broadcasts, FCM push notifications, and separate soft-deletion for user vs everyone.
+2. Circle Group Chat: Public communication channel for all approved members of a circle. Includes cursor-based pagination (before_message_id),
+quoted replies, granular read tracking (inspecting who read each message), per-user message hiding via PostgreSQL JSONB arrays, and sender-only
+deletion for all.
+3. Circle Leadership Group Chat: Confidential communication channel exclusively accessible to the 5 authorized circle leadership roles (Founder,
+Director, Chair, Vice Chair, Secretary). Features leadership member roster metrics, unread counters, and threaded discussions.
+=== PAGE 2 ===
+2. Master API Matrix (Summary Overview)
+# Module Method API Endpoint Description / Purpose
+1 Direct Chat GET /api/v1/chats
+List all 1−to-1 chats with last
+message & unread count
+2 Direct Chat POST /api/v1/chats
+Initiate new chat or retrieve
+existing conversation by user_id
+3 Direct Chat GET /api/v1/chats/{chat_id}
+Fetch details of a specific 1−to-1
+chat room
+4 Direct Chat GET /api/v1/chats/{chat_id}/messages
+Paginated message history for a 1−
+to-1 chat
+5 Direct Chat POST /api/v1/chats/{chat_id}/messages
+Send direct message (Text, Image,
+Video, or File attachments)
+6 Direct Chat POST /api/v1/chats/{chat_id}/mark-read
+Mark all unread messages in the
+chat as read
+7 Direct Chat POST /api/v1/chats/{chat_id}/typing/start Broadcast typing started indicator
+via WebSockets
+8 Direct Chat POST /api/v1/chats/{chat_id}/typing/stop Broadcast typing stopped
+indicator via WebSockets
+9 Direct Chat POST /api/v1/messages/{message_id}/delete-for-me
+Soft delete/hide a message
+exclusively for authenticated user
+=== PAGE 3 ===
+# Module Method API Endpoint Description / Purpose
+10 Direct Chat POST /api/v1/messages/{message_id}/delete-for-everyone
+Delete message for both parties
+(Sender authorization only)
+11 Circle Chat GET /api/v1/circles/{circle_id}/chat/messages
+Fetch circle chat messages
+(Supports cursor & page
+pagination)
+12 Circle Chat POST /api/v1/circles/{circle_id}/chat/messages Send circle message (Text, Media,
+or Quoted Reply)
+13 Circle Chat POST /api/v1/circles/{circle_id}/chat/messages/read Mark specified message IDs as
+read in bulk
+14 Circle Chat GET /api/v1/circles/{circle_id}/chat/messages/{message_id}/reads
+Read Receipts: List members who
+have read this message
+15 Circle Chat POST
+/api/v1/circles/{circle_id}/chat/messages/{message_id}/delete-
+for-me
+Hide circle message for
+authenticated user (JSONB array)
+16 Circle Chat DELETE /api/v1/circles/{circle_id}/chat/messages/{message_id}
+Delete message for all circle
+members (Sender only)
+17 Leadership GET /api/v1/circles/{circle_id}/leadership-chat/members
+Leadership roster, designated
+roles, and unread count overview
+18 Leadership GET /api/v1/circles/{circle_id}/leadership-chat/messages
+Fetch leadership messages
+history with reply relations
+19 Leadership POST /api/v1/circles/{circle_id}/leadership-chat/messages Send confidential message to
+circle leadership team
+=== PAGE 4 ===
+# Module Method API Endpoint Description / Purpose
+20 Leadership POST /api/v1/circles/{circle_id}/leadership-chat/messages/read
+Mark leadership group messages
+as read
+21 Leadership POST
+/api/v1/circles/{circle_id}/leadership-
+chat/messages/{message_id}/delete-for-me
+Hide leadership message for
+current leader
+22 Leadership POST
+/api/v1/circles/{circle_id}/leadership-
+chat/messages/{message_id}/delete-for-everyone
+Delete leadership message for
+everyone (Sender only)
+3. Complete API Specifications with Request & Response JSON
+SECTION 1: Direct (1−to-1) Chat APIs
+GET /api/v1/chats
+Description: Returns all active 1−to-1 conversations for the authenticated user, sorted by the most recent message
+timestamp, including unread message counts.
+Response (200 OK):
+{
+"success": true,
+"data": [
+{
+"id": "0f3ad1c2-4a4f-4dec-8132-0c87d495f110",
+"user1_id": "dc48c2fb-c97e-4161-b128-b9864e8bcb30",
+"user2_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"last_message_at": "2026-09-19T08:44:00.000000Z",
+"created_at": "2026-09-19T08:43:00.000000Z",
+=== PAGE 5 ===
+"updated_at": "2026-09-19T08:44:00.000000Z",
+"other_user": {
+"id": "dc48c2fb-c97e-4161-b128-b9864e8bcb30",
+"display_name": "Deise Massangane",
+"avatar_url": "https://unity-app.test/storage/avatars/user2.jpg"
+},
+"last_message": {
+"id": "f60ee217-5aab-4165-a51e-9f740b2695b9",
+"sender_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"content": "Hello Deise! Testing PeersUnity 1-to-1 chat system.",
+"snippet": "Hello Deise! Testing PeersUnity 1-to-1 chat system.",
+"attachments": [],
+"is_read": false,
+"created_at": "2026-09-19T08:44:00.000000Z"
+},
+"unread_count": 0
+}
+]
+}
+POST /api/v1/chats
+Description: Initiates or retrieves an existing 1−to-1 conversation room with the targeted user.
+Request Body (JSON):
+{
+"user_id": "dc48c2fb-c97e-4161-b128-b9864e8bcb30"
+}
+Response (200 OK):
+=== PAGE 6 ===
+{
+"success": true,
+"message": "Chat ready",
+"data": {
+"id": "0f3ad1c2-4a4f-4dec-8132-0c87d495f110",
+"user1_id": "dc48c2fb-c97e-4161-b128-b9864e8bcb30",
+"user2_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"last_message_at": "2026-09-19T08:44:00.000000Z",
+"other_user": {
+"id": "dc48c2fb-c97e-4161-b128-b9864e8bcb30",
+"display_name": "Deise Massangane",
+"avatar_url": null
+},
+"unread_count": 0,
+"last_message": null
+}
+}
+GET /api/v1/chats/{chat_id}
+Description: Retrieves the metadata and participant information for a specific chat conversation.
+Response (200 OK):
+{
+"success": true,
+"data": {
+"id": "0f3ad1c2-4a4f-4dec-8132-0c87d495f110",
+"user1_id": "dc48c2fb-c97e-4161-b128-b9864e8bcb30",
+"user2_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"last_message_at": "2026-09-19T08:44:00.000000Z",
+"other_user": {
+"id": "dc48c2fb-c97e-4161-b128-b9864e8bcb30",
+=== PAGE 7 ===
+"display_name": "Deise Massangane",
+"avatar_url": null
+},
+"unread_count": 0
+}
+}
+GET /api/v1/chats/{chat_id}/messages?per_page=50&page=1
+Description: Fetches paginated messages for a 1−to-1 chat room with user-specific deletion filtering.
+Response (200 OK):
+{
+"success": true,
+"data": {
+"items": [
+{
+"id": "f60ee217-5aab-4165-a51e-9f740b2695b9",
+"chat_id": "0f3ad1c2-4a4f-4dec-8132-0c87d495f110",
+"sender_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"content": "Hello Deise! Testing PeersUnity 1-to-1 chat system.",
+"attachments": [],
+"preview": "Hello Deise! Testing PeersUnity 1-to-1 chat system.",
+"is_read": false,
+"created_at": "2026-09-19T08:44:00.000000Z",
+"updated_at": "2026-09-19T08:44:00.000000Z",
+"sender": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"display_name": "Urvashi Chavda",
+"first_name": "Urvashi",
+"last_name": "Chavda",
+"profile_photo_url": null
+}
+=== PAGE 8 ===
+}
+],
+"pagination": {
+"current_page": 1,
+"last_page": 1,
+"per_page": 50,
+"total": 1
+}
+}
+}
+POST /api/v1/chats/{chat_id}/messages
+Description: Sends a message in the 1−to-1 chat. Dispatches FCM push notifications and broadcasts real-time WebSocket
+event.
+Request Body (JSON):
+{
+"content": "Hello Deise! Looking forward to our collaboration."
+}
+Response (201 Created):
+{
+"success": true,
+"message": "Message sent",
+"data": {
+"id": "f60ee217-5aab-4165-a51e-9f740b2695b9",
+"chat_id": "0f3ad1c2-4a4f-4dec-8132-0c87d495f110",
+"sender_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"content": "Hello Deise! Looking forward to our collaboration.",
+=== PAGE 9 ===
+"attachments": [],
+"preview": "Hello Deise! Looking forward to our collaboration.",
+"is_read": false,
+"created_at": "2026-09-19T08:44:00.000000Z",
+"updated_at": "2026-09-19T08:44:00.000000Z",
+"sender": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"display_name": "Urvashi Chavda",
+"first_name": "Urvashi",
+"last_name": "Chavda",
+"profile_photo_url": null
+}
+}
+}
+POST /api/v1/chats/{chat_id}/mark-read
+Description: Marks all incoming unread messages in the chat room as read.
+Response (200 OK):
+{
+"success": true,
+"message": "Messages marked as read",
+"data": {
+"updated_count": 1
+}
+}
+=== PAGE 10 ===
+POST /api/v1/chats/{chat_id}/typing/start & /api/v1/chats/{chat_id}/typing/stop
+Description: Broadcasts typing indicator event to the recipient on the WebSocket channel private-chat.{chatId}.
+Response (200 OK):
+{
+"success": true,
+"data": {
+"chat_id": "0f3ad1c2-4a4f-4dec-8132-0c87d495f110",
+"user_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"is_typing": true
+}
+}
+POST /api/v1/messages/{message_id}/delete-for-me
+Description: Soft-deletes/hides the message solely for the authenticated user.
+Response (200 OK):
+{
+"success": true,
+"message": "Message deleted for you",
+"data": null
+}
+=== PAGE 11 ===
+POST /api/v1/messages/{message_id}/delete-for-everyone
+Description: Deletes the message for all parties in the chat room. (Authorized for original sender only).
+Response (200 OK):
+{
+"success": true,
+"message": "Message deleted for everyone",
+"data": null
+}
+SECTION 2: Circle Group Chat APIs
+GET /api/v1/circles/{circle_id}/chat/messages?per_page=20
+Description: Retrieves circle group chat history, sender profiles, read counts, and quoted replies.
+Response (200 OK):
+{
+"success": true,
+"message": "Circle chat messages fetched successfully.",
+"data": {
+"circle": {
+"id": "835ac1e6-e716-4741-ad47-447b71592ecf",
+"name": "Investors Circle"
+},
+"messages": [
+{
+"id": "6e0c0fb3-a0ed-4168-b4fe-2544f8e52a65",
+=== PAGE 12 ===
+"circle_id": "835ac1e6-e716-4741-ad47-447b71592ecf",
+"message_type": "text",
+"message_text": "Welcome to Investors Circle!",
+"attachment": null,
+"reply_to_message": null,
+"sender": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"name": "Urvashi Chavda",
+"company_name": "Tech Corp",
+"profile_photo_url": null
+},
+"is_mine": true,
+"read_count": 1,
+"is_read_by_me": true,
+"created_at": "2026-09-19T08:44:00.000000Z",
+"updated_at": "2026-09-19T08:44:00.000000Z"
+}
+],
+"pagination": {
+"current_page": 1,
+"last_page": 1,
+"per_page": 20,
+"total": 1
+}
+}
+}
+POST /api/v1/circles/{circle_id}/chat/messages
+Description: Posts a message to all approved circle members with optional attachments and quote replies.
+Request Body (JSON):
+=== PAGE 13 ===
+{
+"message_type": "text",
+"message_text": "Hello Everyone in Investors Circle! Next meeting is scheduled on Monday.",
+"reply_to_message_id": null
+}
+Response (201 Created):
+{
+"success": true,
+"message": "Message sent successfully.",
+"data": {
+"id": "6e0c0fb3-a0ed-4168-b4fe-2544f8e52a65",
+"circle_id": "835ac1e6-e716-4741-ad47-447b71592ecf",
+"message_type": "text",
+"message_text": "Hello Everyone in Investors Circle! Next meeting is scheduled on Monday.",
+"attachment": null,
+"reply_to_message": null,
+"sender": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"name": "Urvashi Chavda",
+"company_name": "Tech Corp",
+"profile_photo_url": null
+},
+"is_mine": true,
+"read_count": 1,
+"is_read_by_me": true,
+"created_at": "2026-09-19T08:44:00.000000Z",
+"updated_at": "2026-09-19T08:44:00.000000Z"
+}
+}
+=== PAGE 14 ===
+POST /api/v1/circles/{circle_id}/chat/messages/read
+Description: Marks an array of circle message IDs as read for the authenticated member.
+Request Body (JSON):
+{
+"message_ids": [
+"6e0c0fb3-a0ed-4168-b4fe-2544f8e52a65"
+]
+}
+Response (200 OK):
+{
+"success": true,
+"message": "Messages marked as read successfully.",
+"data": {
+"read_count_added": 1
+}
+}
+GET /api/v1/circles/{circle_id}/chat/messages/{message_id}/reads
+Description: Read Receipts: Returns the list of circle members who have viewed the message with timestamps.
+Response (200 OK):
+=== PAGE 15 ===
+{
+"success": true,
+"message": "Message read details fetched successfully.",
+"data": {
+"message_id": "6e0c0fb3-a0ed-4168-b4fe-2544f8e52a65",
+"read_count": 1,
+"readers": [
+{
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"name": "Urvashi Chavda",
+"company_name": "Tech Corp",
+"profile_photo_url": null,
+"read_at": "2026-09-19T08:44:00.000000Z"
+}
+]
+}
+}
+POST /api/v1/circles/{circle_id}/chat/messages/{message_id}/delete-for-me
+Description: Hides the circle message specifically for the current member using JSONB array persistence.
+Response (200 OK):
+{
+"success": true,
+"message": "Message deleted for you successfully.",
+"data": null
+}
+=== PAGE 16 ===
+DELETE /api/v1/circles/{circle_id}/chat/messages/{message_id}
+Description: Deletes the message for all circle members (Authorized for original sender only).
+Response (200 OK):
+{
+"success": true,
+"message": "Message deleted for all successfully.",
+"data": null
+}
+SECTION 3: Circle Leadership Group Chat APIs
+GET /api/v1/circles/{circle_id}/leadership-chat/members
+Description: Returns the leadership team roster, leadership roles, total messages, and personal unread count.
+Response (200 OK):
+{
+"success": true,
+"message": "Leadership members fetched successfully.",
+"data": {
+"circle": {
+"id": "835ac1e6-e716-4741-ad47-447b71592ecf",
+"name": "Investors Circle",
+"slug": "investors-circle"
+},
+"chat": {
+"type": "leadership_group",
+=== PAGE 17 ===
+"circle_id": "835ac1e6-e716-4741-ad47-447b71592ecf",
+"total_members": 2,
+"total_messages": 1,
+"unread_count": 0
+},
+"current_user": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"is_leadership_member": true,
+"can_send_message": true
+},
+"members": [
+{
+"id": "835ac1e6-e716-4741-ad47-447b71592ecf:founder:98fee7aa-0d25-4dd7-b445-8b79ba689f44",
+"user_id": "98fee7aa-0d25-4dd7-b445-8b79ba689f44",
+"leader_role": "founder",
+"title": "Founder",
+"user": {
+"id": "98fee7aa-0d25-4dd7-b445-8b79ba689f44",
+"display_name": "Kirit Patel",
+"profile_photo_url": null
+}
+},
+{
+"id": "835ac1e6-e716-4741-ad47-447b71592ecf:chair:fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"user_id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"leader_role": "chair",
+"title": "Chair",
+"user": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"display_name": "Urvashi Chavda",
+"profile_photo_url": null
+}
+}
+]
+}
+}
+=== PAGE 18 ===
+GET /api/v1/circles/{circle_id}/leadership-chat/messages?per_page=20
+Description: Returns paginated leadership discussion messages with reply threads.
+Response (200 OK):
+{
+"success": true,
+"message": "Leadership chat messages fetched successfully.",
+"data": {
+"items": [
+{
+"id": "46b10f65-4126-4940-9788-4ef380797c9b",
+"circle_id": "835ac1e6-e716-4741-ad47-447b71592ecf",
+"message_type": "text",
+"message_text": "Confidential: Leadership strategy review scheduled.",
+"attachment": null,
+"reply_to_message_id": null,
+"reply_to_message": null,
+"is_read": true,
+"created_at": "2026-09-19T08:44:00.000000Z",
+"sender": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+"display_name": "Urvashi Chavda",
+"profile_photo_url": null
+}
+}
+],
+"pagination": {
+"current_page": 1,
+"last_page": 1,
+"per_page": 20,
+"total": 1
+}
+=== PAGE 19 ===
+}
+}
+POST /api/v1/circles/{circle_id}/leadership-chat/messages
+Description: Sends a confidential message to circle leaders with notification triggers.
+Request Body (JSON):
+{
+"message_type": "text",
+"message_text": "Confidential: Agenda for upcoming leadership committee review.",
+"reply_to_message_id": null
+}
+Response (201 Created):
+{
+"success": true,
+"message": "Message sent successfully.",
+"data": {
+"id": "46b10f65-4126-4940-9788-4ef380797c9b",
+"circle_id": "835ac1e6-e716-4741-ad47-447b71592ecf",
+"message_type": "text",
+"message_text": "Confidential: Agenda for upcoming leadership committee review.",
+"attachment": null,
+"reply_to_message_id": null,
+"reply_to_message": null,
+"is_read": true,
+"created_at": "2026-09-19T08:44:00.000000Z",
+"sender": {
+"id": "fc78cd4e-8c69-459a-91f6-a7d13f41cf03",
+=== PAGE 20 ===
+"display_name": "Urvashi Chavda",
+"profile_photo_url": null
+}
+}
+}
+POST /api/v1/circles/{circle_id}/leadership-chat/messages/read
+Description: Marks specified leadership message IDs as read.
+Request Body (JSON):
+{
+"message_ids": [
+"46b10f65-4126-4940-9788-4ef380797c9b"
+]
+}
+Response (200 OK):
+{
+"success": true,
+"message": "Messages marked as read successfully.",
+"data": {
+"marked_count": 1
+}
+}
+=== PAGE 21 ===
+POST /api/v1/circles/{circle_id}/leadership-chat/messages/{message_id}/delete-for-me
+Description: Hides the leadership message exclusively for the authenticated leader.
+Response (200 OK):
+{
+"success": true,
+"message": "Message deleted for you successfully.",
+"data": {
+"message_id": "46b10f65-4126-4940-9788-4ef380797c9b"
+}
+}
+POST /api/v1/circles/{circle_id}/leadership-chat/messages/{message_id}/delete-for-everyone
+Description: Deletes the leadership message for all leaders (Sender only).
+Response (200 OK):
+{
+"success": true,
+"message": "Message deleted for everyone successfully.",
+"data": {
+"message_id": "46b10f65-4126-4940-9788-4ef380797c9b"
+}
+}
+=== PAGE 22 ===
+Verification Status: All 22 endpoints with their complete JSON response structures are verified, operational, and ready for production deployment.

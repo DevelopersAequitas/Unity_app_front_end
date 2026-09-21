@@ -25,6 +25,9 @@ class AppErrorHandler {
     'bad certificate',
   ];
 
+  static String getDisplayMessage(dynamic error, [StackTrace? stackTrace]) =>
+      toUserFriendlyMessage(error, stackTrace);
+
   static String toUserFriendlyMessage(dynamic error, [StackTrace? stackTrace]) {
     // 1. Log real error & stacktrace for developers
     _logRealError(error, stackTrace);

@@ -1,3 +1,4 @@
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/subscription_status_entity.dart';
 
 class SubscriptionStatusModel extends SubscriptionStatusEntity {
@@ -12,14 +13,7 @@ class SubscriptionStatusModel extends SubscriptionStatusEntity {
   });
 
   factory SubscriptionStatusModel.fromJson(Map<String, dynamic> json) {
-    DateTime? parseDate(dynamic val) {
-      if (val == null) return null;
-      try {
-        return DateTime.parse(val.toString());
-      } catch (_) {
-        return null;
-      }
-    }
+    DateTime? parseDate(dynamic val) => AppDateFormatter.parseUtc(val);
 
     final handled = json['handled'] == true ||
         json['handled'] == 1 ||

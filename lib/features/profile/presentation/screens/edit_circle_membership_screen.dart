@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../domain/entities/profile_entity.dart';
 
 class EditCircleMembershipScreen extends StatelessWidget {
@@ -12,17 +13,7 @@ class EditCircleMembershipScreen extends StatelessWidget {
     required this.profile,
   });
 
-  static const _monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  String _formatDate(String? isoDate) {
-    if (isoDate == null || isoDate.isEmpty) return 'N/A';
-    try {
-      final dt = DateTime.parse(isoDate);
-      return '${dt.day.toString().padLeft(2, '0')} ${_monthNames[dt.month - 1]} ${dt.year}';
-    } catch (_) {
-      return isoDate;
-    }
-  }
+  String _formatDate(String? isoDate) => AppDateFormatter.format(isoDate, defaultValue: 'N/A');
 
   @override
   Widget build(BuildContext context) {
