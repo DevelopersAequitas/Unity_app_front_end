@@ -133,12 +133,9 @@ class _TimelineMediaViewerState extends State<TimelineMediaViewer> {
     final mediaContent = GestureDetector(
       onTap: _openPreview,
       onDoubleTap: widget.onDoubleTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: AspectRatio(
-          aspectRatio: 4 / 5,
-          child: widget.media.isVideo ? _buildVideo() : _buildImage(),
-        ),
+      child: AspectRatio(
+        aspectRatio: 4 / 5,
+        child: widget.media.isVideo ? _buildVideo() : _buildImage(),
       ),
     );
 

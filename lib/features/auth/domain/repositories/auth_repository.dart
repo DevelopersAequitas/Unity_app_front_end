@@ -4,10 +4,18 @@ import '../entities/register_params.dart';
 import '../entities/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<void> requestOtp(String email, {String channel = 'email'});
+  Future<void> requestOtp(String email);
+
+  Future<void> requestWhatsappOtp(String phone);
 
   Future<({UserEntity user, AuthTokenEntity token})> verifyOtp({
     required String email,
+    required String otp,
+    required String deviceName,
+  });
+
+  Future<({UserEntity user, AuthTokenEntity token})> verifyWhatsappOtp({
+    required String phone,
     required String otp,
     required String deviceName,
   });

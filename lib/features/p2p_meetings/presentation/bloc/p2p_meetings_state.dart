@@ -8,7 +8,8 @@ enum P2pMeetingsStatus { initial, loading, success, failure, actionSuccess }
 
 class P2pMeetingsState extends Equatable {
   final P2pMeetingsStatus status;
-  final String topTab; // 'completed', 'scheduled', or 'leaderboard'
+  final P2pMeetingsStatus leaderboardStatus;
+  final String topTab; // 'leaderboard', 'completed', or 'scheduled'
   final String completedSubTab; // 'i_initiated' or 'peer_initiated'
   final String scheduledSubTab; // 'received', 'sent', 'reschedules'
   final String searchQuery;
@@ -23,7 +24,8 @@ class P2pMeetingsState extends Equatable {
 
   const P2pMeetingsState({
     this.status = P2pMeetingsStatus.initial,
-    this.topTab = 'completed',
+    this.leaderboardStatus = P2pMeetingsStatus.initial,
+    this.topTab = 'leaderboard',
     this.completedSubTab = 'i_initiated',
     this.scheduledSubTab = 'received',
     this.searchQuery = '',
@@ -82,16 +84,20 @@ class P2pMeetingsState extends Equatable {
     if (searchQuery.trim().isEmpty) return leaderboardList;
     final q = searchQuery.trim().toLowerCase();
     return leaderboardList.where((b) {
-      return b.displayName.toLowerCase().contains(q) ||
-          (b.companyName ?? '').toLowerCase().contains(q) ||
-          (b.designation ?? '').toLowerCase().contains(q) ||
-          (b.city ?? '').toLowerCase().contains(q) ||
-          (b.category ?? '').toLowerCase().contains(q);
+      final name = b.displayName.toLowerCase();
+      final company = (b.companyName ?? '').toLowerCase();
+      final city = (b.city ?? '').toLowerCase();
+      final cat = (b.category ?? '').toLowerCase();
+      return name.contains(q) ||
+          company.contains(q) ||
+          city.contains(q) ||
+          cat.contains(q);
     }).toList();
   }
 
   P2pMeetingsState copyWith({
     P2pMeetingsStatus? status,
+    P2pMeetingsStatus? leaderboardStatus,
     String? topTab,
     String? completedSubTab,
     String? scheduledSubTab,
@@ -107,6 +113,7 @@ class P2pMeetingsState extends Equatable {
   }) {
     return P2pMeetingsState(
       status: status ?? this.status,
+      leaderboardStatus: leaderboardStatus ?? this.leaderboardStatus,
       topTab: topTab ?? this.topTab,
       completedSubTab: completedSubTab ?? this.completedSubTab,
       scheduledSubTab: scheduledSubTab ?? this.scheduledSubTab,
@@ -125,6 +132,7 @@ class P2pMeetingsState extends Equatable {
   @override
   List<Object?> get props => [
         status,
+        leaderboardStatus,
         topTab,
         completedSubTab,
         scheduledSubTab,

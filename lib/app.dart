@@ -24,6 +24,7 @@ class MyApp extends StatelessWidget {
         themeMode: ThemeMode.light,
         initialRoute: AppRoutes.splash,
         onGenerateRoute: AppRouter.onGenerateRoute,
+        navigatorObservers: [AppRouter.routeObserver],
         builder: (context, child) =>
             ConnectivityOverlay(child: child ?? const SizedBox.shrink()),
       ),

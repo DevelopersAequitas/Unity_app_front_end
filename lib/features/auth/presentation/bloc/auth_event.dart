@@ -12,28 +12,41 @@ class AuthCheckRequested extends AuthEvent {
 }
 
 class AuthRequestOtpSubmitted extends AuthEvent {
-  final String email;
+  final String identifier;
   final String channel;
 
-  const AuthRequestOtpSubmitted(this.email, {this.channel = 'email'});
+  const AuthRequestOtpSubmitted(
+    this.identifier, {
+    this.channel = 'email',
+  });
+
+  String get email => identifier;
 
   @override
-  List<Object?> get props => [email, channel];
+  List<Object?> get props => [identifier, channel];
 }
 
 class AuthVerifyOtpSubmitted extends AuthEvent {
-  final String email;
+  final String identifier;
+  final String channel;
   final String otp;
   final String deviceName;
 
   const AuthVerifyOtpSubmitted({
-    required this.email,
+    required this.identifier,
+    this.channel = 'email',
     required this.otp,
     this.deviceName = 'Mobile Device',
   });
 
+  String get email => identifier;
+
   @override
-  List<Object?> get props => [email, otp, deviceName];
+  List<Object?> get props => [identifier, channel, otp, deviceName];
+}
+
+class AuthLogoutRequested extends AuthEvent {
+  const AuthLogoutRequested();
 }
 
 class AuthResetState extends AuthEvent {

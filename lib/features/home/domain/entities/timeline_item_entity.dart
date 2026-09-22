@@ -3,6 +3,7 @@ import 'timeline_author_entity.dart';
 import 'timeline_collaboration_entity.dart';
 import 'timeline_impact_entity.dart';
 import 'timeline_media_entity.dart';
+import 'timeline_mention_entity.dart';
 
 enum TimelineItemType { standardPost, lifeImpactRecognition, impactActivity, collaborationPost }
 
@@ -14,6 +15,7 @@ class TimelineItemEntity extends Equatable {
   final bool isVerified;
   final List<TimelineMediaEntity> media;
   final List<String> tags;
+  final List<TimelineMentionEntity> mentions;
   final TimelineAuthorEntity? author;
   final int likesCount;
   final int commentsCount;
@@ -32,6 +34,7 @@ class TimelineItemEntity extends Equatable {
     this.isVerified = false,
     this.media = const [],
     this.tags = const [],
+    this.mentions = const [],
     this.author,
     this.likesCount = 0,
     this.commentsCount = 0,
@@ -63,6 +66,7 @@ class TimelineItemEntity extends Equatable {
     int? savesCount,
     bool? isLikedByMe,
     bool? isSaved,
+    List<TimelineMentionEntity>? mentions,
   }) {
     return TimelineItemEntity(
       id: id,
@@ -72,6 +76,7 @@ class TimelineItemEntity extends Equatable {
       isVerified: isVerified,
       media: media,
       tags: tags,
+      mentions: mentions ?? this.mentions,
       author: author,
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
@@ -93,6 +98,7 @@ class TimelineItemEntity extends Equatable {
     isVerified,
     media,
     tags,
+    mentions,
     author,
     likesCount,
     commentsCount,
@@ -104,3 +110,4 @@ class TimelineItemEntity extends Equatable {
     impact,
   ];
 }
+

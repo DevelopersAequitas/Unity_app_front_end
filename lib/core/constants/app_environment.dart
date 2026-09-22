@@ -65,7 +65,8 @@ class AppEnvironment {
   static String get baseUrl {
     switch (flavor) {
       case Flavor.prod:
-        return 'https://peersunity.com/api/v1';
+        // Temporarily pointing to dev base URL for testing
+        return 'https://dev.peersunity.com/api/v1';
       case Flavor.dev:
         return 'https://dev.peersunity.com/api/v1';
     }

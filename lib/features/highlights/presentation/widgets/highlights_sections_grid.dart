@@ -7,11 +7,13 @@ import 'highlights_grid_card.dart';
 class HighlightsSectionsGrid extends StatelessWidget {
   final List<HighlightSection> sections;
   final ValueChanged<HighlightSection> onSectionTap;
+  final bool isSearching;
 
   const HighlightsSectionsGrid({
     super.key,
     required this.sections,
     required this.onSectionTap,
+    this.isSearching = false,
   });
 
   @override
@@ -20,7 +22,7 @@ class HighlightsSectionsGrid extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth >= 600;
     final crossAxisCount = isTablet ? 6 : 4;
-    final cardAspectRatio = isTablet ? 0.90 : 0.82;
+    final cardAspectRatio = isTablet ? 0.95 : 0.84;
 
     // Group sections by category preserving order
     final categories = <String, List<HighlightSection>>{};
@@ -37,46 +39,65 @@ class HighlightsSectionsGrid extends StatelessWidget {
         children: categories.entries.map((entry) {
           final categoryTitle = entry.key;
           final items = entry.value;
+          final isHighlightsCategory = categoryTitle.trim().toLowerCase() == 'highlights';
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (categoryTitle != 'Highlights') ...[
-                const SizedBox(height: 18),
-                Text(
-                  categoryTitle,
-                  style: AppTypography.titleSmall.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
-                    fontSize: 15,
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isHighlightsCategory && !isSearching) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(left: 2, bottom: 12, top: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 3.5,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            gradient: AppColor.brandGradient,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          categoryTitle,
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: isDark ? AppColor.darkTextPrimary : const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ],
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: cardAspectRatio,
+                  ),
+                  itemBuilder: (context, index) {
+                    final section = items[index];
+                    final itemIndex = globalIndex++;
+                    return HighlightsGridCard(
+                      item: section,
+                      index: itemIndex,
+                      onTap: () => onSectionTap(section),
+                    );
+                  },
                 ),
-                const SizedBox(height: 10),
               ],
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 6,
-                  childAspectRatio: cardAspectRatio,
-                ),
-                itemBuilder: (context, index) {
-                  final section = items[index];
-                  final itemIndex = globalIndex++;
-                  return HighlightsGridCard(
-                    item: section,
-                    index: itemIndex,
-                    onTap: () => onSectionTap(section),
-                  );
-                },
-              ),
-            ],
+            ),
           );
         }).toList(),
       ),
     );
   }
 }
+

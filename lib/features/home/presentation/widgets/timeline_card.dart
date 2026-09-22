@@ -115,7 +115,11 @@ class TimelineCard extends StatelessWidget {
     // For impact/collaboration cards: wrap with double-tap gesture
     if (onLikeTap != null) {
       return GestureDetector(
-        onDoubleTap: onLikeTap,
+        onDoubleTap: () {
+          if (!item.isLikedByMe) {
+            onLikeTap!();
+          }
+        },
         behavior: HitTestBehavior.deferToChild,
         child: cardWidget,
       );

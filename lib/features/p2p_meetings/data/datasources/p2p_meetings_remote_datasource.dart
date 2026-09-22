@@ -71,13 +71,58 @@ class P2pMeetingsRemoteDataSourceImpl implements P2pMeetingsRemoteDataSource {
 
   @override
   Future<List<P2pMeetingLeaderboardModel>> getP2pMeetingsLeaderboard() async {
-    final response = await _dioClient.dio.get(ApiEndpoints.leaderboardP2pMeetings);
-    final data = response.data['data'] ?? response.data;
+    final endpoints = [
+      ApiEndpoints.leaderboardP2pMeetings,
+      '/leaderboards/p2p-meetings',
+      '/leaderboards/p2p_meetings',
+      '/leaderboards/p2p',
+      '/leaderboards/p2p-meeting',
+      '/leaderboard/p2p-meetings',
+      '/leaderboard/p2p',
+    ];
+    dynamic data;
+    for (final ep in endpoints) {
+      try {
+        final response = await _dioClient.dio.get(ep);
+        if (response.data != null) {
+          data = response.data;
+          break;
+        }
+      } catch (_) {
+        // continue
+      }
+    }
+    if (data == null) {
+      final response = await _dioClient.dio.get(ApiEndpoints.leaderboardP2pMeetings);
+      data = response.data;
+    }
+
     List<dynamic> items = [];
-    if (data is Map<String, dynamic> && data['items'] is List) {
-      items = data['items'] as List;
-    } else if (data is List) {
+    if (data is List) {
       items = data;
+    } else if (data is Map<String, dynamic>) {
+      final nestedData = data['data'];
+      if (nestedData is Map<String, dynamic>) {
+        if (nestedData['peers'] is List) {
+          items = nestedData['peers'] as List;
+        } else if (nestedData['items'] is List) {
+          items = nestedData['items'] as List;
+        } else if (nestedData['results'] is List) {
+          items = nestedData['results'] as List;
+        } else if (nestedData['leaderboard'] is List) {
+          items = nestedData['leaderboard'] as List;
+        }
+      } else if (nestedData is List) {
+        items = nestedData;
+      } else if (data['peers'] is List) {
+        items = data['peers'] as List;
+      } else if (data['items'] is List) {
+        items = data['items'] as List;
+      } else if (data['leaderboard'] is List) {
+        items = data['leaderboard'] as List;
+      } else if (data['results'] is List) {
+        items = data['results'] as List;
+      }
     }
     return items.asMap().entries.map((entry) {
       final item = entry.value as Map<String, dynamic>;

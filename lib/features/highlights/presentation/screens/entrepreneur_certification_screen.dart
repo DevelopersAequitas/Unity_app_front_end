@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -109,6 +110,9 @@ class _EntrepreneurCertificationScreenState
                 totalQuestions: currentState.questions.length,
                 isSubmitting: isSubmitting,
                 onConfirmSubmit: () {
+                  if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to submit entrepreneur certification.')) {
+                    return;
+                  }
                   if (_fullNameController.text.trim().isEmpty ||
                       _businessNameController.text.trim().isEmpty) {
                     AppSnackBar.showError(

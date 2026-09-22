@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -50,6 +51,10 @@ class _AskFormScreenState extends State<AskFormScreen> {
 
   void _handleSubmit() {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to submit collaboration asks.')) {
+      return;
+    }
 
     final entity = PostAskEntity(
       subject: _subjectController.text.trim(),

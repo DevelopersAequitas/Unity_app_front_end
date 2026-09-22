@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:unity_app/core/constants/app_colors.dart';
+import 'package:unity_app/core/utils/paywall_gate_helper.dart';
 import 'package:unity_app/core/widgets/app_common_bar.dart';
 import 'package:unity_app/core/widgets/common_peer_selector_sheet.dart';
 import 'package:unity_app/features/p2p_meetings/domain/usecases/log_p2p_meeting_usecase.dart';
@@ -165,6 +166,10 @@ class _AddP2pMeetingViewState extends State<_AddP2pMeetingView> {
       return;
     }
     if (!_formKey.currentState!.validate()) return;
+
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to log and schedule P2P meetings.')) {
+      return;
+    }
 
     final bloc = context.read<AddP2pMeetingBloc>();
     bloc.add(AddP2pMeetingPlaceChanged(_placeController.text.trim()));

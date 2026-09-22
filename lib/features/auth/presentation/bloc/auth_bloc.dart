@@ -3,24 +3,34 @@ import '../../../../core/services/location_sync_service.dart';
 import '../../../../core/services/user_presence_service.dart';
 import '../../../../core/utils/app_error_handler.dart';
 import '../../domain/usecases/get_cached_auth_usecase.dart';
+import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/request_otp_usecase.dart';
+import '../../domain/usecases/request_whatsapp_otp_usecase.dart';
 import '../../domain/usecases/verify_otp_usecase.dart';
+import '../../domain/usecases/verify_whatsapp_otp_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final RequestOtpUseCase requestOtpUseCase;
+  final RequestWhatsappOtpUseCase requestWhatsappOtpUseCase;
   final VerifyOtpUseCase verifyOtpUseCase;
+  final VerifyWhatsappOtpUseCase verifyWhatsappOtpUseCase;
   final GetCachedAuthUseCase getCachedAuthUseCase;
+  final LogoutUseCase logoutUseCase;
 
   AuthBloc({
     required this.requestOtpUseCase,
+    required this.requestWhatsappOtpUseCase,
     required this.verifyOtpUseCase,
+    required this.verifyWhatsappOtpUseCase,
     required this.getCachedAuthUseCase,
+    required this.logoutUseCase,
   }) : super(const AuthInitial()) {
     on<AuthCheckRequested>(_onCheckRequested);
     on<AuthRequestOtpSubmitted>(_onRequestOtpSubmitted);
     on<AuthVerifyOtpSubmitted>(_onVerifyOtpSubmitted);
+    on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthResetState>(_onResetState);
   }
 
@@ -49,26 +59,39 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthRequestOtpSubmitted event,
     Emitter<AuthState> emit,
   ) async {
-    final cleanEmail = event.email.trim();
-    if (cleanEmail.isEmpty || !cleanEmail.contains('@')) {
-      emit(const AuthError('Please enter a valid email address.'));
-      return;
+    final cleanInput = event.identifier.trim();
+    final isWhatsapp = event.channel == 'whatsapp';
+
+    if (isWhatsapp) {
+      if (cleanInput.isEmpty || cleanInput.length < 5) {
+        emit(const AuthError('Please enter a valid phone number.'));
+        return;
+      }
+    } else {
+      if (cleanInput.isEmpty || !cleanInput.contains('@')) {
+        emit(const AuthError('Please enter a valid email address.'));
+        return;
+      }
     }
 
     emit(const AuthLoading(message: 'Sending OTP...'));
     try {
-      await requestOtpUseCase(cleanEmail, channel: event.channel);
-      final dest = event.channel == 'whatsapp' ? 'WhatsApp' : 'email';
+      if (isWhatsapp) {
+        await requestWhatsappOtpUseCase(cleanInput);
+      } else {
+        await requestOtpUseCase(cleanInput);
+      }
+      final dest = isWhatsapp ? 'WhatsApp' : 'email';
       emit(
         AuthOtpSentSuccess(
-          email: cleanEmail,
+          identifier: cleanInput,
           channel: event.channel,
           message: 'OTP sent to your $dest.',
         ),
       );
     } catch (e, stackTrace) {
-      final friendlyMsg = AppErrorHandler.toUserFriendlyMessage(e, stackTrace);
-      emit(AuthError(friendlyMsg));
+      final msg = AppErrorHandler.toUserFriendlyMessage(e, stackTrace);
+      emit(AuthError(msg));
     }
   }
 
@@ -84,18 +107,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     emit(const AuthLoading(message: 'Verifying code...'));
     try {
-      final result = await verifyOtpUseCase(
-        email: event.email.trim(),
-        otp: cleanOtp,
-        deviceName: event.deviceName,
-      );
+      final result = event.channel == 'whatsapp'
+          ? await verifyWhatsappOtpUseCase(
+              phone: event.identifier.trim(),
+              otp: cleanOtp,
+              deviceName: event.deviceName,
+            )
+          : await verifyOtpUseCase(
+              email: event.identifier.trim(),
+              otp: cleanOtp,
+              deviceName: event.deviceName,
+            );
       UserPresenceService.instance.markOnlineAndStart();
       LocationSyncService.instance.syncLocationIfPermitted();
       emit(AuthVerifySuccess(user: result.user, token: result.token));
     } catch (e, stackTrace) {
-      final friendlyMsg = AppErrorHandler.toUserFriendlyMessage(e, stackTrace);
-      emit(AuthError(friendlyMsg));
+      final msg = AppErrorHandler.toUserFriendlyMessage(e, stackTrace);
+      emit(AuthError(msg));
     }
+  }
+
+  Future<void> _onLogoutRequested(
+    AuthLogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading(message: 'Logging out...'));
+    try {
+      await logoutUseCase();
+    } catch (_) {}
+    UserPresenceService.instance.markOfflineAndStop();
+    emit(const AuthUnauthenticated());
   }
 
   void _onResetState(AuthResetState event, Emitter<AuthState> emit) {

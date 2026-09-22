@@ -214,11 +214,11 @@ class _CoinGuidelinesScreenState extends State<CoinGuidelinesScreen> {
                         width: 1.0,
                       ),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.monetization_on_rounded,
-                        color: Color(0xFFD97706),
-                        size: 22,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/coin.png',
+                        width: 22,
+                        height: 22,
                       ),
                     ),
                   ),

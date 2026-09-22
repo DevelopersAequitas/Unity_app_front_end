@@ -35,7 +35,11 @@ class P2pMeetingsScreen extends StatelessWidget {
         approveRescheduleRequestUseCase: ctx.read(),
         rejectRescheduleRequestUseCase: ctx.read(),
         requestRescheduleP2pMeetingUseCase: ctx.read(),
-      )..add(const P2pMeetingsFetchRequested()),
+      )..add(
+          initialTabIndex == 0
+              ? const P2pMeetingsFetchLeaderboardRequested()
+              : const P2pMeetingsFetchRequested(),
+        ),
       child: _P2pMeetingsView(initialTabIndex: initialTabIndex),
     );
   }
@@ -83,24 +87,24 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
   void _onMainTabChanged(int index) {
     setState(() => _mainTabIndex = index);
     final tabName = index == 0
-        ? 'completed'
-        : (index == 1 ? 'scheduled' : 'leaderboard');
+        ? 'leaderboard'
+        : (index == 1 ? 'completed' : 'scheduled');
     context.read<P2pMeetingsBloc>().add(P2pMeetingsTopTabChanged(tabName));
   }
 
   void _onSubTabChanged(int index) {
     setState(() {
-      if (_mainTabIndex == 0) _completedSubIndex = index;
-      if (_mainTabIndex == 1) _scheduledSubIndex = index;
+      if (_mainTabIndex == 1) _completedSubIndex = index;
+      if (_mainTabIndex == 2) _scheduledSubIndex = index;
     });
     final bloc = context.read<P2pMeetingsBloc>();
-    if (_mainTabIndex == 0) {
+    if (_mainTabIndex == 1) {
       bloc.add(
         P2pMeetingsCompletedSubTabChanged(
           index == 0 ? 'i_initiated' : 'peer_initiated',
         ),
       );
-    } else if (_mainTabIndex == 1) {
+    } else if (_mainTabIndex == 2) {
       bloc.add(
         P2pMeetingsScheduledSubTabChanged(
           index == 0 ? 'received' : (index == 1 ? 'sent' : 'reschedules'),
@@ -110,7 +114,7 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
   }
 
   void _onFabPressed() async {
-    if (_mainTabIndex == 0) {
+    if (_mainTabIndex == 1) {
       final result = await Navigator.pushNamed(
         context,
         AppRoutes.addP2pMeeting,
@@ -120,7 +124,7 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
           const P2pMeetingsRefreshRequested(),
         );
       }
-    } else {
+    } else if (_mainTabIndex == 2) {
       ScheduleP2pMeetingSheet.show(
         context,
         onSuccess: () {
@@ -143,7 +147,7 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
         showSearch: true,
         isSearching: _isSearching,
         searchController: _searchController,
-        searchHint: _mainTabIndex == 2
+        searchHint: _mainTabIndex == 0
             ? 'Search leaders by name, company...'
             : 'Search meetings...',
         onSearchTap: () => setState(() => _isSearching = true),
@@ -182,17 +186,17 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
                 children: [
                   Column(
                     children: [
-                      if (_mainTabIndex < 2)
+                      if (_mainTabIndex > 0)
                         P2pSubTabChips(
-                          labels: _mainTabIndex == 0
+                          labels: _mainTabIndex == 1
                               ? _compLabels
                               : _schedLabels,
-                          icons: _mainTabIndex == 0 ? _compIcons : _schedIcons,
-                          selectedIndex: _mainTabIndex == 0
+                          icons: _mainTabIndex == 1 ? _compIcons : _schedIcons,
+                          selectedIndex: _mainTabIndex == 1
                               ? _completedSubIndex
                               : _scheduledSubIndex,
                           badges:
-                              _mainTabIndex == 1 &&
+                              _mainTabIndex == 2 &&
                                   state.rescheduleRequests.isNotEmpty
                               ? {2: state.rescheduleRequests.length}
                               : null,
@@ -216,7 +220,7 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
                       onTabChanged: _onMainTabChanged,
                     ),
                   ),
-                  if (_mainTabIndex < 2)
+                  if (_mainTabIndex > 0)
                     Positioned(
                       right: 16,
                       bottom: 76,
@@ -232,8 +236,8 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
   }
 
   Widget _buildBody(P2pMeetingsState state) {
-    if (_mainTabIndex == 2) return const P2pMeetingLeaderboardView();
-    if (_mainTabIndex == 0) {
+    if (_mainTabIndex == 0) return const P2pMeetingLeaderboardView();
+    if (_mainTabIndex == 1) {
       return P2pCompletedListView(
         isLoading:
             state.status == P2pMeetingsStatus.loading &&

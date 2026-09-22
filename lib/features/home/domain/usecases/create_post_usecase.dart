@@ -14,11 +14,13 @@ class CreatePostUseCase {
     required String contentText,
     String visibility = 'public',
     List<Map<String, String>> media = const [],
+    List<Map<String, dynamic>> mentions = const [],
   }) {
     return repository.createPost(
       contentText: contentText,
       visibility: visibility,
       media: media,
+      mentions: mentions,
     );
   }
 }

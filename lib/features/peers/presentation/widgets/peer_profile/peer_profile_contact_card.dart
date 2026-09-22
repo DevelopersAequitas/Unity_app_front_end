@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unity_app/core/theme/app_color.dart';
+import 'package:unity_app/core/utils/paywall_gate_helper.dart';
 import 'package:unity_app/core/widgets/app_snack_bar.dart';
 import 'package:unity_app/features/profile/domain/entities/profile_entity.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,7 +10,8 @@ class PeerProfileContactCard extends StatelessWidget {
 
   const PeerProfileContactCard({super.key, required this.profile});
 
-  bool get _isFullyVisible {
+  bool _isFullyVisible(BuildContext context) {
+    if (!PaywallGateHelper.isPro(context)) return false;
     final vis = (profile.contactVisibility ?? 'connected_only').toLowerCase();
     if (vis == 'anyone' || vis == 'public' || vis == 'everyone') return true;
     final conn = profile.connectionStatus.toLowerCase();
@@ -17,25 +19,28 @@ class PeerProfileContactCard extends StatelessWidget {
         (conn == 'connected' || conn == 'approved');
   }
 
-  String _maskEmail(String email) {
-    if (_isFullyVisible) return email;
+  String _maskEmail(String email, bool isVisible) {
+    if (isVisible) return email;
     final parts = email.split('@');
-    if (parts.length != 2) return '*****@gmail.com';
+    if (parts.length != 2) return '••••••••@gmail.com';
     final user = parts[0];
     final visiblePrefix = user.length > 2 ? user.substring(0, 2) : (user.isNotEmpty ? user[0] : '');
-    return '$visiblePrefix*****@${parts[1]}';
+    return '$visiblePrefix••••••••@${parts[1]}';
   }
 
-  String _maskPhone(String phone) {
-    if (_isFullyVisible) return phone;
-    if (phone.length < 6) return '*****';
+  String _maskPhone(String phone, bool isVisible) {
+    if (isVisible) return phone;
+    if (phone.length < 6) return '••••••••';
     final prefix = phone.length > 5 ? phone.substring(0, phone.length - 6) : '';
     final suffix = phone.substring(phone.length - 2);
-    return '$prefix*****$suffix';
+    return '$prefix••••••$suffix';
   }
 
-  Future<void> _handleAction(BuildContext context, String urlString, String actionName) async {
-    if (!_isFullyVisible) {
+  Future<void> _handleAction(BuildContext context, String urlString, String actionName, bool isVisible) async {
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to view contact details and $actionName.')) {
+      return;
+    }
+    if (!isVisible) {
       AppSnackBar.showInfo(context, 'Connect with ${profile.displayName} to $actionName');
       return;
     }
@@ -51,6 +56,7 @@ class PeerProfileContactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final email = profile.email;
     final phone = profile.phone;
+    final isVisible = _isFullyVisible(context);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -63,11 +69,11 @@ class PeerProfileContactCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.phone_outlined, size: 16, color: AppColor.primaryBlue),
-              SizedBox(width: 6),
-              Expanded(
+              const Icon(Icons.phone_outlined, size: 16, color: AppColor.primaryBlue),
+              const SizedBox(width: 6),
+              const Expanded(
                 child: Text(
                   'Contact Information',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColor.lightTextPrimary),
@@ -75,6 +81,36 @@ class PeerProfileContactCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (!isVisible) ...[
+                GestureDetector(
+                  onTap: () => PaywallGateHelper.checkPro(
+                    context,
+                    message: 'Upgrade to Pro to view contact information.',
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColor.primaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock_outline_rounded, size: 11, color: AppColor.primaryBlue),
+                        SizedBox(width: 3),
+                        Text(
+                          'PRO',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColor.primaryBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -85,7 +121,7 @@ class PeerProfileContactCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _maskEmail(email),
+                    _maskEmail(email, isVisible),
                     style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400, color: AppColor.lightTextPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -93,7 +129,7 @@ class PeerProfileContactCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: () => _handleAction(context, 'mailto:$email', 'send email'),
+                  onTap: () => _handleAction(context, 'mailto:$email', 'send email', isVisible),
                   borderRadius: BorderRadius.circular(6),
                   child: Padding(
                     padding: const EdgeInsets.all(4),
@@ -111,7 +147,7 @@ class PeerProfileContactCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _maskPhone(phone),
+                    _maskPhone(phone, isVisible),
                     style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400, color: AppColor.lightTextPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -119,7 +155,7 @@ class PeerProfileContactCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: () => _handleAction(context, 'tel:$phone', 'make a call'),
+                  onTap: () => _handleAction(context, 'tel:$phone', 'make a call', isVisible),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     padding: const EdgeInsets.all(6),

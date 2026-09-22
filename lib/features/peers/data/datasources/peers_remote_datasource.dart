@@ -67,6 +67,8 @@ abstract class PeersRemoteDataSource {
 
   Future<void> togglePeerBookmark(String memberId, bool isCurrentlyBookmarked);
 
+  Future<List<PeerModel>> getBookmarkedPeers({int page = 1, int limit = 20});
+
   Future<List<IntroducedPeerModel>> getMemberIntroducedPeers(String memberId);
 
   Future<bool> blockPeer(String peerId, {String reason = 'Spam messages'});
@@ -163,9 +165,12 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
     double? longitude,
   }) async {
     final queryParams = <String, dynamic>{'page': page, 'per_page': limit};
-    if (radiusKm != null) queryParams['radius'] = radiusKm;
-    if (latitude != null) queryParams['latitude'] = latitude;
-    if (longitude != null) queryParams['longitude'] = longitude;
+    if (radiusKm != null && radiusKm > 0) {
+      queryParams['radius_km'] = radiusKm;
+      queryParams['radius'] = radiusKm;
+    }
+    if (latitude != null && latitude != 0) queryParams['latitude'] = latitude;
+    if (longitude != null && longitude != 0) queryParams['longitude'] = longitude;
 
     final response = await _dio.get(
       ApiEndpoints.geoNearbyPeers,
@@ -358,6 +363,23 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
       await _dio.delete(ApiEndpoints.memberBookmark(memberId));
     } else {
       await _dio.post(ApiEndpoints.memberBookmark(memberId));
+    }
+  }
+
+  @override
+  Future<List<PeerModel>> getBookmarkedPeers({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.bookmarkedPeers,
+        queryParameters: {'page': page, 'per_page': limit},
+      );
+      final list = _extractPeerList(response.data);
+      return list.map((p) => p.copyWith(isBookmarked: true)).toList();
+    } catch (_) {
+      return [];
     }
   }
 

@@ -61,7 +61,7 @@ class ImpactBadge extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(
-          Icons.auto_awesome_rounded,
+          Icons.person_rounded,
           size: isPodium ? 14 : 15,
           color: effectiveIconColor,
         ),

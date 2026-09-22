@@ -83,10 +83,11 @@ class _OpenAsksScreenState extends State<OpenAsksScreen> {
           title: 'Open Asks',
           showBack: Navigator.canPop(context),
           showSearch: true,
-          showNotifications: false,
-          showProfile: true,
           onSearchChanged: (query) {
             setState(() => _searchQuery = query.toLowerCase().trim());
+          },
+          onSearchClose: () {
+            setState(() => _searchQuery = '');
           },
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

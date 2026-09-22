@@ -15,6 +15,14 @@ class PeersRefreshRequested extends PeersEvent {
   const PeersRefreshRequested();
 }
 
+class BookmarkedPeersFetchRequested extends PeersEvent {
+  const BookmarkedPeersFetchRequested();
+}
+
+class BookmarkedPeersRefreshRequested extends PeersEvent {
+  const BookmarkedPeersRefreshRequested();
+}
+
 class PeersLoadMoreRequested extends PeersEvent {
   const PeersLoadMoreRequested();
 }

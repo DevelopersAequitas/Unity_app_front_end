@@ -134,11 +134,13 @@ class HomeRepositoryImpl implements HomeRepository {
     required String contentText,
     String visibility = 'public',
     List<Map<String, String>> media = const [],
+    List<Map<String, dynamic>> mentions = const [],
   }) {
     return remoteDataSource.createPost(
       contentText: contentText,
       visibility: visibility,
       media: media,
+      mentions: mentions,
     );
   }
 

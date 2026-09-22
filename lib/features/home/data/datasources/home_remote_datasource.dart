@@ -35,6 +35,7 @@ abstract class HomeRemoteDataSource {
     required String contentText,
     String visibility = 'public',
     List<Map<String, String>> media = const [],
+    List<Map<String, dynamic>> mentions = const [],
   });
 
   Future<void> deletePost(String postId);
@@ -286,6 +287,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     required String contentText,
     String visibility = 'public',
     List<Map<String, String>> media = const [],
+    List<Map<String, dynamic>> mentions = const [],
   }) async {
     final payload = <String, dynamic>{
       'content_text': contentText,
@@ -293,6 +295,10 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     };
     if (media.isNotEmpty) {
       payload['media'] = media;
+    }
+    if (mentions.isNotEmpty) {
+      payload['mentions'] = mentions;
+      payload['tagged_peer_ids'] = mentions.map((m) => m['id']).whereType<String>().toList();
     }
 
     final response = await _dio.post(

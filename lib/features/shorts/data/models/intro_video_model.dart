@@ -1,0 +1,78 @@
+import '../../domain/entities/intro_video_entity.dart';
+
+class IntroVideoModel extends IntroVideoEntity {
+  const IntroVideoModel({
+    required super.id,
+    required super.userId,
+    super.firstName,
+    super.lastName,
+    required super.displayName,
+    required super.name,
+    super.email,
+    super.phone,
+    super.companyName,
+    super.designation,
+    super.cityName,
+    super.level4Category,
+    super.profilePhotoUrl,
+    super.introVideoId,
+    required super.introVideoUrl,
+    super.lifeImpactedCount,
+    super.likesCount,
+    super.isLiked,
+    super.isConnected,
+    super.connectionStatus,
+    super.isRequested,
+    super.canSendConnectionRequest,
+    super.isPro,
+    super.isVerified,
+    super.isFollowing,
+    super.isBookmarked,
+    super.createdAt,
+    super.updatedAt,
+  });
+
+  factory IntroVideoModel.fromJson(Map<String, dynamic> json) {
+    return IntroVideoModel(
+      id: json['id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? json['id']?.toString() ?? '',
+      firstName: json['first_name'] as String?,
+      lastName: json['last_name'] as String?,
+      displayName: json['display_name'] as String? ?? json['name'] as String? ?? 'Unknown Member',
+      name: json['name'] as String? ?? json['display_name'] as String? ?? 'Unknown Member',
+      email: json['email'] as String?,
+      phone: json['phone'] as String?,
+      companyName: json['company_name'] as String?,
+      designation: json['designation'] as String?,
+      cityName: json['city_name'] as String?,
+      level4Category: json['level4_category'] as String?,
+      profilePhotoUrl: json['profile_photo_url'] as String?,
+      introVideoId: json['intro_video_id'] as String?,
+      introVideoUrl: json['intro_video_url'] as String? ?? '',
+      lifeImpactedCount: (json['life_impacted_count'] as num?)?.toInt() ?? 0,
+      likesCount: (json['likes_count'] as num?)?.toInt() ?? (json['like_count'] as num?)?.toInt() ?? 0,
+      isLiked: json['is_liked'] == true || json['is_like'] == true,
+      isConnected: json['is_connected'] == true,
+      connectionStatus: json['connection_status'] as String?,
+      isRequested: json['is_requested'] == true,
+      canSendConnectionRequest: json['can_send_connection_request'] == true,
+      isPro: json['is_pro'] == true,
+      isVerified: json['is_verified'] == true,
+      isFollowing: json['is_following'] == true,
+      isBookmarked: json['is_bookmarked'] == true,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'user_id': userId,
+        'display_name': displayName,
+        'intro_video_url': introVideoUrl,
+        'is_following': isFollowing,
+        'is_bookmarked': isBookmarked,
+        'is_liked': isLiked,
+        'likes_count': likesCount,
+      };
+}

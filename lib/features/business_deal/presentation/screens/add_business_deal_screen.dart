@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/common_peer_selector_sheet.dart';
 import '../../../../core/widgets/responsive_container.dart';
@@ -254,6 +255,9 @@ class _AddBusinessDealViewState extends State<_AddBusinessDealView> {
                       onPressed: isSubmitting || !state.isValid
                           ? null
                           : () async {
+                              if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to record business deals.')) {
+                                return;
+                              }
                               final File? creativeFile =
                                   await _captureCardAsImage();
                               if (context.mounted) {

@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class UserEntity extends Equatable {
   final String id;
   final String email;
+  final String? phone;
   final String? name;
   final String? displayName;
   final String? firstName;
@@ -13,7 +14,8 @@ class UserEntity extends Equatable {
 
   const UserEntity({
     required this.id,
-    required this.email,
+    this.email = '',
+    this.phone,
     this.name,
     this.displayName,
     this.firstName,
@@ -30,13 +32,16 @@ class UserEntity extends Equatable {
     final fullName = '${firstName ?? ''} ${lastName ?? ''}'.trim();
     if (fullName.isNotEmpty) return fullName;
     if (name != null && name!.trim().isNotEmpty) return name!.trim();
-    return email.split('@').first;
+    if (email.contains('@')) return email.split('@').first;
+    if (phone != null && phone!.isNotEmpty) return phone!;
+    return 'User';
   }
 
   @override
   List<Object?> get props => [
     id,
     email,
+    phone,
     name,
     displayName,
     firstName,

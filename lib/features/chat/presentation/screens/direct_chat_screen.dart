@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../domain/entities/chat_message_entity.dart';
 import '../bloc/direct_chat/direct_chat_bloc.dart';
@@ -12,6 +13,7 @@ import '../bloc/direct_chat/direct_chat_state.dart';
 import '../widgets/chat_action_bottom_sheet.dart';
 import '../widgets/chat_bubble_item.dart';
 import '../widgets/chat_date_header.dart';
+import '../widgets/chat_empty_view.dart';
 import '../widgets/chat_input_bar.dart';
 import '../widgets/chat_shimmer_loading.dart';
 
@@ -34,6 +36,7 @@ class DirectChatScreen extends StatefulWidget {
 }
 
 class _DirectChatScreenState extends State<DirectChatScreen> {
+  late final DirectChatBloc _directChatBloc;
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _typingDebounce;
@@ -42,7 +45,8 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<DirectChatBloc>().add(InitDirectChatEvent(
+    _directChatBloc = context.read<DirectChatBloc>();
+    _directChatBloc.add(InitDirectChatEvent(
           chatId: widget.chatId,
           peerUserId: widget.peerUserId,
           peerName: widget.peerName,
@@ -50,6 +54,11 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
         ));
     _scrollController.addListener(_onScroll);
     _inputController.addListener(_onInputChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !PaywallGateHelper.isPro(context)) {
+        Navigator.pushReplacementNamed(context, AppRoutes.membershipPaywall);
+      }
+    });
   }
 
   void _onInputChanged() {
@@ -57,26 +66,20 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
     if (text.isNotEmpty) {
       if (!_isCurrentlyTyping) {
         _isCurrentlyTyping = true;
-        context
-            .read<DirectChatBloc>()
-            .add(const SetTypingIndicatorEvent(isTyping: true));
+        _directChatBloc.add(const SetTypingIndicatorEvent(isTyping: true));
       }
       _typingDebounce?.cancel();
       _typingDebounce = Timer(const Duration(milliseconds: 1500), () {
         if (_isCurrentlyTyping && mounted) {
           _isCurrentlyTyping = false;
-          context
-              .read<DirectChatBloc>()
-              .add(const SetTypingIndicatorEvent(isTyping: false));
+          _directChatBloc.add(const SetTypingIndicatorEvent(isTyping: false));
         }
       });
     } else {
       if (_isCurrentlyTyping) {
         _isCurrentlyTyping = false;
         _typingDebounce?.cancel();
-        context
-            .read<DirectChatBloc>()
-            .add(const SetTypingIndicatorEvent(isTyping: false));
+        _directChatBloc.add(const SetTypingIndicatorEvent(isTyping: false));
       }
     }
   }
@@ -84,9 +87,7 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      context
-          .read<DirectChatBloc>()
-          .add(const LoadDirectMessagesEvent(isInitial: false));
+      _directChatBloc.add(const LoadDirectMessagesEvent(isInitial: false));
     }
   }
 
@@ -94,13 +95,12 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
   void dispose() {
     _typingDebounce?.cancel();
     if (_isCurrentlyTyping) {
-      context
-          .read<DirectChatBloc>()
-          .add(const SetTypingIndicatorEvent(isTyping: false));
+      _directChatBloc.add(const SetTypingIndicatorEvent(isTyping: false));
     }
     _inputController.removeListener(_onInputChanged);
     _inputController.dispose();
     _scrollController.dispose();
+    _directChatBloc.add(const ResetDirectChatEvent());
     super.dispose();
   }
 
@@ -246,28 +246,35 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
                 child: state.status == DirectChatStatus.loading &&
                         state.messages.isEmpty
                     ? const ChatShimmerLoading()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        reverse: true,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: state.messages.length,
-                        itemBuilder: (context, index) {
-                          final msg = state.messages[index];
-                          final showDate = index == state.messages.length - 1 ||
-                              !_isSameDay(msg.createdAt,
-                                  state.messages[index + 1].createdAt);
+                    : state.messages.isEmpty
+                        ? ChatEmptyView(
+                            icon: Icons.waving_hand_rounded,
+                            title: 'Say Hello to $titleName',
+                            subtitle:
+                                'Send a message or voice note to introduce yourself and start collaborating.',
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            reverse: true,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: state.messages.length,
+                            itemBuilder: (context, index) {
+                              final msg = state.messages[index];
+                              final showDate = index == state.messages.length - 1 ||
+                                  !_isSameDay(msg.createdAt,
+                                      state.messages[index + 1].createdAt);
 
-                          return Column(
-                            children: [
-                              if (showDate) ChatDateHeader(date: msg.createdAt),
-                              ChatBubbleItem(
-                                message: msg,
-                                onLongPress: () => _showMessageActions(msg),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                              return Column(
+                                children: [
+                                  if (showDate) ChatDateHeader(date: msg.createdAt),
+                                  ChatBubbleItem(
+                                    message: msg,
+                                    onLongPress: () => _showMessageActions(msg),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
               ),
               ChatInputBar(
                 controller: _inputController,

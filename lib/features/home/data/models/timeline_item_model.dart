@@ -5,6 +5,7 @@ import 'timeline_author_model.dart';
 import 'timeline_collaboration_model.dart';
 import 'timeline_impact_model.dart';
 import 'timeline_media_model.dart';
+import 'timeline_mention_model.dart';
 
 class TimelineItemModel {
   final String id;
@@ -14,6 +15,7 @@ class TimelineItemModel {
   final bool isVerified;
   final List<TimelineMediaModel> media;
   final List<String> tags;
+  final List<TimelineMentionModel> mentions;
   final TimelineAuthorModel? author;
   final int likesCount;
   final int commentsCount;
@@ -32,6 +34,7 @@ class TimelineItemModel {
     this.isVerified = false,
     this.media = const [],
     this.tags = const [],
+    this.mentions = const [],
     this.author,
     this.likesCount = 0,
     this.commentsCount = 0,
@@ -46,6 +49,7 @@ class TimelineItemModel {
   factory TimelineItemModel.fromJson(Map<String, dynamic> json) {
     final mediaList = (json['media'] ?? json['creative_media'] ?? json['creatives']) as List?;
     final tagsList = json['tags'] as List?;
+    final rawMentions = (json['mentions'] ?? json['tagged_peers'] ?? json['tagged_users'] ?? json['mentioned_peers'] ?? json['peers']) as List?;
     final authorMap = (json['author'] ?? json['user'] ?? json['member'] ?? json['creator']) as Map<String, dynamic>?;
     final acceptedMap = json['accepted_by'] as Map<String, dynamic>?;
     final impactMap = json['impact'] as Map<String, dynamic>?;
@@ -105,6 +109,14 @@ class TimelineItemModel {
       }
     }
 
+    List<TimelineMentionModel> parsedMentions = [];
+    if (rawMentions != null) {
+      parsedMentions = rawMentions
+          .whereType<Map<String, dynamic>>()
+          .map((m) => TimelineMentionModel.fromJson(m))
+          .toList();
+    }
+
     return TimelineItemModel(
       id: (json['id'] ?? '').toString(),
       type: (json['type'] ?? json['source_type'] ?? 'post').toString(),
@@ -113,6 +125,7 @@ class TimelineItemModel {
       isVerified: json['is_verified'] as bool? ?? false,
       media: parsedMedia,
       tags: tagsList?.map((t) => t.toString()).toList() ?? const [],
+      mentions: parsedMentions,
       author: authorMap != null
           ? TimelineAuthorModel.fromJson({
               'is_verified': json['is_verified'],
@@ -146,6 +159,7 @@ class TimelineItemModel {
       isVerified: isVerified,
       media: media.map((m) => m.toEntity()).toList(),
       tags: tags,
+      mentions: mentions.map((m) => m.toEntity()).toList(),
       author: author?.toEntity(),
       likesCount: likesCount,
       commentsCount: commentsCount,
@@ -158,3 +172,4 @@ class TimelineItemModel {
     );
   }
 }
+

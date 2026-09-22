@@ -27,7 +27,7 @@ class ReferralsState extends Equatable {
   final bool isUpdatingStatus;
 
   const ReferralsState({
-    this.activeTab = ReferralTab.received,
+    this.activeTab = ReferralTab.leaderboard,
     this.receivedStatus = ReferralsStatus.initial,
     this.givenStatus = ReferralsStatus.initial,
     this.leaderboardStatus = ReferralsStatus.initial,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,7 +8,11 @@ import 'package:video_player/video_player.dart';
 
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../peers/domain/entities/peer_entity.dart';
+import '../../../peers/domain/usecases/get_all_peers_usecase.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
 import '../../../profile/presentation/bloc/profile_posts_event.dart';
@@ -39,12 +44,126 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   double _uploadProgress = 0.0;
   String _statusText = '';
 
+  // Mention Autocomplete State
+  Timer? _debounceTimer;
+  List<PeerEntity> _mentionSuggestions = [];
+  bool _isSearchingMentions = false;
+  int _mentionQueryStartIndex = -1;
+  final Map<String, String> _taggedMentions = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _contentController.addListener(_handleTextChanged);
+  }
+
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _contentController.removeListener(_handleTextChanged);
     _contentController.dispose();
     _focusNode.dispose();
     _videoPlayerController?.dispose();
     super.dispose();
+  }
+
+  void _handleTextChanged() {
+    final text = _contentController.text;
+    final selection = _contentController.selection;
+    if (selection.baseOffset <= 0) {
+      _clearMentionSuggestions();
+      return;
+    }
+
+    final textBeforeCursor = text.substring(0, selection.baseOffset);
+    final lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    if (lastAtIndex == -1) {
+      _clearMentionSuggestions();
+      return;
+    }
+
+    final query = textBeforeCursor.substring(lastAtIndex + 1);
+    // If there's a space or newline between @ and cursor, it's not an active mention query
+    if (query.contains(' ') || query.contains('\n')) {
+      _clearMentionSuggestions();
+      return;
+    }
+
+    // Check if user has written at least 3 characters after @
+    if (query.length >= 3) {
+      _triggerMentionSearch(query, lastAtIndex);
+    } else {
+      _clearMentionSuggestions();
+    }
+  }
+
+  void _clearMentionSuggestions() {
+    if (_mentionSuggestions.isNotEmpty || _isSearchingMentions) {
+      setState(() {
+        _mentionSuggestions = [];
+        _isSearchingMentions = false;
+        _mentionQueryStartIndex = -1;
+      });
+    }
+  }
+
+  void _triggerMentionSearch(String query, int startIndex) {
+    _debounceTimer?.cancel();
+    _mentionQueryStartIndex = startIndex;
+    setState(() => _isSearchingMentions = true);
+
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () async {
+      try {
+        final peers = await context.read<GetAllPeersUseCase>()(
+          search: query,
+          page: 1,
+          limit: 8,
+        );
+        if (mounted) {
+          setState(() {
+            _mentionSuggestions = peers;
+            _isSearchingMentions = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _mentionSuggestions = [];
+            _isSearchingMentions = false;
+          });
+        }
+      }
+    });
+  }
+
+  void _selectMentionPeer(PeerEntity peer) {
+    final text = _contentController.text;
+    final selection = _contentController.selection;
+    final startIndex = _mentionQueryStartIndex;
+
+    if (startIndex < 0 || startIndex >= text.length) return;
+
+    final cursor = selection.baseOffset > startIndex ? selection.baseOffset : text.length;
+    final beforeMention = text.substring(0, startIndex);
+    final afterMention = text.substring(cursor);
+
+    // Markdown tag format: @[DisplayName](peerId)
+    final mentionTag = '@[${peer.displayName}](${peer.id}) ';
+    final newText = '$beforeMention$mentionTag$afterMention';
+    final newCursorPos = beforeMention.length + mentionTag.length;
+
+    _taggedMentions[peer.id] = peer.displayName;
+
+    _contentController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newCursorPos),
+    );
+
+    setState(() {
+      _mentionSuggestions = [];
+      _isSearchingMentions = false;
+      _mentionQueryStartIndex = -1;
+    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -173,6 +292,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to create and publish posts.')) {
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _uploadProgress = 0.0;
@@ -199,10 +322,21 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         if (mounted) setState(() => _statusText = 'Publishing post...');
       }
 
+      final List<Map<String, dynamic>> mentionsPayload = [];
+      for (final entry in _taggedMentions.entries) {
+        if (text.contains(entry.key) || text.contains(entry.value)) {
+          mentionsPayload.add({
+            'id': entry.key,
+            'name': entry.value,
+          });
+        }
+      }
+
       await createPostUseCase(
         contentText: text.isEmpty ? '\u200B' : text,
         visibility: 'public',
         media: mediaList,
+        mentions: mentionsPayload,
       );
 
       if (mounted) {
@@ -221,6 +355,160 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         AppSnackBar.showError(context, 'Failed to create post: $e');
       }
     }
+  }
+
+  Widget _buildMentionSuggestionsList(bool isDark, Color surfaceColor, Color primaryTextColor) {
+    if (_mentionSuggestions.isEmpty && !_isSearchingMentions) {
+      return const SizedBox.shrink();
+    }
+
+    final borderColor = isDark ? AppColor.darkBorder : AppColor.lightBorder;
+    final secondaryTextColor = isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary;
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 220),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? AppColor.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor, width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.alternate_email_rounded, size: 14, color: AppColor.primaryBlue),
+                const SizedBox(width: 6),
+                Text(
+                  'Matching Peers',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: secondaryTextColor,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const Spacer(),
+                if (_isSearchingMentions)
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.8,
+                      valueColor: AlwaysStoppedAnimation(AppColor.primaryBlue),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Divider(height: 1, thickness: 0.6, color: borderColor),
+          if (_mentionSuggestions.isEmpty && _isSearchingMentions)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  'Searching peers...',
+                  style: TextStyle(fontSize: 11.5, color: secondaryTextColor),
+                ),
+              ),
+            )
+          else if (_mentionSuggestions.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  'No matching peers found',
+                  style: TextStyle(fontSize: 11.5, color: secondaryTextColor),
+                ),
+              ),
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: _mentionSuggestions.length,
+                separatorBuilder: (context, index) => Divider(height: 1, thickness: 0.5, color: borderColor.withValues(alpha: 0.5)),
+                itemBuilder: (context, index) {
+                  final peer = _mentionSuggestions[index];
+                  final subtitle = [
+                    if (peer.designation?.isNotEmpty == true) peer.designation!,
+                    if (peer.companyName?.isNotEmpty == true) peer.companyName!,
+                  ].join(' • ');
+
+                  return InkWell(
+                    onTap: () => _selectMentionPeer(peer),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        children: [
+                          AppAvatar(
+                            imageUrl: peer.profilePhotoUrl,
+                            name: peer.displayName,
+                            size: 34,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        peer.displayName,
+                                        style: TextStyle(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: primaryTextColor,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (peer.isVerified) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.verified_rounded, size: 13, color: AppColor.primaryBlue),
+                                    ],
+                                  ],
+                                ),
+                                if (subtitle.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    subtitle,
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: secondaryTextColor,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.north_west_rounded, size: 14, color: AppColor.primaryBlue),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -312,7 +600,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         enabled: !_isSubmitting,
                         style: AppTypography.bodyMedium.copyWith(color: primaryTextColor),
                         decoration: InputDecoration(
-                          hintText: "What do you want to share with peers?",
+                          hintText: "What do you want to share with peers? (Use @ to mention)",
                           hintStyle: AppTypography.bodyMedium.copyWith(
                             color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextDisabled,
                           ),
@@ -348,6 +636,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                 ),
               ),
+              _buildMentionSuggestionsList(isDark, surfaceColor, primaryTextColor),
               CreatePostBottomBar(
                 isSubmitting: _isSubmitting,
                 isDark: isDark,

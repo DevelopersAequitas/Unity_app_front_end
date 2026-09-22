@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_snack_bar.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_edit_bloc.dart';
 import '../bloc/profile_edit_event.dart';
@@ -92,22 +93,21 @@ class _EditProfessionalJourneyScreenState extends State<EditProfessionalJourneyS
         ),
       ),
       body: BlocConsumer<ProfileEditBloc, ProfileEditState>(
+        listenWhen: (previous, current) =>
+            previous.status != current.status &&
+            (current.status == ProfileEditStatus.saved ||
+                current.status == ProfileEditStatus.failure),
         listener: (context, state) {
           if (state.status == ProfileEditStatus.saved) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.successMessage ?? 'Professional journey updated successfully!'),
-                backgroundColor: const Color(0xFF10B981),
-              ),
+            AppSnackBar.showSuccess(
+              context,
+              state.successMessage ?? 'Professional journey updated successfully!',
             );
+            context.read<ProfileEditBloc>().add(const ProfileEditResetRequested());
             Navigator.of(context).pop();
           } else if (state.status == ProfileEditStatus.failure && state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Colors.red,
-              ),
-            );
+            AppSnackBar.showError(context, state.errorMessage!);
+            context.read<ProfileEditBloc>().add(const ProfileEditResetRequested());
           }
         },
         builder: (context, state) {

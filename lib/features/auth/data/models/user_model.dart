@@ -3,6 +3,7 @@ import '../../domain/entities/user_entity.dart';
 class UserModel {
   final String id;
   final String email;
+  final String? phone;
   final String? name;
   final String? displayName;
   final String? firstName;
@@ -13,7 +14,8 @@ class UserModel {
 
   const UserModel({
     required this.id,
-    required this.email,
+    this.email = '',
+    this.phone,
     this.name,
     this.displayName,
     this.firstName,
@@ -30,6 +32,7 @@ class UserModel {
     return UserModel(
       id: (json['id'] ?? json['_id'] ?? '').toString(),
       email: (json['email'] ?? '').toString(),
+      phone: (json['phone'] ?? json['mobile']) as String?,
       name: json['name'] as String?,
       displayName: (json['display_name'] ?? json['displayName']) as String?,
       firstName: (json['first_name'] ?? json['firstName']) as String?,
@@ -51,6 +54,7 @@ class UserModel {
     return {
       'id': id,
       'email': email,
+      'phone': phone,
       'name': name,
       'display_name': displayName,
       'first_name': firstName,
@@ -65,6 +69,7 @@ class UserModel {
     return UserEntity(
       id: id,
       email: email,
+      phone: phone,
       name: name,
       displayName: displayName,
       firstName: firstName,
@@ -79,6 +84,7 @@ class UserModel {
     return UserModel(
       id: entity.id,
       email: entity.email,
+      phone: entity.phone,
       name: entity.name,
       displayName: entity.displayName,
       firstName: entity.firstName,

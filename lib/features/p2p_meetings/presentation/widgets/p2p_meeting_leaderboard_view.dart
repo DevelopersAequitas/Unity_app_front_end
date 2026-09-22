@@ -15,19 +15,24 @@ class P2pMeetingLeaderboardView extends StatelessWidget {
     return BlocBuilder<P2pMeetingsBloc, P2pMeetingsState>(
       builder: (context, state) {
         final list = state.filteredLeaderboardList;
-        final isLoading = state.status == P2pMeetingsStatus.loading && list.isEmpty;
+        final isLoading =
+            state.leaderboardStatus == P2pMeetingsStatus.loading && list.isEmpty;
 
         if (isLoading) {
           return const Center(
             child: SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppColor.primaryBlue),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColor.primaryBlue,
+              ),
             ),
           );
         }
 
-        if (state.status == P2pMeetingsStatus.failure && list.isEmpty) {
+        if (state.leaderboardStatus == P2pMeetingsStatus.failure &&
+            list.isEmpty) {
           return _buildError(context, state.errorMessage);
         }
 

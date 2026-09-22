@@ -28,21 +28,9 @@ class HomeMetricCards extends StatelessWidget {
       final val = (number / 1000000).toStringAsFixed(1);
       return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}M';
     }
-    if (number >= 100000) {
+    if (number >= 1000) {
       final val = (number / 1000).toStringAsFixed(1);
       return '${val.endsWith('.0') ? val.substring(0, val.length - 2) : val}K';
-    }
-    if (number >= 1000) {
-      final str = number.toString();
-      final chars = str.split('');
-      final buffer = StringBuffer();
-      for (int i = 0; i < chars.length; i++) {
-        if (i > 0 && (chars.length - i) % 3 == 0) {
-          buffer.write(',');
-        }
-        buffer.write(chars[i]);
-      }
-      return buffer.toString();
     }
     return number.toString();
   }
@@ -56,27 +44,33 @@ class HomeMetricCards extends StatelessWidget {
             final profile = profileState.profile;
             final user = authState.user;
 
-            final lifeImpacted = profile?.lifeImpactedCount ?? user?.lifeImpactedCount ?? 0;
+            final lifeImpacted =
+                profile?.lifeImpactedCount ?? user?.lifeImpactedCount ?? 0;
             final coins = (profile != null && profile.coinsBalance > 0)
                 ? profile.coinsBalance
                 : (user?.coinsBalance ?? profile?.coinsBalance ?? 0);
 
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
                 children: [
                   Expanded(
                     child: _MetricCard(
                       label: 'Lives Impacted',
                       value: _formatNumber(lifeImpacted),
-                      icon: Icons.bar_chart_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1D4ED8), Color(0xFF3B6FE8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      gradient: AppColor.brandGradient,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.primaryBlue.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.impactLeaderboard);
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.impactLeaderboard,
+                        );
                       },
                     ),
                   ),
@@ -85,12 +79,18 @@ class HomeMetricCards extends StatelessWidget {
                     child: _MetricCard(
                       label: 'Coins',
                       value: _formatNumber(coins),
-                      icon: Icons.toll_rounded,
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFE11D48), Color(0xFFFF6584)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        colors: [AppColor.primaryPink, AppColor.primaryBlue],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.primaryPink.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                       onTap: () {
                         Navigator.pushNamed(context, AppRoutes.leaderboard);
                       },
@@ -109,15 +109,15 @@ class HomeMetricCards extends StatelessWidget {
 class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
   final LinearGradient gradient;
+  final List<BoxShadow>? boxShadow;
   final VoidCallback? onTap;
 
   const _MetricCard({
     required this.label,
     required this.value,
-    required this.icon,
     required this.gradient,
+    this.boxShadow,
     this.onTap,
   });
 
@@ -126,45 +126,47 @@ class _MetricCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: boxShadow,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColor.white.withValues(alpha: 0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: AppTypography.displayLarge.copyWith(
-                          color: AppColor.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                // ── Big Count Number ──
+                Text(
+                  value,
+                  style: AppTypography.displayLarge.copyWith(
+                    color: AppColor.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                    height: 1.0,
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: AppColor.white.withValues(alpha: 0.6),
+                const SizedBox(width: 6),
+                // ── Label bottom-aligned to number ──
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      label,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColor.white,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w400,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ],
             ),

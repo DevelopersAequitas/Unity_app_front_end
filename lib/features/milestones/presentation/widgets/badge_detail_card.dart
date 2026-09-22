@@ -48,8 +48,16 @@ class BadgeDetailCard extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: isEarned ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                gradient: isEarned ? AppColor.brandGradient : null,
+                color: isEarned ? null : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: isEarned ? [
+                  BoxShadow(
+                    color: AppColor.primaryBlue.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ] : null,
               ),
               child: badge.badgeImageUrl.isNotEmpty
                   ? ClipRRect(
@@ -59,14 +67,14 @@ class BadgeDetailCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.workspace_premium_rounded,
-                          color: isEarned ? AppColor.primaryBlue : Colors.grey,
+                          color: isEarned ? Colors.white : Colors.grey,
                           size: 36,
                         ),
                       ),
                     )
                   : Icon(
                       Icons.workspace_premium_rounded,
-                      color: isEarned ? AppColor.primaryBlue : Colors.grey,
+                      color: isEarned ? Colors.white : Colors.grey,
                       size: 36,
                     ),
             ),

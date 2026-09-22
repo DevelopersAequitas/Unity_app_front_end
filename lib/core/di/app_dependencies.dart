@@ -208,10 +208,13 @@ import '../../features/auth/domain/usecases/get_cached_auth_usecase.dart';
 import '../../features/auth/domain/usecases/get_main_categories_usecase.dart';
 import '../../features/auth/domain/usecases/get_registration_draft_usecase.dart';
 import '../../features/auth/domain/usecases/get_subcategories_usecase.dart';
+import '../../features/auth/domain/usecases/logout_usecase.dart';
 import '../../features/auth/domain/usecases/register_usecase.dart';
 import '../../features/auth/domain/usecases/request_otp_usecase.dart';
+import '../../features/auth/domain/usecases/request_whatsapp_otp_usecase.dart';
 import '../../features/auth/domain/usecases/save_registration_draft_usecase.dart';
 import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
+import '../../features/auth/domain/usecases/verify_whatsapp_otp_usecase.dart';
 import '../../features/home/data/datasources/home_local_datasource.dart';
 import '../../features/home/data/datasources/home_remote_datasource.dart';
 import '../../features/home/data/repositories_impl/home_repository_impl.dart';
@@ -248,6 +251,7 @@ import '../../features/peers/domain/usecases/get_sent_connection_requests_usecas
 import '../../features/peers/domain/usecases/remove_connection_usecase.dart';
 import '../../features/peers/domain/usecases/send_connection_request_usecase.dart';
 import '../../features/peers/domain/usecases/toggle_peer_bookmark_usecase.dart';
+import '../../features/peers/domain/usecases/get_bookmarked_peers_usecase.dart';
 import '../../features/peers/domain/usecases/unfollow_user_usecase.dart';
 import '../../features/profile/data/datasources/profile_local_datasource.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
@@ -304,6 +308,10 @@ import '../../features/chat/domain/usecases/get_leadership_messages_usecase.dart
 import '../../features/chat/domain/usecases/send_leadership_message_usecase.dart';
 import '../../features/chat/domain/usecases/mark_leadership_messages_read_usecase.dart';
 import '../../features/chat/domain/usecases/delete_leadership_message_usecase.dart';
+import '../../features/shorts/data/datasources/shorts_remote_datasource.dart';
+import '../../features/shorts/data/repositories_impl/shorts_repository_impl.dart';
+import '../../features/shorts/domain/repositories/shorts_repository.dart';
+import '../../features/shorts/domain/usecases/get_intro_videos_usecase.dart';
 
 class AppDependencies {
   // Core
@@ -318,6 +326,8 @@ class AppDependencies {
   final NotificationsRepository notificationsRepository;
   final CirclesRepository circlesRepository;
   final MembershipRepository membershipRepository;
+  final ShortsRepository shortsRepository;
+  final GetIntroVideosUseCase getIntroVideosUseCase;
   // Highlights Repositories & UseCases
   final HighlightsRepository highlightsRepository;
   final GetHighlightSectionsUseCase getHighlightSectionsUseCase;
@@ -438,8 +448,11 @@ class AppDependencies {
 
   // Auth UseCases
   final RequestOtpUseCase requestOtpUseCase;
+  final RequestWhatsappOtpUseCase requestWhatsappOtpUseCase;
   final VerifyOtpUseCase verifyOtpUseCase;
+  final VerifyWhatsappOtpUseCase verifyWhatsappOtpUseCase;
   final GetCachedAuthUseCase getCachedAuthUseCase;
+  final LogoutUseCase logoutUseCase;
   final RegisterUseCase registerUseCase;
   final GetMainCategoriesUseCase getMainCategoriesUseCase;
   final GetSubcategoriesUseCase getSubcategoriesUseCase;
@@ -473,6 +486,7 @@ class AppDependencies {
   final DeclineConnectionRequestUseCase declineConnectionRequestUseCase;
   final CancelSentConnectionRequestUseCase cancelSentConnectionRequestUseCase;
   final TogglePeerBookmarkUseCase togglePeerBookmarkUseCase;
+  final GetBookmarkedPeersUseCase getBookmarkedPeersUseCase;
   final GetMemberProfileUseCase getMemberProfileUseCase;
   final GetMemberPostsUseCase getMemberPostsUseCase;
   final GetMemberIntroducedPeersUseCase getMemberIntroducedPeersUseCase;
@@ -625,6 +639,8 @@ class AppDependencies {
     required this.notificationsRepository,
     required this.circlesRepository,
     required this.membershipRepository,
+    required this.shortsRepository,
+    required this.getIntroVideosUseCase,
     required this.getMembershipPlansUseCase,
     required this.initiatePlanCheckoutUseCase,
     required this.verifyCheckoutStatusUseCase,
@@ -647,8 +663,11 @@ class AppDependencies {
     required this.markAllNotificationsReadUseCase,
     required this.getCachedNotificationsUseCase,
     required this.requestOtpUseCase,
+    required this.requestWhatsappOtpUseCase,
     required this.verifyOtpUseCase,
+    required this.verifyWhatsappOtpUseCase,
     required this.getCachedAuthUseCase,
+    required this.logoutUseCase,
     required this.registerUseCase,
     required this.getMainCategoriesUseCase,
     required this.getSubcategoriesUseCase,
@@ -678,6 +697,7 @@ class AppDependencies {
     required this.declineConnectionRequestUseCase,
     required this.cancelSentConnectionRequestUseCase,
     required this.togglePeerBookmarkUseCase,
+    required this.getBookmarkedPeersUseCase,
     required this.getMemberProfileUseCase,
     required this.getMemberPostsUseCase,
     required this.getMemberIntroducedPeersUseCase,
@@ -1108,6 +1128,15 @@ class AppDependencies {
     final deleteLeadershipMessageUseCase =
         DeleteLeadershipMessageUseCase(chatRepository);
 
+    // Shorts Data Sources & Repositories
+    final shortsRemoteDataSource = ShortsRemoteDataSourceImpl(
+      dioClient: dioClient,
+    );
+    final shortsRepository = ShortsRepositoryImpl(
+      remoteDataSource: shortsRemoteDataSource,
+    );
+    final getIntroVideosUseCase = GetIntroVideosUseCase(shortsRepository);
+
     // Notifications UseCases
     final getNotificationsUseCase = GetNotificationsUseCase(
       notificationsRepository,
@@ -1124,8 +1153,11 @@ class AppDependencies {
 
     // Auth UseCases
     final requestOtpUseCase = RequestOtpUseCase(authRepository);
+    final requestWhatsappOtpUseCase = RequestWhatsappOtpUseCase(authRepository);
     final verifyOtpUseCase = VerifyOtpUseCase(authRepository);
+    final verifyWhatsappOtpUseCase = VerifyWhatsappOtpUseCase(authRepository);
     final getCachedAuthUseCase = GetCachedAuthUseCase(authRepository);
+    final logoutUseCase = LogoutUseCase(authRepository);
     final registerUseCase = RegisterUseCase(authRepository);
     final getMainCategoriesUseCase = GetMainCategoriesUseCase(authRepository);
     final getSubcategoriesUseCase = GetSubcategoriesUseCase(authRepository);
@@ -1182,6 +1214,8 @@ class AppDependencies {
     final togglePeerBookmarkUseCase = TogglePeerBookmarkUseCase(
       peersRepository,
     );
+    final getBookmarkedPeersUseCase =
+        GetBookmarkedPeersUseCase(peersRepository);
     final getMemberProfileUseCase = GetMemberProfileUseCase(peersRepository);
     final getMemberPostsUseCase = GetMemberPostsUseCase(peersRepository);
     final getMemberIntroducedPeersUseCase =
@@ -1450,8 +1484,11 @@ class AppDependencies {
       markAllNotificationsReadUseCase: markAllNotificationsReadUseCase,
       getCachedNotificationsUseCase: getCachedNotificationsUseCase,
       requestOtpUseCase: requestOtpUseCase,
+      requestWhatsappOtpUseCase: requestWhatsappOtpUseCase,
       verifyOtpUseCase: verifyOtpUseCase,
+      verifyWhatsappOtpUseCase: verifyWhatsappOtpUseCase,
       getCachedAuthUseCase: getCachedAuthUseCase,
+      logoutUseCase: logoutUseCase,
       registerUseCase: registerUseCase,
       getMainCategoriesUseCase: getMainCategoriesUseCase,
       getSubcategoriesUseCase: getSubcategoriesUseCase,
@@ -1481,6 +1518,7 @@ class AppDependencies {
       declineConnectionRequestUseCase: declineConnectionRequestUseCase,
       cancelSentConnectionRequestUseCase: cancelSentConnectionRequestUseCase,
       togglePeerBookmarkUseCase: togglePeerBookmarkUseCase,
+      getBookmarkedPeersUseCase: getBookmarkedPeersUseCase,
       getMemberProfileUseCase: getMemberProfileUseCase,
       getMemberPostsUseCase: getMemberPostsUseCase,
       getMemberIntroducedPeersUseCase: getMemberIntroducedPeersUseCase,
@@ -1600,6 +1638,8 @@ class AppDependencies {
       sendLeadershipMessageUseCase: sendLeadershipMessageUseCase,
       markLeadershipMessagesReadUseCase: markLeadershipMessagesReadUseCase,
       deleteLeadershipMessageUseCase: deleteLeadershipMessageUseCase,
+      shortsRepository: shortsRepository,
+      getIntroVideosUseCase: getIntroVideosUseCase,
     );
   }
 }

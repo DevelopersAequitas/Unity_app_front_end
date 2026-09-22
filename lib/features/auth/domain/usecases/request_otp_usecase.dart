@@ -5,7 +5,7 @@ class RequestOtpUseCase {
 
   const RequestOtpUseCase(this._repository);
 
-  Future<void> call(String email, {String channel = 'email'}) {
-    return _repository.requestOtp(email, channel: channel);
+  Future<void> call(String email) {
+    return _repository.requestOtp(email);
   }
 }

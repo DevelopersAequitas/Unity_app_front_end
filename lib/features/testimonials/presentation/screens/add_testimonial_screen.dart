@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../peers/domain/usecases/get_all_peers_usecase.dart';
@@ -174,6 +175,9 @@ class _AddTestimonialViewState extends State<_AddTestimonialView> {
                       onPressed: isSubmitting || !state.isValid
                           ? null
                           : () {
+                              if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to give testimonials.')) {
+                                return;
+                              }
                               context.read<AddTestimonialBloc>().add(
                                     const AddTestimonialSubmitted(),
                                   );

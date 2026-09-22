@@ -163,6 +163,9 @@ import '../../features/chat/presentation/bloc/chat_list/chat_list_bloc.dart';
 import '../../features/chat/presentation/bloc/direct_chat/direct_chat_bloc.dart';
 import '../../features/chat/presentation/bloc/circle_chat/circle_chat_bloc.dart';
 import '../../features/chat/presentation/bloc/leadership_chat/leadership_chat_bloc.dart';
+import '../../features/shorts/domain/repositories/shorts_repository.dart';
+import '../../features/shorts/domain/usecases/get_intro_videos_usecase.dart';
+import '../../features/shorts/presentation/bloc/shorts_bloc.dart';
 import 'app_dependencies.dart';
 
 class AppProviders extends StatelessWidget {
@@ -464,6 +467,12 @@ class AppProviders extends StatelessWidget {
         RepositoryProvider<GetMyEventsWithQrUseCase>.value(
           value: dependencies.getMyEventsWithQrUseCase,
         ),
+        RepositoryProvider<ShortsRepository>.value(
+          value: dependencies.shortsRepository,
+        ),
+        RepositoryProvider<GetIntroVideosUseCase>.value(
+          value: dependencies.getIntroVideosUseCase,
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -491,8 +500,11 @@ class AppProviders extends StatelessWidget {
           BlocProvider<AuthBloc>(
             create: (_) => AuthBloc(
               requestOtpUseCase: dependencies.requestOtpUseCase,
+              requestWhatsappOtpUseCase: dependencies.requestWhatsappOtpUseCase,
               verifyOtpUseCase: dependencies.verifyOtpUseCase,
+              verifyWhatsappOtpUseCase: dependencies.verifyWhatsappOtpUseCase,
               getCachedAuthUseCase: dependencies.getCachedAuthUseCase,
+              logoutUseCase: dependencies.logoutUseCase,
             ),
           ),
           BlocProvider<RegisterBloc>(
@@ -528,6 +540,7 @@ class AppProviders extends StatelessWidget {
               sendConnectionRequestUseCase:
                   dependencies.sendConnectionRequestUseCase,
               togglePeerBookmarkUseCase: dependencies.togglePeerBookmarkUseCase,
+              getBookmarkedPeersUseCase: dependencies.getBookmarkedPeersUseCase,
               followUserUseCase: dependencies.followUserUseCase,
               unfollowUserUseCase: dependencies.unfollowUserUseCase,
             ),
@@ -836,6 +849,12 @@ class AppProviders extends StatelessWidget {
             create: (_) => MyEventsBloc(
               getMyEventsWithQrUseCase: dependencies.getMyEventsWithQrUseCase,
             )..add(const FetchMyEventsEvent()),
+          ),
+          BlocProvider<ShortsBloc>(
+            create: (_) => ShortsBloc(
+              getIntroVideosUseCase: dependencies.getIntroVideosUseCase,
+              repository: dependencies.shortsRepository,
+            ),
           ),
         ],
         child: child,

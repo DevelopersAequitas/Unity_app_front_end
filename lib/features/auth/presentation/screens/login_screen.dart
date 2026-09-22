@@ -20,24 +20,41 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+  String _selectedChannel = 'email';
+  String _selectedDialCode = '+91';
+  String _selectedFlag = '🇮🇳';
 
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
+    _phoneController = TextEditingController();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  void _onSendOtp(String channel) {
+  void _onSendOtp() {
     FocusScope.of(context).unfocus();
-    context.read<AuthBloc>().add(
-      AuthRequestOtpSubmitted(_emailController.text, channel: channel),
-    );
+    if (_selectedChannel == 'whatsapp') {
+      final rawDigits = _phoneController.text.replaceAll(RegExp(r'[^\d]'), '');
+      final code = _selectedDialCode.startsWith('+')
+          ? _selectedDialCode
+          : '+$_selectedDialCode';
+      final fullPhone = '$code$rawDigits';
+      context.read<AuthBloc>().add(
+            AuthRequestOtpSubmitted(fullPhone, channel: 'whatsapp'),
+          );
+    } else {
+      context.read<AuthBloc>().add(
+            AuthRequestOtpSubmitted(_emailController.text.trim(), channel: 'email'),
+          );
+    }
   }
 
   void _onCreateAccount() {
@@ -49,7 +66,11 @@ class _LoginScreenState extends State<LoginScreen> {
       AppSnackBar.showSuccess(context, state.message);
       Navigator.of(context).pushNamed(
         AppRoutes.verifyOtp,
-        arguments: {'email': state.email, 'channel': state.channel},
+        arguments: {
+          'identifier': state.identifier,
+          'email': state.identifier,
+          'channel': state.channel,
+        },
       );
     } else if (state is AuthError) {
       AppSnackBar.showError(context, state.message);
@@ -79,11 +100,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             : null,
                       ),
                       const SizedBox(height: 16),
-                      const LoginTitleSection(),
+                      LoginTitleSection(channel: _selectedChannel),
                       const SizedBox(height: 24),
                       LoginFormSection(
                         emailController: _emailController,
+                        phoneController: _phoneController,
+                        selectedChannel: _selectedChannel,
+                        dialCode: _selectedDialCode,
+                        flag: _selectedFlag,
                         isLoading: isLoading,
+                        onChannelChanged: (ch) =>
+                            setState(() => _selectedChannel = ch),
+                        onCountryChanged: (c) => setState(() {
+                          _selectedDialCode = c.dialCode;
+                          _selectedFlag = c.flag;
+                        }),
                         onSendOtp: _onSendOtp,
                         onCreateAccount: _onCreateAccount,
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/common_peer_selector_sheet.dart';
 import '../../../../core/widgets/contact_picker_sheet.dart';
@@ -209,7 +210,12 @@ class _AddReferralViewState extends State<_AddReferralView> {
                     child: ElevatedButton(
                       onPressed: isSubmitting || !state.isValid
                           ? null
-                          : () => bloc.add(const AddReferralSubmitted()),
+                          : () {
+                              if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to give referrals.')) {
+                                return;
+                              }
+                              bloc.add(const AddReferralSubmitted());
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primaryBlue,
                         foregroundColor: AppColor.white,

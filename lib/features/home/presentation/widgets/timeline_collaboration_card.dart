@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../domain/entities/timeline_item_entity.dart';
+import 'mention_text_view.dart';
 import 'post_options_bottom_sheet.dart';
 import 'timeline_author_row.dart';
 import 'timeline_interaction_bar.dart';
+
 
 class TimelineCollaborationCard extends StatelessWidget {
   final TimelineItemEntity item;
@@ -40,11 +42,12 @@ class TimelineCollaborationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
-          width: 1,
+        color: isDark ? AppColor.darkSurface : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+            width: 0.8,
+          ),
         ),
       ),
       child: Column(
@@ -58,8 +61,9 @@ class TimelineCollaborationCard extends StatelessWidget {
           ),
           if (item.contentText.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Text(
-              item.contentText,
+            MentionTextView(
+              text: item.contentText,
+              mentions: item.mentions,
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w400,

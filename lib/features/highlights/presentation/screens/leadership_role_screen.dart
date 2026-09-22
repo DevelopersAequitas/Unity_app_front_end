@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -66,6 +66,10 @@ class _LeadershipRoleScreenState extends State<LeadershipRoleScreen> {
   }
 
   void _submit(BuildContext context) {
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to apply for leadership roles.')) {
+      return;
+    }
+
     if (_applyingFor == 'referring_friend') {
       if (_referredNameController.text.trim().isEmpty || _referredMobileController.text.trim().isEmpty) {
         AppSnackBar.showError(context, 'Please enter referred peer name and mobile.');
@@ -110,8 +114,6 @@ class _LeadershipRoleScreenState extends State<LeadershipRoleScreen> {
       appBar: AppCommonBar(
         title: 'Leadership Roles',
         showBack: Navigator.canPop(context),
-        showProfile: true,
-        onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
         onBackTap: Navigator.canPop(context) ? () => Navigator.pop(context) : null,
       ),
       body: AppGradientBackground(

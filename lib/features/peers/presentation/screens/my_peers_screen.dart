@@ -147,10 +147,11 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
       backgroundColor: Colors.transparent,
       appBar: AppCommonBar(
         title: _currentTitle,
-        showBack: true,
+        showBack: Navigator.canPop(context),
         showSearch: _activeTab == 0,
-        showNotifications: false,
-        showProfile: false,
+        showChat: true,
+        showNotifications: true,
+        showProfile: true,
         isSearching: _isSearching,
         searchController: _searchController,
         searchHint: 'Search peers by name, company, city...',
@@ -158,6 +159,12 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
         onSearchClose: _onSearchClose,
         onSearchChanged: (query) {
           context.read<PeersBloc>().add(PeersSearchChanged(query));
+        },
+        onNotificationsTap: () {
+          Navigator.of(context).pushNamed(AppRoutes.notifications);
+        },
+        onProfileTap: () {
+          Navigator.of(context).pushNamed(AppRoutes.profile);
         },
         onBackTap: () => Navigator.of(context).pop(),
       ),
@@ -271,16 +278,22 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
                         },
                         onScheduleP2P: isConnected
                             ? () {
-                                AppSnackBar.showInfo(
+                                Navigator.pushNamed(
                                   context,
-                                  'Scheduling P2P with ${peer.displayName}',
+                                  AppRoutes.addP2pMeeting,
+                                  arguments: peer,
                                 );
                               }
                             : null,
                         onMessage: () {
-                          AppSnackBar.showInfo(
+                          Navigator.pushNamed(
                             context,
-                            'Messaging ${peer.displayName}',
+                            AppRoutes.directChat,
+                            arguments: {
+                              'peer_id': peer.id,
+                              'peer_name': peer.displayName,
+                              'peer_avatar': peer.profilePhotoUrl,
+                            },
                           );
                         },
                         onTap: () {

@@ -39,7 +39,7 @@ class ReferralsScreen extends StatelessWidget {
         updateReferralStatusUseCase: ctx.read<UpdateReferralStatusUseCase>(),
         getReferralsLeaderboardUseCase: ctx.read<GetReferralsLeaderboardUseCase>(),
       )
-        ..add(const ReferralsFetchReceivedRequested())
+        ..add(const ReferralsFetchLeaderboardRequested())
         ..add(const ReferralsFetchStatsRequested())
         ..add(const ReferralsStatusesFetchRequested()),
       child: _ReferralsView(isModal: isModal),

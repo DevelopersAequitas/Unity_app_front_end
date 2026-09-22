@@ -34,7 +34,7 @@ class TestimonialsScreen extends StatelessWidget {
         getGivenTestimonialsUseCase: ctx.read<GetGivenTestimonialsUseCase>(),
         getUserTestimonialsUseCase: ctx.read<GetUserTestimonialsUseCase>(),
         getTestimonialsLeaderboardUseCase: ctx.read<GetTestimonialsLeaderboardUseCase>(),
-      )..add(const TestimonialsFetchReceivedRequested()),
+      )..add(const TestimonialsFetchLeaderboardRequested()),
       child: _TestimonialsView(isModal: isModal),
     );
   }

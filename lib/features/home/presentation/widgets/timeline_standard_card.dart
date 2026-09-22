@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../domain/entities/timeline_item_entity.dart';
+import 'mention_text_view.dart';
 import 'post_options_bottom_sheet.dart';
 import 'timeline_author_row.dart';
 import 'timeline_interaction_bar.dart';
@@ -33,24 +34,31 @@ class TimelineStandardCard extends StatefulWidget {
 }
 
 class _TimelineStandardCardState extends State<TimelineStandardCard> {
-  bool _isExpanded = false;
+  bool _showHeartAnimation = false;
+
+  void _handleDoubleTapLike() {
+    setState(() => _showHeartAnimation = true);
+    if (!widget.item.isLikedByMe) {
+      widget.onLikeTap?.call();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryTextColor = isDark
-        ? AppColor.darkTextPrimary
-        : AppColor.lightTextPrimary;
+    final primaryTextColor =
+        isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
     final item = widget.item;
     final hasMedia = item.media.isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
-          width: 1,
+        color: isDark ? AppColor.darkSurface : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+            width: 0.8,
+          ),
         ),
       ),
       child: Column(
@@ -65,30 +73,73 @@ class _TimelineStandardCardState extends State<TimelineStandardCard> {
               onAuthorTap: widget.onAuthorTap,
             ),
           ),
-          // ── Double-tap anywhere on content area to like ──
+          // ── Double-tap anywhere on content area to like & trigger heart burst ──
           GestureDetector(
-            onDoubleTap: widget.onLikeTap,
+            onDoubleTap: _handleDoubleTapLike,
             behavior: HitTestBehavior.translucent,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                if (item.contentText.isNotEmpty) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-                    child: _buildContentText(primaryTextColor),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (item.contentText.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                        child: MentionTextView(
+                          text: item.contentText,
+                          mentions: item.mentions,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w400,
+                            height: 1.45,
+                            color: primaryTextColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (hasMedia) ...[
+                      const SizedBox(height: 8),
+                      TimelineMediaViewer(
+                        media: item.media.first,
+                        autoPlay: widget.autoPlay,
+                        onDoubleTap: _handleDoubleTapLike,
+                      ),
+                    ],
+                  ],
+                ),
+                if (_showHeartAnimation)
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 650),
+                    curve: Curves.easeOutBack,
+                    onEnd: () {
+                      if (mounted) setState(() => _showHeartAnimation = false);
+                    },
+                    builder: (context, value, child) {
+                      final scale = value <= 0.6
+                          ? (value / 0.6) * 1.3
+                          : 1.3 - ((value - 0.6) / 0.4) * 0.3;
+                      final opacity = value >= 0.75
+                          ? (1.0 - (value - 0.75) / 0.25).clamp(0.0, 1.0)
+                          : 1.0;
+                      return Opacity(
+                        opacity: opacity,
+                        child: Transform.scale(
+                          scale: scale.clamp(0.0, 1.4),
+                          child: const Icon(
+                            Icons.favorite_rounded,
+                            size: 90,
+                            color: Color(0xFFFF2554),
+                            shadows: [
+                              Shadow(color: Color(0x77FF2554), blurRadius: 28),
+                              Shadow(color: Colors.black45, blurRadius: 16),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ],
-                if (hasMedia) ...[
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: TimelineMediaViewer(
-                      media: item.media.first,
-                      autoPlay: widget.autoPlay,
-                      onDoubleTap: widget.onLikeTap,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -111,41 +162,5 @@ class _TimelineStandardCardState extends State<TimelineStandardCard> {
       ),
     );
   }
-
-  Widget _buildContentText(Color textColor) {
-    final text = widget.item.contentText;
-    final isLong = text.length > 160;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w400,
-            height: 1.45,
-            color: textColor,
-          ),
-          maxLines: _isExpanded ? null : 3,
-          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-        ),
-        if (isLong)
-          GestureDetector(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                _isExpanded ? 'Read less' : 'Read more',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColor.primaryBlue,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
 }
+

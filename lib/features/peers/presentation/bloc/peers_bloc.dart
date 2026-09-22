@@ -4,6 +4,7 @@ import '../../../../core/events/peers_event_bus.dart';
 import '../../domain/entities/peer_entity.dart';
 import '../../domain/usecases/follow_user_usecase.dart';
 import '../../domain/usecases/get_all_peers_usecase.dart';
+import '../../domain/usecases/get_bookmarked_peers_usecase.dart';
 import '../../domain/usecases/send_connection_request_usecase.dart';
 import '../../domain/usecases/toggle_peer_bookmark_usecase.dart';
 import '../../domain/usecases/unfollow_user_usecase.dart';
@@ -14,6 +15,7 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
   final GetAllPeersUseCase getAllPeersUseCase;
   final SendConnectionRequestUseCase sendConnectionRequestUseCase;
   final TogglePeerBookmarkUseCase togglePeerBookmarkUseCase;
+  final GetBookmarkedPeersUseCase? getBookmarkedPeersUseCase;
   final FollowUserUseCase? followUserUseCase;
   final UnfollowUserUseCase? unfollowUserUseCase;
   StreamSubscription<PeerBusEvent>? _busSubscription;
@@ -22,11 +24,14 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     required this.getAllPeersUseCase,
     required this.sendConnectionRequestUseCase,
     required this.togglePeerBookmarkUseCase,
+    this.getBookmarkedPeersUseCase,
     this.followUserUseCase,
     this.unfollowUserUseCase,
   }) : super(const PeersState()) {
     on<PeersFetchRequested>(_onFetch);
     on<PeersRefreshRequested>(_onRefresh);
+    on<BookmarkedPeersFetchRequested>(_onFetchBookmarkedPeers);
+    on<BookmarkedPeersRefreshRequested>(_onRefreshBookmarkedPeers);
     on<PeersLoadMoreRequested>(_onLoadMore);
     on<PeersSearchChanged>(_onSearchChanged);
     on<PeersSortChanged>(_onSortChanged);
@@ -36,13 +41,17 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     on<PeerStatusUpdated>(_onStatusUpdated);
     on<PeerFollowStatusSynced>((event, emit) {
       final updated = state.allPeers.map((p) {
-        return p.id == event.peerId ? p.copyWith(isFollowing: event.isFollowing) : p;
+        return p.id == event.peerId
+            ? p.copyWith(isFollowing: event.isFollowing)
+            : p;
       }).toList();
       emit(state.copyWith(allPeers: updated));
     });
     on<PeerBookmarkStatusSynced>((event, emit) {
       final updated = state.allPeers.map((p) {
-        return p.id == event.peerId ? p.copyWith(isBookmarked: event.isBookmarked) : p;
+        return p.id == event.peerId
+            ? p.copyWith(isBookmarked: event.isBookmarked)
+            : p;
       }).toList();
       emit(state.copyWith(allPeers: updated));
     });
@@ -54,16 +63,28 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
         add(PeerStatusUpdated(peerId: event.peerId, status: 'pending'));
       } else if (event is PeerConnectionDeclinedEvent ||
           event is PeerConnectionCancelledEvent) {
-        add(PeerStatusUpdated(
-          peerId: event is PeerConnectionDeclinedEvent
-              ? event.peerId
-              : (event as PeerConnectionCancelledEvent).peerId,
-          status: 'none',
-        ));
+        add(
+          PeerStatusUpdated(
+            peerId: event is PeerConnectionDeclinedEvent
+                ? event.peerId
+                : (event as PeerConnectionCancelledEvent).peerId,
+            status: 'none',
+          ),
+        );
       } else if (event is PeerFollowToggledEvent) {
-        add(PeerFollowStatusSynced(peerId: event.peerId, isFollowing: event.isFollowing));
+        add(
+          PeerFollowStatusSynced(
+            peerId: event.peerId,
+            isFollowing: event.isFollowing,
+          ),
+        );
       } else if (event is PeerBookmarkToggledEvent) {
-        add(PeerBookmarkStatusSynced(peerId: event.peerId, isBookmarked: event.isBookmarked));
+        add(
+          PeerBookmarkStatusSynced(
+            peerId: event.peerId,
+            isBookmarked: event.isBookmarked,
+          ),
+        );
       } else if (event is PeersSyncNeededEvent) {
         add(const PeersRefreshRequested());
       }
@@ -74,16 +95,24 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     final sorted = List<PeerEntity>.from(list);
     switch (sort) {
       case 'Alphabetical (A-Z)':
-        sorted.sort((a, b) =>
-            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+        sorted.sort(
+          (a, b) => a.displayName.toLowerCase().compareTo(
+            b.displayName.toLowerCase(),
+          ),
+        );
         break;
       case 'Alphabetical (Z-A)':
-        sorted.sort((a, b) =>
-            b.displayName.toLowerCase().compareTo(a.displayName.toLowerCase()));
+        sorted.sort(
+          (a, b) => b.displayName.toLowerCase().compareTo(
+            a.displayName.toLowerCase(),
+          ),
+        );
         break;
       case 'Highest Impact':
-        sorted.sort((a, b) =>
-            (b.lifeImpactedCount ?? 0).compareTo(a.lifeImpactedCount ?? 0));
+        sorted.sort(
+          (a, b) =>
+              (b.lifeImpactedCount ?? 0).compareTo(a.lifeImpactedCount ?? 0),
+        );
         break;
       case 'Most Recent':
       default:
@@ -94,18 +123,19 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
 
   /// Excludes system/org accounts that have no company, designation, or category.
   bool _isRealPeer(PeerEntity p) {
-    final hasCompany = p.companyName != null && p.companyName!.trim().isNotEmpty;
-    final hasDesignation = p.designation != null && p.designation!.trim().isNotEmpty;
+    final hasCompany =
+        p.companyName != null && p.companyName!.trim().isNotEmpty;
+    final hasDesignation =
+        p.designation != null && p.designation!.trim().isNotEmpty;
     final hasCategory = p.category != null && p.category!.trim().isNotEmpty;
     return hasCompany || hasDesignation || hasCategory;
   }
 
-  void _onStatusUpdated(
-    PeerStatusUpdated event,
-    Emitter<PeersState> emit,
-  ) {
+  void _onStatusUpdated(PeerStatusUpdated event, Emitter<PeersState> emit) {
     final updated = state.allPeers.map((p) {
-      return p.id == event.peerId ? p.copyWith(connectionStatus: event.status) : p;
+      return p.id == event.peerId
+          ? p.copyWith(connectionStatus: event.status)
+          : p;
     }).toList();
     emit(state.copyWith(allPeers: updated));
   }
@@ -128,12 +158,14 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
       if (cached.isNotEmpty) {
         final valid = cached.where((p) => _isRealPeer(p)).toList();
         final sorted = _applySort(valid, state.selectedSort);
-        emit(state.copyWith(
-          status: PeersStatus.success,
-          allPeers: sorted,
-          page: 1,
-          hasMore: cached.length >= 20,
-        ));
+        emit(
+          state.copyWith(
+            status: PeersStatus.success,
+            allPeers: sorted,
+            page: 1,
+            hasMore: cached.length >= 20,
+          ),
+        );
       } else {
         emit(state.copyWith(status: PeersStatus.loading, page: 1));
       }
@@ -150,19 +182,23 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
       );
       final validPeers = peers.where((p) => _isRealPeer(p)).toList();
       final sortedPeers = _applySort(validPeers, state.selectedSort);
-      emit(state.copyWith(
-        status: PeersStatus.success,
-        allPeers: sortedPeers,
-        hasMore: peers.length >= 20,
-        page: 1,
-        errorMessage: null,
-      ));
+      emit(
+        state.copyWith(
+          status: PeersStatus.success,
+          allPeers: sortedPeers,
+          hasMore: peers.length >= 20,
+          page: 1,
+          errorMessage: null,
+        ),
+      );
     } catch (e) {
       if (state.allPeers.isEmpty) {
-        emit(state.copyWith(
-          status: PeersStatus.failure,
-          errorMessage: e.toString(),
-        ));
+        emit(
+          state.copyWith(
+            status: PeersStatus.failure,
+            errorMessage: e.toString(),
+          ),
+        );
       }
     }
   }
@@ -179,12 +215,14 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
       );
       final validPeers2 = peers.where((p) => _isRealPeer(p)).toList();
       final sortedPeers = _applySort(validPeers2, state.selectedSort);
-      emit(state.copyWith(
-        status: PeersStatus.success,
-        allPeers: sortedPeers,
-        hasMore: peers.length >= 20,
-        page: 1,
-      ));
+      emit(
+        state.copyWith(
+          status: PeersStatus.success,
+          allPeers: sortedPeers,
+          hasMore: peers.length >= 20,
+          page: 1,
+        ),
+      );
     } catch (_) {}
   }
 
@@ -202,23 +240,23 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
         sort: state.selectedSort,
       );
       if (newPeers.isEmpty) {
-        emit(state.copyWith(
-          hasMore: false,
-          isLoadingMore: false,
-        ));
+        emit(state.copyWith(hasMore: false, isLoadingMore: false));
         return;
       }
       final validNewPeers = newPeers.where((p) => _isRealPeer(p)).toList();
       final existingIds = state.allPeers.map((p) => p.id).toSet();
-      final uniqueNewPeers =
-          validNewPeers.where((p) => !existingIds.contains(p.id)).toList();
+      final uniqueNewPeers = validNewPeers
+          .where((p) => !existingIds.contains(p.id))
+          .toList();
       final combined = [...state.allPeers, ...uniqueNewPeers];
-      emit(state.copyWith(
-        allPeers: _applySort(combined, state.selectedSort),
-        page: nextPage,
-        hasMore: newPeers.length >= 20,
-        isLoadingMore: false,
-      ));
+      emit(
+        state.copyWith(
+          allPeers: _applySort(combined, state.selectedSort),
+          page: nextPage,
+          hasMore: newPeers.length >= 20,
+          isLoadingMore: false,
+        ),
+      );
     } catch (_) {
       emit(state.copyWith(isLoadingMore: false));
     }
@@ -284,9 +322,46 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
       }).toList();
       emit(state.copyWith(allPeers: reverted));
       PeersEventBus.instance.emit(
-        PeerFollowToggledEvent(peerId: event.peerId, isFollowing: event.isCurrentlyFollowing),
+        PeerFollowToggledEvent(
+          peerId: event.peerId,
+          isFollowing: event.isCurrentlyFollowing,
+        ),
       );
     }
+  }
+
+  Future<void> _onFetchBookmarkedPeers(
+    BookmarkedPeersFetchRequested event,
+    Emitter<PeersState> emit,
+  ) async {
+    if (getBookmarkedPeersUseCase == null) return;
+    emit(state.copyWith(isLoadingBookmarks: true));
+    try {
+      final list = await getBookmarkedPeersUseCase!();
+      emit(state.copyWith(
+        bookmarkedPeersList: list,
+        isLoadingBookmarks: false,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoadingBookmarks: false,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> _onRefreshBookmarkedPeers(
+    BookmarkedPeersRefreshRequested event,
+    Emitter<PeersState> emit,
+  ) async {
+    if (getBookmarkedPeersUseCase == null) return;
+    try {
+      final list = await getBookmarkedPeersUseCase!();
+      emit(state.copyWith(
+        bookmarkedPeersList: list,
+        isLoadingBookmarks: false,
+      ));
+    } catch (_) {}
   }
 
   Future<void> _onBookmark(
@@ -300,9 +375,23 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
       }
       return p;
     }).toList();
-    emit(state.copyWith(allPeers: updated));
+
+    final updatedBookmarks = state.bookmarkedPeersList.map((p) {
+      if (p.id == event.peerId) {
+        return p.copyWith(isBookmarked: nextBookmark);
+      }
+      return p;
+    }).where((p) => p.isBookmarked).toList();
+
+    emit(state.copyWith(
+      allPeers: updated,
+      bookmarkedPeersList: updatedBookmarks,
+    ));
     PeersEventBus.instance.emit(
-      PeerBookmarkToggledEvent(peerId: event.peerId, isBookmarked: nextBookmark),
+      PeerBookmarkToggledEvent(
+        peerId: event.peerId,
+        isBookmarked: nextBookmark,
+      ),
     );
     try {
       await togglePeerBookmarkUseCase(

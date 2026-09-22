@@ -41,6 +41,14 @@ class TestimonialsBottomNav extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildNavItem(
+                  label: 'Leaderboard',
+                  icon: Icons.leaderboard_outlined,
+                  isSelected: activeTab == TestimonialTab.leaderboard,
+                  onTap: () => onTabChanged(TestimonialTab.leaderboard),
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
                   label: 'Received',
                   icon: Icons.format_quote_outlined,
                   isSelected: activeTab == TestimonialTab.received,
@@ -53,14 +61,6 @@ class TestimonialsBottomNav extends StatelessWidget {
                   icon: Icons.send_outlined,
                   isSelected: activeTab == TestimonialTab.given,
                   onTap: () => onTabChanged(TestimonialTab.given),
-                ),
-              ),
-              Expanded(
-                child: _buildNavItem(
-                  label: 'Leaderboard',
-                  icon: Icons.leaderboard_outlined,
-                  isSelected: activeTab == TestimonialTab.leaderboard,
-                  onTap: () => onTabChanged(TestimonialTab.leaderboard),
                 ),
               ),
             ],

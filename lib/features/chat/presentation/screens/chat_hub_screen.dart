@@ -4,10 +4,12 @@ import 'package:unity_app/core/widgets/app_common_bar.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/common_peer_selector_sheet.dart';
 import '../../../circles/presentation/bloc/circles_bloc.dart';
 import '../../../circles/presentation/bloc/circles_event.dart';
 import '../../../circles/presentation/bloc/circles_state.dart';
+import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../bloc/chat_list/chat_list_bloc.dart';
 import '../bloc/chat_list/chat_list_event.dart';
 import '../bloc/chat_list/chat_list_state.dart';
@@ -45,12 +47,15 @@ class _ChatHubScreenState extends State<ChatHubScreen>
   }
 
   Future<void> _startNewChat() async {
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to start direct messages.')) {
+      return;
+    }
     final peer = await CommonPeerSelectorSheet.show(
       context,
       title: 'Start Direct Chat',
     );
     if (!mounted || peer == null) return;
-    Navigator.pushNamed(
+    await Navigator.pushNamed(
       context,
       AppRoutes.directChat,
       arguments: {
@@ -59,6 +64,9 @@ class _ChatHubScreenState extends State<ChatHubScreen>
         'peer_avatar': peer.profilePhotoUrl,
       },
     );
+    if (mounted) {
+      context.read<ChatListBloc>().add(const RefreshChatListEvent());
+    }
   }
 
   @override
@@ -174,8 +182,11 @@ class _ChatHubScreenState extends State<ChatHubScreen>
               final conv = state.filteredDirectChats[index];
               return ChatHubConversationTile(
                 conversation: conv,
-                onTap: () {
-                  Navigator.pushNamed(
+                onTap: () async {
+                  if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to chat with peers.')) {
+                    return;
+                  }
+                  await Navigator.pushNamed(
                     context,
                     AppRoutes.directChat,
                     arguments: {
@@ -185,6 +196,11 @@ class _ChatHubScreenState extends State<ChatHubScreen>
                       'peer_avatar': conv.otherUser?.profilePhotoUrl,
                     },
                   );
+                  if (context.mounted) {
+                    context
+                        .read<ChatListBloc>()
+                        .add(const RefreshChatListEvent());
+                  }
                 },
               );
             },
@@ -242,7 +258,15 @@ class _ChatHubScreenState extends State<ChatHubScreen>
         if (state.status == CirclesStatus.loading) {
           return const ChatShimmerLoading();
         }
-        if (state.myCircles.isEmpty) {
+        final currentUserId =
+            context.watch<ProfileBloc>().state.profile?.id ?? '';
+
+        final leadershipCircles = state.myCircles.where((circle) {
+          if (currentUserId.isEmpty) return false;
+          return circle.allLeaders.any((leader) => leader.id == currentUserId);
+        }).toList();
+
+        if (leadershipCircles.isEmpty) {
           return const ChatEmptyView(
             icon: Icons.shield_rounded,
             title: 'Leadership Hub',
@@ -250,25 +274,29 @@ class _ChatHubScreenState extends State<ChatHubScreen>
                 'Confidential discussions for designated circle leadership members.',
           );
         }
-        return ListView.separated(
-          itemCount: state.myCircles.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final circle = state.myCircles[index];
-            return ChatHubLeadershipTile(
-              circle: circle,
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.circleLeadershipChat,
-                  arguments: {
-                    'circle_id': circle.id,
-                    'circle_name': circle.name,
-                  },
-                );
-              },
-            );
-          },
+        return RefreshIndicator(
+          onRefresh: () async =>
+              context.read<CirclesBloc>().add(const CirclesFetchRequested()),
+          child: ListView.separated(
+            itemCount: leadershipCircles.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final circle = leadershipCircles[index];
+              return ChatHubLeadershipTile(
+                circle: circle,
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.circleLeadershipChat,
+                    arguments: {
+                      'circle_id': circle.id,
+                      'circle_name': circle.name,
+                    },
+                  );
+                },
+              );
+            },
+          ),
         );
       },
     );

@@ -23,7 +23,7 @@ class TestimonialsState extends Equatable {
   final String? errorMessage;
 
   const TestimonialsState({
-    this.activeTab = TestimonialTab.received,
+    this.activeTab = TestimonialTab.leaderboard,
     this.receivedStatus = TestimonialsStatus.initial,
     this.givenStatus = TestimonialsStatus.initial,
     this.leaderboardStatus = TestimonialsStatus.initial,

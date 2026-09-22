@@ -31,6 +31,7 @@ abstract class HomeRepository {
     required String contentText,
     String visibility = 'public',
     List<Map<String, String>> media = const [],
+    List<Map<String, dynamic>> mentions = const [],
   });
 
   Future<void> deletePost(String postId);

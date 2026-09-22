@@ -20,7 +20,7 @@ class NearMeLoadMoreRequested extends NearMeEvent {
 }
 
 class NearMeRadiusChanged extends NearMeEvent {
-  final double radiusKm;
+  final double? radiusKm;
   const NearMeRadiusChanged(this.radiusKm);
 
   @override

@@ -51,3 +51,7 @@ class ProfileUploadProgressUpdated extends ProfileEditEvent {
   @override
   List<Object?> get props => [progress];
 }
+
+class ProfileEditResetRequested extends ProfileEditEvent {
+  const ProfileEditResetRequested();
+}

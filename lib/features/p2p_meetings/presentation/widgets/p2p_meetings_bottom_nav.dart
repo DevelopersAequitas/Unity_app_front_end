@@ -3,7 +3,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 
 class P2pMeetingsBottomNav extends StatelessWidget {
-  final int activeTab; // 0: Completed, 1: Schedule Invites, 2: Leaderboard
+  final int activeTab; // 0: Leaderboard, 1: Completed, 2: Schedule Invites
   final int? completedCount;
   final int? scheduledCount;
   final ValueChanged<int> onTabChanged;
@@ -44,27 +44,27 @@ class P2pMeetingsBottomNav extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildNavItem(
+                  label: 'Leaderboard',
+                  icon: Icons.leaderboard_outlined,
+                  isSelected: activeTab == 0,
+                  onTap: () => onTabChanged(0),
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
                   label: 'Completed',
                   icon: Icons.check_circle_outline_rounded,
-                  isSelected: activeTab == 0,
+                  isSelected: activeTab == 1,
                   count: completedCount,
-                  onTap: () => onTabChanged(0),
+                  onTap: () => onTabChanged(1),
                 ),
               ),
               Expanded(
                 child: _buildNavItem(
                   label: 'Schedule Invites',
                   icon: Icons.calendar_month_outlined,
-                  isSelected: activeTab == 1,
-                  count: scheduledCount,
-                  onTap: () => onTabChanged(1),
-                ),
-              ),
-              Expanded(
-                child: _buildNavItem(
-                  label: 'Leaderboard',
-                  icon: Icons.leaderboard_outlined,
                   isSelected: activeTab == 2,
+                  count: scheduledCount,
                   onTap: () => onTabChanged(2),
                 ),
               ),

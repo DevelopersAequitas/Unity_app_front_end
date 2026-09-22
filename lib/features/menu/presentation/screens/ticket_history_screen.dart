@@ -327,8 +327,8 @@ class _TicketHistoryScreenState extends State<TicketHistoryScreen> {
       return ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: 4,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, __) => Container(
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) => Container(
           height: 90,
           decoration: BoxDecoration(
             color: AppColor.lightSurface,
@@ -400,7 +400,7 @@ class _TicketHistoryScreenState extends State<TicketHistoryScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _tickets.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final ticket = _tickets[index];
         final id = (ticket['id'] ?? ticket['ticket_id'] ?? ticket['ticket_number'] ?? '').toString();

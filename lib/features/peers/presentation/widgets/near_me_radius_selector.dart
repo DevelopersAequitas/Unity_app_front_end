@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 
 class NearMeRadiusSelector extends StatelessWidget {
-  final double selectedRadius;
-  final ValueChanged<double> onRadiusChanged;
+  final double? selectedRadius;
+  final ValueChanged<double?> onRadiusChanged;
 
   const NearMeRadiusSelector({
     super.key,
@@ -11,7 +11,15 @@ class NearMeRadiusSelector extends StatelessWidget {
     required this.onRadiusChanged,
   });
 
-  static const _radiusOptions = [5.0, 10.0, 25.0, 50.0, 100.0, 500.0];
+  static const List<double?> _radiusOptions = [
+    null,
+    5.0,
+    10.0,
+    25.0,
+    50.0,
+    100.0,
+    500.0,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +48,7 @@ class NearMeRadiusSelector extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  '${radius.toInt()} km',
+                  radius == null ? 'All' : '${radius.toInt()} km',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,

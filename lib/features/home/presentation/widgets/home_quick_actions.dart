@@ -1,86 +1,112 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_color.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../highlights/domain/entities/highlight_section.dart';
+import '../../../highlights/presentation/widgets/highlights_navigation_handler.dart';
+import '../models/home_quick_tab_config.dart';
+import 'home_dome_sub_pills_bar.dart';
+import 'home_dome_tab_header.dart';
+import 'swiggy_dome_painter.dart';
 
-class HomeQuickActions extends StatelessWidget {
-  final void Function(String action)? onActionSelected;
+class HomeQuickActions extends StatefulWidget {
+  final void Function(String route)? onActionSelected;
 
   const HomeQuickActions({super.key, this.onActionSelected});
 
-  static const _actions = [
-    _ActionDef('Impact', Icons.favorite_border_rounded, AppColor.primaryPink),
-    _ActionDef('Peers', Icons.people_outline_rounded, AppColor.primaryBlue),
-    _ActionDef('Circles', Icons.bubble_chart_outlined, Color(0xFF7C3AED)),
-    _ActionDef('Events', Icons.calendar_month_outlined, Color(0xFF0891B2)),
-    _ActionDef('Learning', Icons.auto_stories_outlined, Color(0xFF059669)),
-    _ActionDef('Opportunities', Icons.work_outline_rounded, Color(0xFFD97706)),
-  ];
+  @override
+  State<HomeQuickActions> createState() => _HomeQuickActionsState();
+}
+
+class _HomeQuickActionsState extends State<HomeQuickActions> {
+  int _selectedTabIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColor.darkSurface : AppColor.lightSurface;
-    final borderColor = isDark ? AppColor.darkBorder : AppColor.lightBorder;
-    final textColor = isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary;
+    final tabs = HomeQuickTabConfig.tabs;
+    final activeTab = tabs[_selectedTabIndex.clamp(0, tabs.length - 1)];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: _actions.map((item) {
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                right: _actions.last == item ? 0 : 6,
+    final bgFill = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDark
+        ? activeTab.accentColor.withValues(alpha: 0.5)
+        : const Color(0xFF334155).withValues(alpha: 0.25);
+    final baselineColor = isDark
+        ? Colors.white12
+        : const Color(0xFF334155).withValues(alpha: 0.18);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(
+        begin: _selectedTabIndex.toDouble(),
+        end: _selectedTabIndex.toDouble(),
+      ),
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeInOutCubic,
+      builder: (context, animatedIndex, child) {
+        return CustomPaint(
+          painter: SwiggyDomePainter(
+            selectedIndex: animatedIndex,
+            tabCount: tabs.length,
+            backgroundColor: bgFill,
+            borderColor: borderColor,
+            baselineColor: baselineColor,
+            tabHeaderHeight: 74.0,
+            borderWidth: 1.0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              HomeDomeTabHeader(
+                selectedIndex: _selectedTabIndex,
+                onTabSelected: (index) {
+                  setState(() => _selectedTabIndex = index);
+                },
               ),
-              child: InkWell(
-                onTap: () => onActionSelected?.call(item.label),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: borderColor, width: 1),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(item.icon, size: 22, color: item.color),
-                      const SizedBox(height: 5),
-                      Text(
-                        _shortLabel(item.label),
-                        style: AppTypography.labelSmall.copyWith(
-                          color: textColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.03),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<String>(activeTab.id),
+                  child: HomeDomeSubPillsBar(
+                    activeTab: activeTab,
+                    onItemTap: (item) => _handleItemTap(context, item),
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  String _shortLabel(String label) {
-    // Truncate 'Opportunities' to fit in narrow card
-    if (label == 'Opportunities') return 'Opport.';
-    return label;
+  void _handleItemTap(BuildContext context, HomeQuickTabItem item) {
+    if (item.route != null) {
+      if (widget.onActionSelected != null) {
+        widget.onActionSelected!(item.route!);
+      } else {
+        Navigator.of(context).pushNamed(item.route!);
+      }
+      return;
+    }
+    HighlightsNavigationHandler.handleTap(
+      context,
+      HighlightSection(
+        id: item.id,
+        title: item.title,
+        icon: item.icon,
+        accentColor: item.color,
+      ),
+    );
   }
-}
-
-class _ActionDef {
-  final String label;
-  final IconData icon;
-  final Color color;
-  const _ActionDef(this.label, this.icon, this.color);
 }

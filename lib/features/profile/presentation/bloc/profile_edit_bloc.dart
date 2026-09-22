@@ -20,6 +20,14 @@ class ProfileEditBloc extends Bloc<ProfileEditEvent, ProfileEditState> {
     on<ProfileUploadPhotoRequested>(_onUploadPhotoRequested);
     on<ProfileUploadVideoRequested>(_onUploadVideoRequested);
     on<ProfileUploadProgressUpdated>(_onUploadProgressUpdated);
+    on<ProfileEditResetRequested>(_onResetRequested);
+  }
+
+  void _onResetRequested(
+    ProfileEditResetRequested event,
+    Emitter<ProfileEditState> emit,
+  ) {
+    emit(const ProfileEditState());
   }
 
   void _onUploadProgressUpdated(

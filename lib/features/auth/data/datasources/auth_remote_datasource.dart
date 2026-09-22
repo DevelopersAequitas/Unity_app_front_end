@@ -8,9 +8,15 @@ import '../models/user_model.dart';
 import '../models/category_item_model.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<void> requestOtp(String email, {String channel = 'email'});
+  Future<void> requestOtp(String email);
+  Future<void> requestWhatsappOtp(String phone);
   Future<AuthResponseModel> verifyOtp({
     required String email,
+    required String otp,
+    required String deviceName,
+  });
+  Future<AuthResponseModel> verifyWhatsappOtp({
+    required String phone,
     required String otp,
     required String deviceName,
   });
@@ -32,11 +38,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Dio get _dio => dioClient.dio;
 
   @override
-  Future<void> requestOtp(String email, {String channel = 'email'}) async {
+  Future<void> requestOtp(String email) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.requestOtp,
-        data: {'email': email, 'channel': channel},
+        data: {'email': email},
       );
 
       if (response.statusCode != null &&
@@ -46,6 +52,45 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
       throw Exception('Failed to send OTP');
     } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final resData = e.response!.data as Map<String, dynamic>;
+        final msg = resData['message'] as String?;
+        if (msg != null && msg.isNotEmpty) {
+          throw Exception(msg);
+        }
+      }
+      if (e.error != null) {
+        throw Exception(e.error.toString());
+      }
+      await Future.delayed(const Duration(milliseconds: 500));
+      return;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> requestWhatsappOtp(String phone) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.requestWhatsappOtp,
+        data: {'mobile': phone, 'phone': phone},
+      );
+
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return;
+      }
+      throw Exception('Failed to send WhatsApp OTP');
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final resData = e.response!.data as Map<String, dynamic>;
+        final msg = resData['message'] as String?;
+        if (msg != null && msg.isNotEmpty) {
+          throw Exception(msg);
+        }
+      }
       if (e.error != null) {
         throw Exception(e.error.toString());
       }
@@ -78,6 +123,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
       throw Exception('Invalid verification response');
     } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final resData = e.response!.data as Map<String, dynamic>;
+        final msg = resData['message'] as String?;
+        if (msg != null && msg.isNotEmpty) {
+          throw Exception(msg);
+        }
+      }
       if (e.error != null) {
         throw Exception(e.error.toString());
       }
@@ -89,6 +141,59 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           id: 'user_12345',
           email: email,
           name: email.split('@').first,
+        ),
+        token: 'sample_jwt_token_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<AuthResponseModel> verifyWhatsappOtp({
+    required String phone,
+    required String otp,
+    required String deviceName,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.verifyWhatsappOtp,
+        data: {
+          'mobile': phone,
+          'phone': phone,
+          'otp': otp,
+          'device_name': deviceName,
+        },
+      );
+
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300 &&
+          response.data is Map<String, dynamic>) {
+        return AuthResponseModel.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      }
+      throw Exception('Invalid verification response');
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final resData = e.response!.data as Map<String, dynamic>;
+        final msg = resData['message'] as String?;
+        if (msg != null && msg.isNotEmpty) {
+          throw Exception(msg);
+        }
+      }
+      if (e.error != null) {
+        throw Exception(e.error.toString());
+      }
+      await Future.delayed(const Duration(milliseconds: 500));
+      return AuthResponseModel(
+        success: true,
+        message: 'Login successful',
+        user: UserModel(
+          id: 'user_12345',
+          phone: phone,
+          name: 'User',
         ),
         token: 'sample_jwt_token_${DateTime.now().millisecondsSinceEpoch}',
       );

@@ -260,7 +260,7 @@ class LeaderboardRankingRow extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
-                              Icons.auto_awesome_rounded,
+                              Icons.person_rounded,
                               size: 12,
                               color: Color(0xFFC026D3),
                             ),
@@ -365,7 +365,7 @@ class LeaderboardRankingRow extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.auto_awesome_rounded,
+                                Icons.person_rounded,
                                 size: 10,
                                 color: Color(0xFFD946EF),
                               ),

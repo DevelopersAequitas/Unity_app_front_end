@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_gradient_text.dart';
 import '../../domain/entities/geo_peer_entity.dart';
@@ -28,7 +29,7 @@ class NearMePeerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 2.5),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4.5),
       decoration: BoxDecoration(
         color: AppColor.lightSurface,
         borderRadius: BorderRadius.circular(12),
@@ -48,12 +49,12 @@ class NearMePeerCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 6),
+                const SizedBox(height: 12),
                 _buildActions(context),
               ],
             ),
@@ -126,32 +127,29 @@ class NearMePeerCard extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 1.5),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on_rounded,
-                    size: 10,
-                    color: AppColor.lightTextSecondary,
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Text(
-                      [
-                        if (peer.city != null && peer.city!.isNotEmpty)
-                          peer.city!,
-                        '${peer.distanceKm.toStringAsFixed(1)} km',
-                      ].join(' · '),
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: AppColor.lightTextSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              if (peer.city != null && peer.city!.isNotEmpty) ...[
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_rounded,
+                      size: 10,
+                      color: AppColor.lightTextSecondary,
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Text(
+                        peer.city!,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: AppColor.lightTextSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               if (peer.designation != null || peer.companyName != null) ...[
                 Row(
                   children: [
@@ -251,7 +249,7 @@ class NearMePeerCard extends StatelessWidget {
             shaderCallback: (bounds) =>
                 AppColor.brandGradient.createShader(bounds),
             child: const Icon(
-              Icons.auto_awesome_rounded,
+              Icons.person_rounded,
               size: 13,
               color: AppColor.white,
             ),
@@ -284,7 +282,7 @@ class NearMePeerCard extends StatelessWidget {
         statusLower == 'connected' ||
         statusLower == 'approved' ||
         statusLower == 'accepted';
-    final hasScheduleP2P = isConnected && onScheduleP2P != null;
+    final hasScheduleP2P = isConnected;
 
     return Row(
       children: [
@@ -302,8 +300,22 @@ class NearMePeerCard extends StatelessWidget {
               color: AppColor.transparent,
               child: InkWell(
                 onTap: hasScheduleP2P
-                    ? onScheduleP2P
-                    : ((!isPending && !isConnected) ? onConnect : null),
+                    ? (onScheduleP2P ??
+                        () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.addP2pMeeting,
+                            arguments: peer,
+                          );
+                        })
+                    : ((!isPending && !isConnected)
+                        ? () {
+                            if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to send connection requests.')) {
+                              return;
+                            }
+                            onConnect();
+                          }
+                        : null),
                 borderRadius: BorderRadius.circular(7),
                 child: Center(
                   child: Row(
@@ -438,18 +450,24 @@ class NearMePeerCard extends StatelessWidget {
             child: Material(
               color: AppColor.transparent,
               child: InkWell(
-                onTap: onMessage ??
-                    () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.directChat,
-                        arguments: {
-                          'peer_id': peer.id,
-                          'peer_name': peer.displayName,
-                          'peer_avatar': peer.profilePhotoUrl,
-                        },
-                      );
-                    },
+                onTap: () {
+                  if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to message peers.')) {
+                    return;
+                  }
+                  if (onMessage != null) {
+                    onMessage!();
+                  } else {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.directChat,
+                      arguments: {
+                        'peer_id': peer.id,
+                        'peer_name': peer.displayName,
+                        'peer_avatar': peer.profilePhotoUrl,
+                      },
+                    );
+                  }
+                },
                 borderRadius: BorderRadius.circular(7),
                 child: const Center(
                   child: Row(

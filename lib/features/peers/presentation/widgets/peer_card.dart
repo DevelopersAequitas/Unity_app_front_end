@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
+import 'package:unity_app/core/utils/paywall_gate_helper.dart';
 import 'package:unity_app/core/widgets/app_avatar.dart';
 import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 
@@ -36,7 +37,7 @@ class PeerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin:
-          margin ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 2.5),
+          margin ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 4.5),
       decoration: BoxDecoration(
         color: showBorder ? AppColor.lightSurface : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
@@ -60,13 +61,13 @@ class PeerCard extends StatelessWidget {
           child: Padding(
             padding:
                 padding ??
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
                 if (!isCurrentUser) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 12),
                   _buildActions(context),
                 ],
               ],
@@ -101,7 +102,7 @@ class PeerCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row 1: Name + verified + YOU
+              // Row 1: Name + verified + PRO + YOU
               Row(
                 children: [
                   Flexible(
@@ -170,9 +171,36 @@ class PeerCard extends StatelessWidget {
                 ],
               ),
 
-              // Row 2: Designation · Company
+              // Row 2: City (after peer name)
+              if (hasCity) ...[
+                const SizedBox(height: 1.5),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_rounded,
+                      size: 10,
+                      color: AppColor.lightTextSecondary,
+                    ),
+                    const SizedBox(width: 2.5),
+                    Expanded(
+                      child: Text(
+                        peer.city!.trim(),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: AppColor.lightTextSecondary,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              // Row 3: Designation · Company
               if (hasDesignationOrCompany) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: 1.5),
                 Row(
                   children: [
                     const Icon(
@@ -180,7 +208,7 @@ class PeerCard extends StatelessWidget {
                       size: 10,
                       color: AppColor.lightTextSecondary,
                     ),
-                    const SizedBox(width: 3),
+                    const SizedBox(width: 2.5),
                     Expanded(
                       child: Text(
                         [
@@ -194,6 +222,7 @@ class PeerCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 10.5,
                           color: AppColor.lightTextSecondary,
+                          height: 1.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -203,85 +232,47 @@ class PeerCard extends StatelessWidget {
                 ),
               ],
 
-              // Row 3: City · Category
-              if (hasCity || hasCategory) ...[
+              // Row 4: Category
+              if (hasCategory) ...[
                 const SizedBox(height: 2.5),
-                Row(
-                  children: [
-                    if (hasCity) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColor.badgeBlueBg,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: AppColor.primaryBlue.withValues(
+                        alpha: 0.15,
+                      ),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       const Icon(
-                        Icons.location_on_rounded,
-                        size: 10,
-                        color: AppColor.lightTextSecondary,
+                        Icons.sell_outlined,
+                        size: 8.5,
+                        color: AppColor.primaryBlue,
                       ),
-                      const SizedBox(width: 2),
-                      Text(
-                        peer.city!.trim(),
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: AppColor.lightTextSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    if (hasCity && hasCategory) ...[
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          '·',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
-                            color: AppColor.lightTextSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (hasCategory) ...[
+                      const SizedBox(width: 2.5),
                       Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1,
+                        child: Text(
+                          peer.category!.trim(),
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppColor.primaryBlue,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColor.badgeBlueBg,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: AppColor.primaryBlue.withValues(
-                                alpha: 0.15,
-                              ),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.sell_outlined,
-                                size: 8.5,
-                                color: AppColor.primaryBlue,
-                              ),
-                              const SizedBox(width: 2.5),
-                              Flexible(
-                                child: Text(
-                                  peer.category!.trim(),
-                                  style: const TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColor.primaryBlue,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ],
             ],
@@ -312,7 +303,7 @@ class PeerCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(
-            Icons.auto_awesome_rounded,
+            Icons.person_rounded,
             size: 13,
             color: Color(0xFFD946EF),
           ),
@@ -342,7 +333,7 @@ class PeerCard extends StatelessWidget {
         statusLower == 'connected' ||
         statusLower == 'approved' ||
         statusLower == 'accepted';
-    final hasScheduleP2P = isConnected && onScheduleP2P != null;
+    final hasScheduleP2P = isConnected;
 
     return Row(
       children: [
@@ -362,8 +353,22 @@ class PeerCard extends StatelessWidget {
               color: AppColor.transparent,
               child: InkWell(
                 onTap: hasScheduleP2P
-                    ? onScheduleP2P
-                    : ((!isPending && !isConnected) ? onConnect : null),
+                    ? (onScheduleP2P ??
+                        () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.addP2pMeeting,
+                            arguments: peer,
+                          );
+                        })
+                    : ((!isPending && !isConnected)
+                        ? () {
+                            if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to send connection requests.')) {
+                              return;
+                            }
+                            onConnect?.call();
+                          }
+                        : null),
                 borderRadius: BorderRadius.circular(7),
                 child: Center(
                   child: Row(
@@ -491,19 +496,24 @@ class PeerCard extends StatelessWidget {
             child: Material(
               color: AppColor.transparent,
               child: InkWell(
-                onTap:
-                    onMessage ??
-                    () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.directChat,
-                        arguments: {
-                          'peer_id': peer.id,
-                          'peer_name': peer.displayName,
-                          'peer_avatar': peer.profilePhotoUrl,
-                        },
-                      );
-                    },
+                onTap: () {
+                  if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to message peers.')) {
+                    return;
+                  }
+                  if (onMessage != null) {
+                    onMessage!();
+                  } else {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.directChat,
+                      arguments: {
+                        'peer_id': peer.id,
+                        'peer_name': peer.displayName,
+                        'peer_avatar': peer.profilePhotoUrl,
+                      },
+                    );
+                  }
+                },
                 borderRadius: BorderRadius.circular(7),
                 child: const Center(
                   child: Row(

@@ -44,7 +44,7 @@ class LeaderboardRankingList extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isImpact ? Icons.auto_awesome_rounded : Icons.emoji_events_outlined,
+                      isImpact ? Icons.person_rounded : Icons.emoji_events_outlined,
                       size: 13,
                       color: Colors.white,
                     ),

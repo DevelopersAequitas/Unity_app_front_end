@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
@@ -38,8 +37,6 @@ class _LastMonthActivityScreenState extends State<LastMonthActivityScreen> {
       appBar: AppCommonBar(
         title: 'Last Month Activity',
         showBack: Navigator.canPop(context),
-        showProfile: true,
-        onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
         onBackTap: Navigator.canPop(context) ? () => Navigator.pop(context) : null,
       ),
       body: AppGradientBackground(

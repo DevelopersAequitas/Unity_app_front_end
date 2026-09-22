@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/image_source_picker_sheet.dart';
 import '../../../../core/widgets/video_source_picker_sheet.dart';
 import '../../domain/entities/profile_entity.dart';
@@ -21,6 +22,12 @@ class EditMediaPortfolioScreen extends StatefulWidget {
 }
 
 class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
+  @override
+  void dispose() {
+    context.read<ProfileEditBloc>().add(const ProfileEditResetRequested());
+    super.dispose();
+  }
+
   Future<void> _pickAndUploadPhoto({required bool isCover}) async {
     try {
       final croppedFile = isCover
@@ -37,9 +44,7 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to process image: $e')),
-        );
+        AppSnackBar.showError(context, 'Failed to process image: $e');
       }
     }
   }
@@ -57,9 +62,7 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to process video: $e')),
-        );
+        AppSnackBar.showError(context, 'Failed to process video: $e');
       }
     }
   }
@@ -82,15 +85,20 @@ class _EditMediaPortfolioScreenState extends State<EditMediaPortfolioScreen> {
         ),
       ),
       body: BlocConsumer<ProfileEditBloc, ProfileEditState>(
+        listenWhen: (previous, current) =>
+            previous.status != current.status &&
+            (current.status == ProfileEditStatus.uploaded ||
+                current.status == ProfileEditStatus.failure),
         listener: (context, state) {
           if (state.status == ProfileEditStatus.uploaded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.successMessage ?? 'Media updated successfully!')),
+            AppSnackBar.showSuccess(
+              context,
+              state.successMessage ?? 'Media updated successfully!',
             );
+            context.read<ProfileEditBloc>().add(const ProfileEditResetRequested());
           } else if (state.status == ProfileEditStatus.failure && state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!), backgroundColor: AppColor.error),
-            );
+            AppSnackBar.showError(context, state.errorMessage!);
+            context.read<ProfileEditBloc>().add(const ProfileEditResetRequested());
           }
         },
         builder: (context, state) {

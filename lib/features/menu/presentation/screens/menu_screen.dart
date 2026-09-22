@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -49,8 +50,11 @@ class _MenuScreenState extends State<MenuScreen> {
   Future<void> _handleLogout() async {
     final confirmed = await MenuLogoutDialog.show(context);
     if (confirmed == true && mounted) {
-      context.read<AuthBloc>().add(const AuthResetState());
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      context.read<AuthBloc>().add(const AuthLogoutRequested());
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.welcome,
+        (route) => false,
+      );
     }
   }
 

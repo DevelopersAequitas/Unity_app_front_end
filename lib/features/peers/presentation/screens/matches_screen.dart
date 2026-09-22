@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -114,6 +115,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
                               },
                               onSwipe:
                                   (previousIndex, currentIndex, direction) {
+                                if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to match with peers.')) {
+                                  return false;
+                                }
                                 final match = matches[previousIndex];
                                 if (direction == CardSwiperDirection.right) {
                                   context.read<MatchesBloc>().add(
@@ -138,10 +142,18 @@ class _MatchesScreenState extends State<MatchesScreen> {
                           ),
                           const SizedBox(height: 18),
                           MatchActionButtons(
-                            onPass: () =>
-                                _controller.swipe(CardSwiperDirection.left),
-                            onConnect: () =>
-                                _controller.swipe(CardSwiperDirection.right),
+                            onPass: () {
+                              if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to match with peers.')) {
+                                return;
+                              }
+                              _controller.swipe(CardSwiperDirection.left);
+                            },
+                            onConnect: () {
+                              if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to match with peers.')) {
+                                return;
+                              }
+                              _controller.swipe(CardSwiperDirection.right);
+                            },
                           ),
                           const SizedBox(height: 24),
                         ],

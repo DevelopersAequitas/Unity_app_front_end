@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/router/app_router.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -101,6 +101,10 @@ class _PartnerWithUsScreenState extends State<PartnerWithUsScreen>
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to submit partnership requests.')) {
+      return;
+    }
+
     final entity = PartnerWithUsEntity(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
@@ -152,8 +156,6 @@ class _PartnerWithUsScreenState extends State<PartnerWithUsScreen>
         appBar: AppCommonBar(
           title: 'Partner With Us',
           showBack: Navigator.canPop(context),
-          showProfile: true,
-          onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
           onBackTap: Navigator.canPop(context) ? () => Navigator.pop(context) : null,
         ),
         body: AppGradientBackground(

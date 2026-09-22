@@ -35,11 +35,12 @@ class TimelineImpactCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
-          width: 1,
+        color: isDark ? AppColor.darkSurface : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+            width: 0.8,
+          ),
         ),
       ),
       child: Column(
@@ -114,12 +115,25 @@ class TimelineImpactCard extends StatelessWidget {
                         'Impacted Peer: ',
                         style: TextStyle(color: secondaryTextColor, fontSize: 10.5, fontWeight: FontWeight.w400),
                       ),
-                      Text(
-                        impact!.impactedPeerDisplayName!,
-                        style: TextStyle(
-                          color: primaryTextColor,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
+                      GestureDetector(
+                        onTap: () {
+                          if (impact?.impactedPeerId?.isNotEmpty == true) {
+                            Navigator.pushNamed(context, '/peer-profile', arguments: impact!.impactedPeerId);
+                          }
+                        },
+                        child: ShaderMask(
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) => AppColor.brandGradient.createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                          ),
+                          child: Text(
+                            (impact?.impactedPeerDisplayName ?? '').toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
                     ],

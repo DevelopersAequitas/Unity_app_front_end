@@ -19,8 +19,13 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Future<void> requestOtp(String email, {String channel = 'email'}) async {
-    await remoteDataSource.requestOtp(email, channel: channel);
+  Future<void> requestOtp(String email) async {
+    await remoteDataSource.requestOtp(email);
+  }
+
+  @override
+  Future<void> requestWhatsappOtp(String phone) async {
+    await remoteDataSource.requestWhatsappOtp(phone);
   }
 
   @override
@@ -37,6 +42,31 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final userModel =
         response.user ?? UserModel(id: 'usr_default', email: email);
+    final tokenStr = response.token ?? 'fallback_token';
+
+    // Store in offline cache box
+    await localDataSource.saveAuthData(user: userModel, token: tokenStr);
+
+    return (
+      user: userModel.toEntity(),
+      token: AuthTokenEntity(token: tokenStr),
+    );
+  }
+
+  @override
+  Future<({UserEntity user, AuthTokenEntity token})> verifyWhatsappOtp({
+    required String phone,
+    required String otp,
+    required String deviceName,
+  }) async {
+    final response = await remoteDataSource.verifyWhatsappOtp(
+      phone: phone,
+      otp: otp,
+      deviceName: deviceName,
+    );
+
+    final userModel =
+        response.user ?? UserModel(id: 'usr_default', phone: phone);
     final tokenStr = response.token ?? 'fallback_token';
 
     // Store in offline cache box

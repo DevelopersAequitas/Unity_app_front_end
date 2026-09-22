@@ -60,8 +60,18 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
     Emitter<P2pMeetingsState> emit,
   ) {
     emit(state.copyWith(topTab: event.topTab));
-    if (event.topTab == 'leaderboard' && state.leaderboardList.isEmpty) {
+    if (event.topTab == 'leaderboard' &&
+        (state.leaderboardList.isEmpty ||
+            state.leaderboardStatus == P2pMeetingsStatus.initial)) {
       add(const P2pMeetingsFetchLeaderboardRequested());
+    } else if (event.topTab == 'completed' &&
+        state.iInitiatedMeetings.isEmpty &&
+        state.peerInitiatedMeetings.isEmpty) {
+      add(const P2pMeetingsFetchRequested());
+    } else if (event.topTab == 'scheduled' &&
+        state.receivedRequests.isEmpty &&
+        state.sentRequests.isEmpty) {
+      add(const P2pMeetingsFetchRequested());
     }
   }
 
@@ -70,16 +80,18 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
     Emitter<P2pMeetingsState> emit,
   ) async {
     if (!event.forceRefresh && state.leaderboardList.isNotEmpty) return;
-    emit(state.copyWith(status: P2pMeetingsStatus.loading));
+    emit(state.copyWith(leaderboardStatus: P2pMeetingsStatus.loading));
     try {
       final list = await getP2pMeetingsLeaderboardUseCase();
       emit(state.copyWith(
-        status: P2pMeetingsStatus.success,
+        leaderboardStatus: P2pMeetingsStatus.success,
         leaderboardList: list,
       ));
     } catch (e) {
       emit(state.copyWith(
-        status: P2pMeetingsStatus.failure,
+        leaderboardStatus: state.leaderboardList.isNotEmpty
+            ? P2pMeetingsStatus.success
+            : P2pMeetingsStatus.failure,
         errorMessage: 'Failed to load leaderboard: $e',
       ));
     }

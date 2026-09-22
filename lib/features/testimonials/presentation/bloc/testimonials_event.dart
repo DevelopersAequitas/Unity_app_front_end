@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/testimonial_entity.dart';
 
-enum TestimonialTab { received, given, leaderboard }
+enum TestimonialTab { leaderboard, received, given }
 
 abstract class TestimonialsEvent extends Equatable {
   const TestimonialsEvent();

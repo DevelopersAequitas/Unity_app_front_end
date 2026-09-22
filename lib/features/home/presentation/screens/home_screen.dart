@@ -13,10 +13,11 @@ import '../../../profile/presentation/bloc/profile_posts_event.dart';
 import '../../../circles/presentation/bloc/circles_bloc.dart';
 import '../../../circles/presentation/bloc/circles_event.dart';
 import '../../../circles/presentation/bloc/circles_state.dart';
+import '../../../events/data/services/event_popup_service.dart';
 import '../../../highlights/presentation/bloc/highlights_bloc.dart';
 import '../../../highlights/presentation/bloc/highlights_event.dart';
 import '../../../highlights/presentation/bloc/highlights_state.dart';
-import '../../../highlights/presentation/screens/highlights_screen.dart';
+import '../../../shorts/presentation/screens/shorts_screen.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -27,7 +28,6 @@ import '../../../../core/widgets/responsive_container.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
-import '../widgets/create_action_sheet.dart';
 import '../widgets/home_bottom_nav_bar.dart';
 import '../widgets/home_brand_partners_section.dart';
 import '../widgets/home_metric_cards.dart';
@@ -52,18 +52,25 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isSearching = false;
   DateTime? _lastBackPressTime;
 
-  static const _tabTitles = ['Home', 'Peers', '', 'Circles', 'Highlights'];
+  static const _tabTitles = ['Home', 'Peers', 'Highlights', 'Circles', 'Shorts'];
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    
+
     // Initial fetch for Home feed
     final homeBloc = context.read<HomeBloc>();
     if (homeBloc.state.status == HomeFeedStatus.initial) {
       homeBloc.add(const HomeFeedFetchRequested());
     }
+
+    // Check and display active event popup from /events/all-with-live-status
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      EventPopupService.instance.showEventPopupIfAvailable(context);
+    });
   }
 
   @override
@@ -111,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Clear search in current tab
     if (_currentNavIndex == 0) {
       context.read<HomeBloc>().add(const HomeSearchChanged(''));
-    } else if (_currentNavIndex == 1) { 
+    } else if (_currentNavIndex == 1) {
       context.read<PeersBloc>().add(const PeersSearchChanged(''));
     } else if (_currentNavIndex == 3) {
       context.read<CirclesBloc>().add(const CirclesSearchChanged(''));
@@ -152,7 +159,10 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.pushNamed(context, AppRoutes.peers);
       return;
     }
-    if (index == 2) return;
+    if (index == 2) {
+      Navigator.pushNamed(context, AppRoutes.highlights);
+      return;
+    }
     if (index == 3) {
       final circlesBloc = context.read<CirclesBloc>();
       if (circlesBloc.state.status == CirclesStatus.initial) {
@@ -215,13 +225,17 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppCommonBar(
           title: _currentTitle,
+          showLogo: _currentNavIndex == 0,
+          backgroundColor: _currentNavIndex == 4 ? Colors.black : null,
+          foregroundColor: _currentNavIndex == 4 ? Colors.white : null,
           showSearch: true,
+          showChat: true,
           showNotifications: true,
           showProfile: true,
           isSearching: _isSearching,
           searchController: _searchController,
           searchHint: _currentNavIndex == 4
-              ? 'Search highlights...'
+              ? 'Search shorts...'
               : 'Search posts by name, content, category...',
           onSearchTap: () => setState(() => _isSearching = true),
           onSearchChanged: _onSearchChanged,
@@ -236,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
         bottomNavigationBar: HomeBottomNavBar(
           selectedIndex: _currentNavIndex,
           onItemSelected: _onTabSelected,
-          onCreateTap: () => CreateActionSheet.show(context),
+          onCreateTap: () => Navigator.pushNamed(context, AppRoutes.highlights),
         ),
         floatingActionButton: _currentNavIndex == 0
             ? _buildCreatePostFloatingButton(context)
@@ -251,7 +265,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox.shrink(),
                 const SizedBox.shrink(),
                 const SizedBox.shrink(),
-                const _KeepAliveTab(child: HighlightsScreen()),
+                _KeepAliveTab(
+                  child: ShortsScreen(isVisible: _currentNavIndex == 4),
+                ),
               ],
             ),
           ),
@@ -298,7 +314,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: HomeBrandPartnersSection(
                       brandPartners: state.brandPartners,
-                      onPartnerTap: (_) {},
+                      onPartnerTap: (partner) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.brandPartnerDetails,
+                          arguments: partner,
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -311,23 +333,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              if (state.status == HomeFeedStatus.loading && state.allItems.isEmpty)
-                const SliverToBoxAdapter(
-                  child: HomeSkeletonLoader(),
-                )
+              if (state.status == HomeFeedStatus.loading &&
+                  state.allItems.isEmpty)
+                const SliverToBoxAdapter(child: HomeSkeletonLoader())
               else if (state.items.isEmpty && state.searchQuery.isNotEmpty)
                 SliverToBoxAdapter(
                   child: _buildSearchEmptyState(state.searchQuery),
                 )
               else if (state.items.isEmpty)
-                SliverToBoxAdapter(
-                  child: _buildEmptyFeedState(),
-                )
+                SliverToBoxAdapter(child: _buildEmptyFeedState())
               else
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.zero,
                   sliver: SliverList.separated(
-                    itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+                    itemCount:
+                        state.items.length + (state.isLoadingMore ? 1 : 0),
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       if (index == state.items.length) {
@@ -351,9 +371,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           final authorId = author?.id ?? '';
                           if (authorId.isEmpty) return;
                           // Skip system/org accounts (no company, designation or category)
-                          final isSystemAccount = (author?.companyName == null || author!.companyName!.isEmpty) &&
-                              (author!.designation == null || author.designation!.isEmpty) &&
-                              (author.level4Category == null || author.level4Category!.isEmpty);
+                          final isSystemAccount =
+                              (author?.companyName == null ||
+                                  author!.companyName!.isEmpty) &&
+                              (author!.designation == null ||
+                                  author.designation!.isEmpty) &&
+                              (author.level4Category == null ||
+                                  author.level4Category!.isEmpty);
                           if (isSystemAccount) return;
                           // Determine if this is the current logged-in user
                           final authUser = context.read<AuthBloc>().state.user;
@@ -370,7 +394,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         onLikeTap: () {
                           final currentLiked = item.isLikedByMe;
                           final newLiked = !currentLiked;
-                          final newCount = (item.likesCount + (newLiked ? 1 : -1)).clamp(0, 9999999);
+                          final newCount =
+                              (item.likesCount + (newLiked ? 1 : -1)).clamp(
+                                0,
+                                9999999,
+                              );
                           context.read<HomeBloc>().add(
                             HomePostLikeToggled(
                               postId: item.id,
@@ -432,13 +460,17 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 36,
-              color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+              color: isDark
+                  ? AppColor.darkTextSecondary
+                  : AppColor.lightTextSecondary,
             ),
             const SizedBox(height: 8),
             Text(
               'No results for "$query"',
               style: AppTypography.titleMedium.copyWith(
-                color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
+                color: isDark
+                    ? AppColor.darkTextPrimary
+                    : AppColor.lightTextPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -467,13 +499,17 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.dynamic_feed_outlined,
               size: 36,
-              color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+              color: isDark
+                  ? AppColor.darkTextSecondary
+                  : AppColor.lightTextSecondary,
             ),
             const SizedBox(height: 8),
             Text(
               'No activity yet',
               style: AppTypography.titleMedium.copyWith(
-                color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
+                color: isDark
+                    ? AppColor.darkTextPrimary
+                    : AppColor.lightTextPrimary,
               ),
             ),
           ],
@@ -504,11 +540,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => Navigator.of(context).pushNamed(AppRoutes.createPost),
           customBorder: const CircleBorder(),
           child: const Center(
-            child: Icon(
-              Icons.add_rounded,
-              color: Colors.white,
-              size: 26,
-            ),
+            child: Icon(Icons.add_rounded, color: Colors.white, size: 26),
           ),
         ),
       ),
@@ -524,7 +556,8 @@ class _KeepAliveTab extends StatefulWidget {
   State<_KeepAliveTab> createState() => _KeepAliveTabState();
 }
 
-class _KeepAliveTabState extends State<_KeepAliveTab> with AutomaticKeepAliveClientMixin {
+class _KeepAliveTabState extends State<_KeepAliveTab>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 

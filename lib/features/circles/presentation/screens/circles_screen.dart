@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -132,10 +133,11 @@ class _CirclesScreenState extends State<CirclesScreen> {
           backgroundColor: AppColor.transparent,
           appBar: AppCommonBar(
             title: _getAppTitle(state.activeTab),
-            showBack: true,
+            showBack: Navigator.canPop(context),
             showSearch: true,
-            showNotifications: false,
-            showProfile: false,
+            showChat: true,
+            showNotifications: true,
+            showProfile: true,
             isSearching: _isSearching,
             searchController: _searchController,
             searchHint: _getSearchHint(state.activeTab),
@@ -143,6 +145,12 @@ class _CirclesScreenState extends State<CirclesScreen> {
             onSearchClose: _onSearchClose,
             onSearchChanged: (query) {
               context.read<CirclesBloc>().add(CirclesSearchChanged(query));
+            },
+            onNotificationsTap: () {
+              Navigator.of(context).pushNamed(AppRoutes.notifications);
+            },
+            onProfileTap: () {
+              Navigator.of(context).pushNamed(AppRoutes.profile);
             },
             onBackTap: () => Navigator.of(context).pop(),
           ),
@@ -176,6 +184,9 @@ class _CirclesScreenState extends State<CirclesScreen> {
                         circles: state.filteredMyCircles,
                         searchQuery: state.searchQuery,
                         onCircleTap: (circle) {
+                          if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to view Circle details.')) {
+                            return;
+                          }
                           Navigator.pushNamed(
                             context,
                             AppRoutes.circleDetails,

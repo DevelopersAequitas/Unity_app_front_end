@@ -41,16 +41,18 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onSearchClose;
   final String? searchHint;
   final PreferredSizeWidget? bottom;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   const AppCommonBar({
     super.key,
     this.title = '',
     this.showLogo = false,
     this.showBack = false,
-    this.showSearch = true,
-    this.showChat = true,
-    this.showNotifications = true,
-    this.showProfile = true,
+    this.showSearch = false,
+    this.showChat = false,
+    this.showNotifications = false,
+    this.showProfile = false,
     this.onSearchTap,
     this.onChatTap,
     this.onNotificationsTap,
@@ -64,6 +66,8 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
     this.onSearchClose,
     this.searchHint,
     this.bottom,
+    this.backgroundColor,
+    this.foregroundColor,
   });
 
   @override
@@ -74,9 +78,10 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColor.darkBackground : AppColor.lightBackground;
-    final iconColor = isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
-    final primaryTextColor = isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
+    final isForcedDark = backgroundColor == Colors.black;
+    final bgColor = backgroundColor ?? (isDark ? AppColor.darkBackground : AppColor.lightBackground);
+    final iconColor = foregroundColor ?? (isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary);
+    final primaryTextColor = foregroundColor ?? (isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary);
 
     if (isSearching) {
       return AppBar(
@@ -88,14 +93,14 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
         automaticallyImplyLeading: false,
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+          statusBarIconBrightness: (isForcedDark || isDark) ? Brightness.light : Brightness.dark,
+          statusBarBrightness: (isForcedDark || isDark) ? Brightness.dark : Brightness.light,
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+            color: isForcedDark ? Colors.white10 : (isDark ? AppColor.darkBorder : AppColor.lightBorder),
           ),
         ),
         leading: IconButton(
@@ -150,8 +155,8 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: 0,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: (isForcedDark || isDark) ? Brightness.light : Brightness.dark,
+        statusBarBrightness: (isForcedDark || isDark) ? Brightness.dark : Brightness.light,
       ),
       bottom: PreferredSize(
         preferredSize: Size.fromHeight((bottom?.preferredSize.height ?? 0) + 1),
@@ -161,7 +166,7 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
             ?bottom,
             Container(
               height: 1,
-              color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
+              color: isForcedDark ? Colors.white10 : (isDark ? AppColor.darkBorder : AppColor.lightBorder),
             ),
           ],
         ),

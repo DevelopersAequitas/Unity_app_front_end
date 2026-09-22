@@ -697,7 +697,7 @@ class _CommonPeerSelectorSheetState extends State<CommonPeerSelectorSheet> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
-                          Icons.auto_awesome_rounded,
+                          Icons.person_rounded,
                           size: 13,
                           color: Color(0xFFD946EF),
                         ),

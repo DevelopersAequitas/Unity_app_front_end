@@ -35,7 +35,7 @@ class BusinessDealsScreen extends StatelessWidget {
         getGivenBusinessDealsUseCase: ctx.read<GetGivenBusinessDealsUseCase>(),
         getUserBusinessDealsUseCase: ctx.read<GetUserBusinessDealsUseCase>(),
         getBusinessDealsLeaderboardUseCase: ctx.read<GetBusinessDealsLeaderboardUseCase>(),
-      )..add(const BusinessDealsFetchReceivedRequested()),
+      )..add(const BusinessDealsFetchLeaderboardRequested()),
       child: _BusinessDealsView(isModal: isModal),
     );
   }
@@ -138,9 +138,6 @@ class _BusinessDealsViewState extends State<_BusinessDealsView> {
           context.read<BusinessDealsBloc>().add(const BusinessDealsSearchChanged(''));
           setState(() => _isSearching = false);
         },
-        showNotifications: false,
-        showProfile: true,
-        onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
         onBackTap: Navigator.canPop(context) ? () => Navigator.pop(context) : null,
       ),
       body: SafeArea(

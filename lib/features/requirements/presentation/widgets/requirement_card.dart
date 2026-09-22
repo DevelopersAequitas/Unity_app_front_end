@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../home/domain/entities/timeline_author_entity.dart';
 import '../../../home/presentation/widgets/post_comments_bottom_sheet.dart';
@@ -60,6 +61,9 @@ class RequirementCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () {
+            if (!isOwner && !PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to view open asks and collaborations.')) {
+              return;
+            }
             Navigator.push(
               context,
               MaterialPageRoute(

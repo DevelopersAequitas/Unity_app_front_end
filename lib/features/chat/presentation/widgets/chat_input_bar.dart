@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import 'chat_attachment_picker_sheet.dart';
@@ -27,10 +30,12 @@ class ChatInputBar extends StatefulWidget {
 }
 
 class _ChatInputBarState extends State<ChatInputBar> {
+  final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   int _recordSeconds = 0;
   Timer? _timer;
   bool _hasText = false;
+  String? _currentRecordingPath;
 
   @override
   void initState() {
@@ -49,32 +54,74 @@ class _ChatInputBarState extends State<ChatInputBar> {
   @override
   void dispose() {
     _timer?.cancel();
+    _audioRecorder.dispose();
     widget.controller.removeListener(_onTextChanged);
     super.dispose();
   }
 
-  void _startRecording() {
-    setState(() {
-      _isRecording = true;
-      _recordSeconds = 0;
-    });
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() => _recordSeconds++);
-      }
-    });
+  Future<void> _startRecording() async {
+    try {
+      if (!await _audioRecorder.hasPermission()) return;
+
+      final dir = await getTemporaryDirectory();
+      final filePath =
+          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      _currentRecordingPath = filePath;
+
+      await _audioRecorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+          sampleRate: 44100,
+        ),
+        path: filePath,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _isRecording = true;
+        _recordSeconds = 0;
+      });
+
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          setState(() => _recordSeconds++);
+        }
+      });
+    } catch (_) {}
   }
 
-  void _stopRecording({required bool send}) {
+  Future<void> _stopRecording({required bool send}) async {
     _timer?.cancel();
-    if (send && _recordSeconds >= 1 && widget.onSendAttachment != null) {
-      widget.onSendAttachment!('voice_note_$_recordSeconds.m4a', 'audio');
+    String? path;
+    try {
+      path = await _audioRecorder.stop();
+    } catch (_) {}
+
+    final recordedPath = path ?? _currentRecordingPath;
+    final seconds = _recordSeconds;
+
+    if (mounted) {
+      setState(() {
+        _isRecording = false;
+        _recordSeconds = 0;
+        _currentRecordingPath = null;
+      });
     }
-    setState(() {
-      _isRecording = false;
-      _recordSeconds = 0;
-    });
+
+    if (send &&
+        seconds >= 1 &&
+        recordedPath != null &&
+        File(recordedPath).existsSync() &&
+        widget.onSendAttachment != null) {
+      widget.onSendAttachment!(recordedPath, 'audio');
+    } else if (!send && recordedPath != null) {
+      try {
+        final f = File(recordedPath);
+        if (f.existsSync()) f.deleteSync();
+      } catch (_) {}
+    }
   }
 
   String _formatDuration(int sec) {

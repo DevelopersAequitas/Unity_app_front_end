@@ -108,7 +108,7 @@ class LeaderboardPodiumCard extends StatelessWidget {
 
                   // 1. Peer Name (UPPER CASE & refined font size)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: EdgeInsets.symmetric(horizontal: isCenter ? 12.0 : 10.0),
                     child: Text(
                       entry.name.toUpperCase(),
                       textAlign: TextAlign.center,
@@ -127,7 +127,7 @@ class LeaderboardPodiumCard extends StatelessWidget {
                   if (entry.city != null && entry.city!.trim().isNotEmpty) ...[
                     const SizedBox(height: 2.0),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: EdgeInsets.symmetric(horizontal: isCenter ? 12.0 : 10.0),
                       child: Text(
                         entry.city!.trim(),
                         textAlign: TextAlign.center,
@@ -146,7 +146,7 @@ class LeaderboardPodiumCard extends StatelessWidget {
                   if (entry.companyName != null && entry.companyName!.trim().isNotEmpty) ...[
                     const SizedBox(height: 2.0),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: EdgeInsets.symmetric(horizontal: isCenter ? 12.0 : 10.0),
                       child: Text(
                         entry.companyName!.trim(),
                         textAlign: TextAlign.center,
@@ -165,7 +165,7 @@ class LeaderboardPodiumCard extends StatelessWidget {
                   if (entry.category != null && entry.category!.trim().isNotEmpty) ...[
                     const SizedBox(height: 2.0),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: EdgeInsets.symmetric(horizontal: isCenter ? 12.0 : 10.0),
                       child: ShaderMask(
                         blendMode: BlendMode.srcIn,
                         shaderCallback: (bounds) => AppColor.brandGradient.createShader(
@@ -225,7 +225,7 @@ class LeaderboardPodiumCard extends StatelessWidget {
                   Container(
                     height: isCenter ? 48.0 : 40.0,
                     alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: EdgeInsets.symmetric(horizontal: isCenter ? 14.0 : 10.0),
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(

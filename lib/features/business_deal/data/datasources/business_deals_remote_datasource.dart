@@ -57,12 +57,33 @@ class BusinessDealsRemoteDataSourceImpl
   @override
   Future<List<BusinessDealLeaderboardModel>> getBusinessDealsLeaderboard() async {
     final response = await dioClient.dio.get(ApiEndpoints.leaderboardBusinessDeals);
-    final data = response.data['data'] ?? response.data;
+    final data = response.data;
     List<dynamic> items = [];
-    if (data is Map<String, dynamic> && data['items'] is List) {
-      items = data['items'] as List;
-    } else if (data is List) {
+    if (data is List) {
       items = data;
+    } else if (data is Map<String, dynamic>) {
+      final nestedData = data['data'];
+      if (nestedData is Map<String, dynamic>) {
+        if (nestedData['peers'] is List) {
+          items = nestedData['peers'] as List;
+        } else if (nestedData['items'] is List) {
+          items = nestedData['items'] as List;
+        } else if (nestedData['results'] is List) {
+          items = nestedData['results'] as List;
+        } else if (nestedData['leaderboard'] is List) {
+          items = nestedData['leaderboard'] as List;
+        }
+      } else if (nestedData is List) {
+        items = nestedData;
+      } else if (data['peers'] is List) {
+        items = data['peers'] as List;
+      } else if (data['items'] is List) {
+        items = data['items'] as List;
+      } else if (data['leaderboard'] is List) {
+        items = data['leaderboard'] as List;
+      } else if (data['results'] is List) {
+        items = data['results'] as List;
+      }
     }
     return items.asMap().entries.map((entry) {
       final item = entry.value as Map<String, dynamic>;

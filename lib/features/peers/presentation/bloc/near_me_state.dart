@@ -6,7 +6,7 @@ enum NearMeStatus { initial, loading, success, failure, permissionDenied }
 class NearMeState extends Equatable {
   final NearMeStatus status;
   final List<GeoPeerEntity> nearbyPeers;
-  final double selectedRadiusKm;
+  final double? selectedRadiusKm;
   final double? userLatitude;
   final double? userLongitude;
   final int page;
@@ -17,7 +17,7 @@ class NearMeState extends Equatable {
   const NearMeState({
     this.status = NearMeStatus.initial,
     this.nearbyPeers = const [],
-    this.selectedRadiusKm = 25.0,
+    this.selectedRadiusKm,
     this.userLatitude,
     this.userLongitude,
     this.page = 1,

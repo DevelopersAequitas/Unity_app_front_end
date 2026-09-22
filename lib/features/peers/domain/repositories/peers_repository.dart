@@ -70,6 +70,8 @@ abstract class PeersRepository {
 
   Future<void> togglePeerBookmark(String memberId, bool isCurrentlyBookmarked);
 
+  Future<List<PeerEntity>> getBookmarkedPeers({int page = 1, int limit = 20});
+
   Future<List<IntroducedPeerEntity>> getMemberIntroducedPeers(String memberId);
 
   Future<bool> blockPeer(String peerId, {String reason = 'Spam messages'});

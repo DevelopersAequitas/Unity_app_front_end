@@ -5,8 +5,16 @@ class ApiEndpoints {
 
   static String get baseUrl => AppEnvironment.baseUrl;
 
+  // Ads
+  static String get ads {
+    final base = AppEnvironment.baseUrl.split('/api')[0];
+    return '$base/api/ads';
+  }
+
   static const String requestOtp = '/auth/request-otp';
   static const String verifyOtp = '/auth/verify-otp';
+  static const String requestWhatsappOtp = '/auth/request-whatsapp-otp';
+  static const String verifyWhatsappOtp = '/auth/verify-whatsapp-otp';
   static const String register = '/auth/register';
   static const String countries = '/countries';
   static const String cities = '/cities';
@@ -21,6 +29,7 @@ class ApiEndpoints {
   static const String geoUpdateLocation = '/geo/update-location';
   static const String geoNearbyPeers = '/geo/nearby-peers';
   static const String geoPeersCount500km = '/geo/peers-count-500km';
+  static const String introVideos = '/intro-videos';
 
   // Home & Timeline Feed
   static const String timelineFeed = '/posts/feed';
@@ -50,6 +59,7 @@ class ApiEndpoints {
   static String cancelSentConnection(String requestId) =>
       '/connections/sent/$requestId';
   static String memberBookmark(String id) => '/members/$id/bookmark';
+  static const String bookmarkedPeers = '/bookmarked-peers';
   static String memberIntroducedPeers(String memberId) =>
       '/members/$memberId/introduced-peers';
   static String blockPeer(String peerId) => '/peers/$peerId/block';
@@ -187,6 +197,7 @@ class ApiEndpoints {
 
   // Events System
   static const String eventsAll = '/events/all';
+  static const String allEventsWithLiveStatus = '/events/all-with-live-status';
   static String publicEventOccurrence(String eventId, String occurrenceId) =>
       '/public/events/$eventId/occurrences/$occurrenceId';
   static String privateEventDetail(String eventId) => '/events/$eventId';

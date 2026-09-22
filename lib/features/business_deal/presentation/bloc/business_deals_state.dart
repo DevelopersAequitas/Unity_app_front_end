@@ -23,7 +23,7 @@ class BusinessDealsState extends Equatable {
   final String? errorMessage;
 
   const BusinessDealsState({
-    this.activeTab = BusinessDealTab.received,
+    this.activeTab = BusinessDealTab.leaderboard,
     this.receivedStatus = BusinessDealsStatus.initial,
     this.givenStatus = BusinessDealsStatus.initial,
     this.leaderboardStatus = BusinessDealsStatus.initial,

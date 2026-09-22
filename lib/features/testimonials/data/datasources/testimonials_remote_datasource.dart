@@ -176,10 +176,25 @@ class TestimonialsRemoteDataSourceImpl implements TestimonialsRemoteDataSource {
     if (data is List) {
       listData = data;
     } else if (data is Map<String, dynamic>) {
-      if (data['data'] is List) {
-        listData = data['data'] as List;
+      final nestedData = data['data'];
+      if (nestedData is Map<String, dynamic>) {
+        if (nestedData['peers'] is List) {
+          listData = nestedData['peers'] as List;
+        } else if (nestedData['items'] is List) {
+          listData = nestedData['items'] as List;
+        } else if (nestedData['results'] is List) {
+          listData = nestedData['results'] as List;
+        } else if (nestedData['leaderboard'] is List) {
+          listData = nestedData['leaderboard'] as List;
+        }
+      } else if (nestedData is List) {
+        listData = nestedData;
+      } else if (data['peers'] is List) {
+        listData = data['peers'] as List;
       } else if (data['leaderboard'] is List) {
         listData = data['leaderboard'] as List;
+      } else if (data['items'] is List) {
+        listData = data['items'] as List;
       } else if (data['results'] is List) {
         listData = data['results'] as List;
       }

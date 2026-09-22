@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/business_deal_entity.dart';
 
-enum BusinessDealTab { received, given, leaderboard }
+enum BusinessDealTab { leaderboard, received, given }
 
 abstract class BusinessDealsEvent extends Equatable {
   const BusinessDealsEvent();

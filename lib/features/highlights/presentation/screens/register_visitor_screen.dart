@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/datasources/location_remote_datasource.dart';
 import '../../../../core/network/dio_client.dart';
-import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/app_date_formatter.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -152,6 +152,10 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen>
   }
 
   void _submit() {
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to register visitors.')) {
+      return;
+    }
+
     if (_eventNameController.text.trim().isEmpty) {
       AppSnackBar.showError(context, 'Please select or enter event name.');
       return;
@@ -218,8 +222,6 @@ class _RegisterVisitorScreenState extends State<RegisterVisitorScreen>
       appBar: AppCommonBar(
         title: 'Register A Visitor',
         showBack: Navigator.canPop(context),
-        showProfile: true,
-        onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
         onBackTap: Navigator.canPop(context)
             ? () => Navigator.pop(context)
             : null,

@@ -41,6 +41,14 @@ class ReferralsBottomNav extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildNavItem(
+                  label: 'Leaderboard',
+                  icon: Icons.leaderboard_outlined,
+                  isSelected: activeTab == ReferralTab.leaderboard,
+                  onTap: () => onTabChanged(ReferralTab.leaderboard),
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
                   label: 'Received',
                   icon: Icons.call_received_rounded,
                   isSelected: activeTab == ReferralTab.received,
@@ -53,14 +61,6 @@ class ReferralsBottomNav extends StatelessWidget {
                   icon: Icons.call_made_rounded,
                   isSelected: activeTab == ReferralTab.given,
                   onTap: () => onTabChanged(ReferralTab.given),
-                ),
-              ),
-              Expanded(
-                child: _buildNavItem(
-                  label: 'Leaderboard',
-                  icon: Icons.leaderboard_outlined,
-                  isSelected: activeTab == ReferralTab.leaderboard,
-                  onTap: () => onTabChanged(ReferralTab.leaderboard),
                 ),
               ),
             ],

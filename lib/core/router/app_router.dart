@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/verify_otp_screen.dart';
 import '../../features/home/presentation/screens/create_post_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/peers/presentation/screens/bookmarked_peers_screen.dart';
 import '../../features/peers/presentation/screens/connections_screen.dart';
 import '../../features/peers/presentation/screens/matches_screen.dart';
 import '../../features/peers/presentation/screens/my_peers_screen.dart';
@@ -110,6 +111,10 @@ import '../../features/events/presentation/screens/events_screen.dart';
 import '../../features/events/presentation/screens/event_detail_screen.dart';
 import '../../features/events/presentation/screens/my_events_screen.dart';
 import '../../features/events/presentation/screens/event_qr_ticket_screen.dart';
+import '../../features/highlights/presentation/screens/highlights_screen.dart';
+import '../../features/shorts/presentation/screens/shorts_screen.dart';
+import '../../features/home/presentation/screens/brand_partner_details_screen.dart';
+import '../../features/home/domain/entities/brand_partner_entity.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -127,6 +132,7 @@ class AppRoutes {
   static const String connections = '/connections';
   static const String nearMe = '/near-me';
   static const String peerRequests = '/peer-requests';
+  static const String bookmarkedPeers = '/bookmarked-peers';
   static const String createPost = '/create-post';
   static const String notifications = '/notifications';
   static const String membershipPaywall = '/membership-paywall';
@@ -179,6 +185,8 @@ class AppRoutes {
   static const String registerVisitor = '/register-visitor';
   static const String openRequirements = '/open-requirements';
   static const String openAsks = '/open-asks';
+  static const String shorts = '/shorts';
+  static const String highlights = '/highlights';
 
   // Profile Edit Screens
   static const String editProfileOverview = '/edit-profile-overview';
@@ -216,6 +224,9 @@ class AppRoutes {
 class AppRouter {
   AppRouter._();
 
+  static final RouteObserver<ModalRoute<void>> routeObserver =
+      RouteObserver<ModalRoute<void>>();
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.splash:
@@ -239,17 +250,18 @@ class AppRouter {
           settings: settings,
         );
       case AppRoutes.verifyOtp:
-        String email = '';
+        String identifier = '';
         String channel = 'email';
         if (settings.arguments is Map<String, dynamic>) {
           final map = settings.arguments as Map<String, dynamic>;
-          email = map['email'] as String? ?? '';
+          identifier = (map['identifier'] ?? map['email']) as String? ?? '';
           channel = map['channel'] as String? ?? 'email';
         } else if (settings.arguments is String) {
-          email = settings.arguments as String;
+          identifier = settings.arguments as String;
         }
         return MaterialPageRoute(
-          builder: (_) => VerifyOtpScreen(email: email, channel: channel),
+          builder: (_) =>
+              VerifyOtpScreen(identifier: identifier, channel: channel),
           settings: settings,
         );
       case AppRoutes.home:
@@ -280,6 +292,11 @@ class AppRouter {
       case AppRoutes.matches:
         return MaterialPageRoute(
           builder: (_) => const MatchesScreen(),
+          settings: settings,
+        );
+      case AppRoutes.bookmarkedPeers:
+        return MaterialPageRoute(
+          builder: (_) => const BookmarkedPeersScreen(),
           settings: settings,
         );
       case AppRoutes.peerProfile:
@@ -487,8 +504,8 @@ class AppRouter {
         String? initialPlace;
         if (settings.arguments is PeerEntity) {
           initialPeer = settings.arguments as PeerEntity;
-        } else if (settings.arguments is Map<String, dynamic>) {
-          final map = settings.arguments as Map<String, dynamic>;
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
           initialPeer = map['peer'] as PeerEntity?;
           initialDate = map['date'] as DateTime?;
           initialPlace = map['place'] as String?;
@@ -729,6 +746,16 @@ class AppRouter {
           builder: (_) => const RegisterVisitorScreen(),
           settings: settings,
         );
+      case AppRoutes.shorts:
+        return MaterialPageRoute(
+          builder: (_) => const ShortsScreen(showBackButton: true),
+          settings: settings,
+        );
+      case AppRoutes.highlights:
+        return MaterialPageRoute(
+          builder: (_) => const HighlightsScreen(),
+          settings: settings,
+        );
       case AppRoutes.editProfileOverview:
         return MaterialPageRoute(
           builder: (_) => const EditProfileOverviewScreen(),
@@ -826,12 +853,17 @@ class AppRouter {
         String? peerAvatar;
         if (settings.arguments is String) {
           chatId = settings.arguments as String;
-        } else if (settings.arguments is Map<String, dynamic>) {
-          final args = settings.arguments as Map<String, dynamic>;
+        } else if (settings.arguments is Map) {
+          final args = settings.arguments as Map;
           chatId = args['chat_id']?.toString();
           peerUserId = args['peer_id']?.toString() ?? args['user_id']?.toString();
           peerName = args['peer_name']?.toString() ?? args['user_name']?.toString();
           peerAvatar = args['peer_avatar']?.toString() ?? args['avatar_url']?.toString();
+        } else if (settings.arguments is PeerEntity) {
+          final p = settings.arguments as PeerEntity;
+          peerUserId = p.id;
+          peerName = p.displayName;
+          peerAvatar = p.profilePhotoUrl;
         }
         return MaterialPageRoute(
           builder: (_) => DirectChatScreen(
@@ -874,6 +906,19 @@ class AppRouter {
             circleId: circleId,
             circleName: circleName,
           ),
+          settings: settings,
+        );
+      case AppRoutes.brandPartnerDetails:
+        if (settings.arguments is BrandPartnerEntity) {
+          return MaterialPageRoute(
+            builder: (_) => BrandPartnerDetailsScreen(
+              partner: settings.arguments as BrandPartnerEntity,
+            ),
+            settings: settings,
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => const HomeScreen(),
           settings: settings,
         );
       default:

@@ -25,7 +25,9 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
   @override
   void initState() {
     super.initState();
-    _localDataSource = LeaderboardLocalDataSourceImpl(cacheStore: HiveCacheStore());
+    _localDataSource = LeaderboardLocalDataSourceImpl(
+      cacheStore: HiveCacheStore(),
+    );
     _remoteDataSource = LeaderboardRemoteDataSourceImpl(dioClient: DioClient());
     _loadGuidelines();
   }
@@ -70,13 +72,19 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
 
   IconData _getActionIcon(String action, String category) {
     final lower = '${action.toLowerCase()} ${category.toLowerCase()}';
-    if (lower.contains('deal') || lower.contains('business')) return Icons.handshake_outlined;
-    if (lower.contains('testimonial') || lower.contains('review')) return Icons.rate_review_outlined;
+    if (lower.contains('deal') || lower.contains('business'))
+      return Icons.handshake_outlined;
+    if (lower.contains('testimonial') || lower.contains('review'))
+      return Icons.rate_review_outlined;
     if (lower.contains('referral')) return Icons.group_add_outlined;
-    if (lower.contains('connect') || lower.contains('collaboration')) return Icons.hub_outlined;
-    if (lower.contains('meeting') || lower.contains('p2p')) return Icons.video_call_outlined;
-    if (lower.contains('signup') || lower.contains('sign up')) return Icons.person_add_alt_1_outlined;
-    if (lower.contains('visibility') || lower.contains('trust')) return Icons.verified_user_outlined;
+    if (lower.contains('connect') || lower.contains('collaboration'))
+      return Icons.hub_outlined;
+    if (lower.contains('meeting') || lower.contains('p2p'))
+      return Icons.video_call_outlined;
+    if (lower.contains('signup') || lower.contains('sign up'))
+      return Icons.person_add_alt_1_outlined;
+    if (lower.contains('visibility') || lower.contains('trust'))
+      return Icons.verified_user_outlined;
     return Icons.auto_awesome_rounded;
   }
 
@@ -175,10 +183,7 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFFFAF5FF),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFFF3E8FF),
-              width: 1.0,
-            ),
+            border: Border.all(color: const Color(0xFFF3E8FF), width: 1.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +203,7 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
                     ),
                     child: const Center(
                       child: Icon(
-                        Icons.auto_awesome_rounded,
+                        Icons.person_rounded,
                         color: Color(0xFFC026D3),
                         size: 20,
                       ),
@@ -251,22 +256,18 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
         // ── Guidelines List ──
         ...guidelines.map((item) {
           final isMulti = item.impactValue > 1;
-          final unitText = item.impactUnit.isNotEmpty ? item.impactUnit : (isMulti ? 'Lives' : 'Life');
+          final unitText = item.impactUnit.isNotEmpty
+              ? item.impactUnit
+              : (isMulti ? 'Lives' : 'Life');
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFE2E8F0),
-                  width: 1.0,
-                ),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.02),
@@ -335,7 +336,7 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
-                          Icons.auto_awesome_rounded,
+                          Icons.person_rounded,
                           size: 11.5,
                           color: Color(0xFFC026D3),
                         ),

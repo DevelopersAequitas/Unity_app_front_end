@@ -42,6 +42,14 @@ class BusinessDealsBottomNav extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildNavItem(
+                  label: 'Leaderboard',
+                  icon: Icons.leaderboard_outlined,
+                  isSelected: activeTab == BusinessDealTab.leaderboard,
+                  onTap: () => onTabChanged(BusinessDealTab.leaderboard),
+                ),
+              ),
+              Expanded(
+                child: _buildNavItem(
                   label: 'Received',
                   icon: Icons.call_received_rounded,
                   isSelected: activeTab == BusinessDealTab.received,
@@ -54,14 +62,6 @@ class BusinessDealsBottomNav extends StatelessWidget {
                   icon: Icons.call_made_rounded,
                   isSelected: activeTab == BusinessDealTab.given,
                   onTap: () => onTabChanged(BusinessDealTab.given),
-                ),
-              ),
-              Expanded(
-                child: _buildNavItem(
-                  label: 'Leaderboard',
-                  icon: Icons.leaderboard_outlined,
-                  isSelected: activeTab == BusinessDealTab.leaderboard,
-                  onTap: () => onTabChanged(BusinessDealTab.leaderboard),
                 ),
               ),
             ],

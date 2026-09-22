@@ -147,15 +147,21 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                                   );
                             },
                             onScheduleP2P: () {
-                              AppSnackBar.showInfo(
+                              Navigator.pushNamed(
                                 context,
-                                'Scheduling P2P with ${peer.displayName}',
+                                AppRoutes.addP2pMeeting,
+                                arguments: peer,
                               );
                             },
                             onMessage: () {
-                              AppSnackBar.showInfo(
+                              Navigator.pushNamed(
                                 context,
-                                'Messaging ${peer.displayName}',
+                                AppRoutes.directChat,
+                                arguments: {
+                                  'peer_id': peer.id,
+                                  'peer_name': peer.displayName,
+                                  'peer_avatar': peer.profilePhotoUrl,
+                                },
                               );
                             },
                             onBookmark: () {

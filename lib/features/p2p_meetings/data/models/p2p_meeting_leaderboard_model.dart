@@ -108,7 +108,10 @@ class P2pMeetingLeaderboardModel {
       score: (json['score'] as num?)?.toInt() ?? 0,
       meetingsCount: (json['meetings_count'] as num?)?.toInt() ??
           (json['meetings'] as num?)?.toInt() ??
+          (json['p2p_meetings_count'] as num?)?.toInt() ??
+          (json['p2p_count'] as num?)?.toInt() ??
           (json['count'] as num?)?.toInt() ??
+          (json['score'] as num?)?.toInt() ??
           0,
     );
   }

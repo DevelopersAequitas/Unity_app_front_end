@@ -254,6 +254,18 @@ class PeersRepositoryImpl implements PeersRepository {
   }
 
   @override
+  Future<List<PeerEntity>> getBookmarkedPeers({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final models = await remoteDataSource.getBookmarkedPeers(
+      page: page,
+      limit: limit,
+    );
+    return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
   Future<List<IntroducedPeerEntity>> getMemberIntroducedPeers(String memberId) async {
     final models = await remoteDataSource.getMemberIntroducedPeers(memberId);
     return models.map((m) => m.toEntity()).toList();

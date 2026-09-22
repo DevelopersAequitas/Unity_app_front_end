@@ -241,19 +241,22 @@ class _EditBusinessInfoScreenState extends State<EditBusinessInfoScreen> {
         ),
       ),
       body: BlocConsumer<ProfileEditBloc, ProfileEditState>(
+        listenWhen: (previous, current) =>
+            previous.status != current.status &&
+            (current.status == ProfileEditStatus.saved ||
+                current.status == ProfileEditStatus.failure),
         listener: (context, state) {
           if (state.status == ProfileEditStatus.saved) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.successMessage ?? 'Business info updated!'),
-              ),
+            AppSnackBar.showSuccess(
+              context,
+              state.successMessage ?? 'Business info updated!',
             );
+            context.read<ProfileEditBloc>().add(const ProfileEditResetRequested());
             Navigator.of(context).pop();
           } else if (state.status == ProfileEditStatus.failure &&
               state.errorMessage != null) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+            AppSnackBar.showError(context, state.errorMessage!);
+            context.read<ProfileEditBloc>().add(const ProfileEditResetRequested());
           }
         },
         builder: (context, state) {

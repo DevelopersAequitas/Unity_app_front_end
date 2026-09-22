@@ -21,7 +21,7 @@ class CoinsBalanceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.monetization_on_outlined, color: Colors.white, size: 24),
+              Image.asset('assets/images/coin.png', width: 22, height: 22),
               const SizedBox(width: 8),
               Text(
                 'AVAILABLE COINS WALLET',

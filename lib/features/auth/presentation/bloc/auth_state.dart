@@ -29,18 +29,20 @@ class AuthLoading extends AuthState {
 }
 
 class AuthOtpSentSuccess extends AuthState {
-  final String email;
+  final String identifier;
   final String channel;
   final String message;
 
   const AuthOtpSentSuccess({
-    required this.email,
+    required this.identifier,
     this.channel = 'email',
     this.message = 'OTP sent successfully.',
   });
 
+  String get email => identifier;
+
   @override
-  List<Object?> get props => [email, channel, message];
+  List<Object?> get props => [identifier, channel, message];
 }
 
 class AuthVerifySuccess extends AuthState {

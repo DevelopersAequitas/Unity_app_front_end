@@ -255,7 +255,7 @@ class CircleClosedCategoryOccupant extends StatelessWidget {
                   shaderCallback: (bounds) =>
                       AppColor.brandGradient.createShader(bounds),
                   child: const Icon(
-                    Icons.auto_awesome_rounded,
+                    Icons.person_rounded,
                     size: 12,
                     color: AppColor.white,
                   ),

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/referral_entity.dart';
 
-enum ReferralTab { received, given, leaderboard }
+enum ReferralTab { leaderboard, received, given }
 
 abstract class ReferralsEvent extends Equatable {
   const ReferralsEvent();

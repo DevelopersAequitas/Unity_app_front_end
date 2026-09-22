@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_snack_bar.dart';
 import '../bloc/near_me_bloc.dart';
 import '../bloc/near_me_event.dart';
 import '../bloc/near_me_state.dart';
+import '../widgets/near_me_directions_sheet.dart';
 import '../widgets/near_me_peer_card.dart';
 import '../widgets/near_me_radius_selector.dart';
 import '../widgets/peers_skeleton_loader.dart';
@@ -314,7 +315,11 @@ class _NearMeScreenState extends State<NearMeScreen> {
                                       );
                                 },
                                 onScheduleP2P: () {
-                                  // Navigate to P2P scheduling
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.addP2pMeeting,
+                                    arguments: peer,
+                                  );
                                 },
                                 onBookmark: () {
                                   context.read<NearMeBloc>().add(
@@ -326,13 +331,22 @@ class _NearMeScreenState extends State<NearMeScreen> {
                                       );
                                 },
                                 onMessage: () {
-                                  // Open message thread
-                                },
-                                onTap: () {
                                   Navigator.pushNamed(
                                     context,
-                                    AppRoutes.peerProfile,
-                                    arguments: peer.id,
+                                    AppRoutes.directChat,
+                                    arguments: {
+                                      'peer_id': peer.id,
+                                      'peer_name': peer.displayName,
+                                      'peer_avatar': peer.profilePhotoUrl,
+                                    },
+                                  );
+                                },
+                                onTap: () {
+                                  NearMeDirectionsSheet.show(
+                                    context,
+                                    peer: peer,
+                                    userLatitude: state.userLatitude,
+                                    userLongitude: state.userLongitude,
                                   );
                                 },
                               );
@@ -395,17 +409,28 @@ class _NearMeScreenState extends State<NearMeScreen> {
           point: point,
           width: 38,
           height: 38,
-          child: const Icon(
-            Icons.location_on_rounded,
-            size: 34,
-            color: AppColor.primaryBlue,
-            shadows: [
-              Shadow(
-                color: Colors.black26,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              NearMeDirectionsSheet.show(
+                context,
+                peer: peer,
+                userLatitude: state.userLatitude,
+                userLongitude: state.userLongitude,
+              );
+            },
+            child: const Icon(
+              Icons.location_on_rounded,
+              size: 34,
+              color: AppColor.primaryBlue,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
           ),
         ),
       );

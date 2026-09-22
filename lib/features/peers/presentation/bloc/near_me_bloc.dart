@@ -114,23 +114,32 @@ class NearMeBloc extends Bloc<NearMeEvent, NearMeState> {
       double? lng = state.userLongitude;
 
       if (lat == null || lng == null) {
-        final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (serviceEnabled) {
-          var permission = await Geolocator.checkPermission();
-          if (permission == LocationPermission.denied) {
-            permission = await Geolocator.requestPermission();
+        try {
+          final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+          if (serviceEnabled) {
+            var permission = await Geolocator.checkPermission();
+            if (permission == LocationPermission.denied) {
+              permission = await Geolocator.requestPermission();
+            }
+            if (permission == LocationPermission.whileInUse ||
+                permission == LocationPermission.always) {
+              final lastKnown = await Geolocator.getLastKnownPosition();
+              if (lastKnown != null) {
+                lat = lastKnown.latitude;
+                lng = lastKnown.longitude;
+              }
+              final pos = await Geolocator.getCurrentPosition(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.medium,
+                  timeLimit: Duration(seconds: 3),
+                ),
+              );
+              lat = pos.latitude;
+              lng = pos.longitude;
+            }
           }
-          if (permission == LocationPermission.whileInUse ||
-              permission == LocationPermission.always) {
-            final pos = await Geolocator.getCurrentPosition(
-              locationSettings: const LocationSettings(
-                accuracy: LocationAccuracy.medium,
-                timeLimit: Duration(seconds: 5),
-              ),
-            );
-            lat = pos.latitude;
-            lng = pos.longitude;
-          }
+        } catch (_) {
+          // If GPS times out or is slow, continue gracefully to fetch API
         }
       }
 

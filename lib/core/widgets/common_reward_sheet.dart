@@ -95,7 +95,7 @@ class CommonRewardSheet extends StatelessWidget {
     this.impactValue,
     this.impactTitle,
     this.impactSubtitle = 'Life Impacted',
-    this.impactIcon = Icons.auto_awesome_rounded,
+    this.impactIcon = Icons.person_rounded,
     this.coinsEarned,
     this.impactEarned,
     this.showCoins,
@@ -125,7 +125,7 @@ class CommonRewardSheet extends StatelessWidget {
     dynamic impactValue,
     String? impactTitle,
     String? impactSubtitle = 'Life Impacted',
-    IconData impactIcon = Icons.auto_awesome_rounded,
+    IconData impactIcon = Icons.person_rounded,
     int? coinsEarned,
     int? impactEarned,
     bool? showCoins,
@@ -471,6 +471,7 @@ class CommonRewardSheet extends StatelessWidget {
           Expanded(
             child: _buildWhiteRewardCard(
               icon: coinsIcon,
+              imageAsset: 'assets/images/coin.png',
               title: finalCoinsTitle,
               subtitle: finalCoinsSubtitle,
               iconBgColor: const Color(0xFFEFF6FF),
@@ -516,6 +517,7 @@ class CommonRewardSheet extends StatelessWidget {
 
   Widget _buildWhiteRewardCard({
     required IconData icon,
+    String? imageAsset,
     required String title,
     required String subtitle,
     required Color iconBgColor,
@@ -548,10 +550,19 @@ class CommonRewardSheet extends StatelessWidget {
               color: iconBgColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: iconColor,
+            child: Center(
+              child: imageAsset != null
+                  ? Image.asset(
+                      imageAsset,
+                      width: 18,
+                      height: 18,
+                      fit: BoxFit.contain,
+                    )
+                  : Icon(
+                      icon,
+                      size: 16,
+                      color: iconColor,
+                    ),
             ),
           ),
           const SizedBox(width: 7),

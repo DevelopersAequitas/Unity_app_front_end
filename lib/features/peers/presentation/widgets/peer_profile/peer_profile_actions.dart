@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
+import 'package:unity_app/core/utils/paywall_gate_helper.dart';
 import 'package:unity_app/core/widgets/app_snack_bar.dart';
+import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 import 'package:unity_app/features/profile/domain/entities/profile_entity.dart';
 
 class PeerProfileActions extends StatelessWidget {
@@ -60,6 +62,9 @@ class PeerProfileActions extends StatelessWidget {
                       if (isPending) {
                         onCancelRequest();
                       } else if (isConnected) {
+                        if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to chat with peers.')) {
+                          return;
+                        }
                         Navigator.pushNamed(
                           context,
                           AppRoutes.directChat,
@@ -70,6 +75,9 @@ class PeerProfileActions extends StatelessWidget {
                           },
                         );
                       } else {
+                        if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to send connection requests.')) {
+                          return;
+                        }
                         onConnect();
                       }
                     },
@@ -213,9 +221,27 @@ class PeerProfileActions extends StatelessWidget {
                         );
                         return;
                       }
-                      AppSnackBar.showInfo(
+                      final peer = PeerEntity(
+                        id: profile.id,
+                        displayName: profile.displayName,
+                        firstName: profile.firstName,
+                        lastName: profile.lastName,
+                        profilePhotoUrl: profile.profilePhotoUrl,
+                        city: profile.city?.name,
+                        category: profile.mainBusinessCategory ??
+                            profile.businessCategory,
+                        companyName: profile.companyName,
+                        designation: profile.designation,
+                        connectionStatus: profile.connectionStatus,
+                        isVerified: profile.isVerified,
+                        isPro: profile.isPro,
+                        isFollowing: profile.isFollowing,
+                        isBookmarked: profile.isBookmark,
+                      );
+                      Navigator.pushNamed(
                         context,
-                        'Schedule P2P with ${profile.displayName}',
+                        AppRoutes.addP2pMeeting,
+                        arguments: peer,
                       );
                     },
                     child: const Padding(

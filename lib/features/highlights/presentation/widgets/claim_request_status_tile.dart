@@ -68,7 +68,7 @@ class ClaimRequestStatusTile extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.monetization_on_rounded, size: 14, color: Color(0xFFF59E0B)),
+              Image.asset('assets/images/coin.png', width: 14, height: 14),
               const SizedBox(width: 4),
               Text(
                 '+${claim.coinsAwarded > 0 ? claim.coinsAwarded : '—'} Coins',

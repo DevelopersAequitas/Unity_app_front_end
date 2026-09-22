@@ -139,7 +139,7 @@ class CoinsScreen extends StatelessWidget {
                 color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.monetization_on_rounded, color: Color(0xFFF59E0B), size: 20),
+              child: Image.asset('assets/images/coin.png', width: 20, height: 20),
             ),
             const SizedBox(width: 12),
             Expanded(

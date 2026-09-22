@@ -14,14 +14,16 @@ import '../widgets/verify_otp_resend_section.dart';
 import '../widgets/verify_otp_title_section.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
-  final String email;
+  final String identifier;
   final String channel;
 
   const VerifyOtpScreen({
     super.key,
-    required this.email,
+    required this.identifier,
     this.channel = 'email',
   });
+
+  String get email => identifier;
 
   @override
   State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
@@ -54,14 +56,18 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   void _onVerify() {
     FocusScope.of(context).unfocus();
     context.read<AuthBloc>().add(
-      AuthVerifyOtpSubmitted(email: widget.email, otp: _currentOtp),
-    );
+          AuthVerifyOtpSubmitted(
+            identifier: widget.identifier,
+            channel: widget.channel,
+            otp: _currentOtp,
+          ),
+        );
   }
 
   void _onResend() {
     context.read<AuthBloc>().add(
-      AuthRequestOtpSubmitted(widget.email, channel: widget.channel),
-    );
+          AuthRequestOtpSubmitted(widget.identifier, channel: widget.channel),
+        );
   }
 
   void _onStateChanged(BuildContext context, AuthState state) {
@@ -99,7 +105,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       ),
                       const SizedBox(height: 16),
                       VerifyOtpTitleSection(
-                        email: widget.email,
+                        identifier: widget.identifier,
                         channel: widget.channel,
                       ),
                       const SizedBox(height: 32),

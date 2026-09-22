@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/router/app_router.dart';
+import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
@@ -94,6 +94,10 @@ class _VyapaarJagatStoryScreenState extends State<VyapaarJagatStoryScreen> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
+    if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to submit your story.')) {
+      return;
+    }
+
     final entity = VyapaarJagatStoryEntity(
       fullName: _fullNameController.text.trim(),
       designation: _designationController.text.trim(),
@@ -152,8 +156,6 @@ class _VyapaarJagatStoryScreenState extends State<VyapaarJagatStoryScreen> {
         appBar: AppCommonBar(
           title: 'Vyapaar Jagat Story',
           showBack: Navigator.canPop(context),
-          showProfile: true,
-          onProfileTap: () => Navigator.pushNamed(context, AppRoutes.profile),
           onBackTap: Navigator.canPop(context) ? () => Navigator.pop(context) : null,
         ),
         body: AppGradientBackground(
