@@ -7,6 +7,10 @@ final AppConfig fempreneurConfig = AppConfig(
   androidPackageName: 'com.unity.fempreneur',
   iosBundleId: 'com.unity.fempreneur',
   logoPath: 'assets/logo/fempreneur.png',
-  appScheme: 'fempreneurunity',
-  appDomain: 'fempreneur.peersunity.com',
+  appScheme: 'fempreneur',
+  appDomain: 'dev.fempreneur.club',
+  devBaseUrl: 'https://dev.fempreneur.club/api/v1',
+  prodBaseUrl: 'https://unity.fempreneur.club/api/v1',
+  appStoreUrl: 'https://apps.apple.com/in/app/fempreneur-unity/id6799073359',
+  appStoreId: '6799073359',
 );

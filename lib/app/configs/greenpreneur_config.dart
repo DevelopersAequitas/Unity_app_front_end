@@ -7,6 +7,10 @@ final AppConfig greenpreneurConfig = AppConfig(
   androidPackageName: 'com.unity.greenpreneur',
   iosBundleId: 'com.unity.greenpreneur',
   logoPath: 'assets/logo/greenpreneur.png',
-  appScheme: 'greenpreneurunity',
-  appDomain: 'greenpreneur.peersunity.com',
+  appScheme: 'greenpreneur',
+  appDomain: 'unity.greenpreneur.in',
+  devBaseUrl: 'https://unity.greenpreneur.in/api/v1',
+  prodBaseUrl: 'https://unity.greenpreneur.in/api/v1',
+  appStoreUrl: 'https://apps.apple.com/in/app/greenpreneur-unity/id6782311572',
+  appStoreId: '6782311572',
 );

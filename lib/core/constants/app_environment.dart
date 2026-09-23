@@ -64,13 +64,12 @@ class AppEnvironment {
   ];
 
   static String get baseUrl {
-    switch (flavor) {
-      case Flavor.prod:
-        // Temporarily pointing to dev base URL for testing
-        return 'https://dev.peersunity.com/api/v1';
-      case Flavor.dev:
-        return 'https://dev.peersunity.com/api/v1';
+    if (AppConfig.isInitialized) {
+      return flavor == Flavor.prod
+          ? AppConfig.current.prodBaseUrl
+          : AppConfig.current.devBaseUrl;
     }
+    return 'https://dev.peersunity.com/api/v1';
   }
 
   static String get packageName => AppConfig.isInitialized
@@ -80,10 +79,13 @@ class AppEnvironment {
   static String get playStoreUrl =>
       'https://play.google.com/store/apps/details?id=$packageName';
 
-  static String get appStoreUrl =>
-      'https://apps.apple.com/in/app/peers-global-unity/id6739198477';
+  static String get appStoreUrl => AppConfig.isInitialized
+      ? AppConfig.current.appStoreUrl
+      : 'https://apps.apple.com/in/app/peers-global-unity/id6739198477';
 
-  static String get appStoreId => '6739198477';
+  static String get appStoreId => AppConfig.isInitialized
+      ? AppConfig.current.appStoreId
+      : '6739198477';
 
   static String get appName =>
       AppConfig.isInitialized ? AppConfig.current.appName : 'Peers Global Unity';

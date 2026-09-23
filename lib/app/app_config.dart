@@ -12,6 +12,10 @@ class AppConfig {
   final String logoPath;
   final String appScheme;
   final String appDomain;
+  final String devBaseUrl;
+  final String prodBaseUrl;
+  final String appStoreUrl;
+  final String appStoreId;
   final ThemeData? themeData;
   final ThemeData? darkThemeData;
 
@@ -23,6 +27,10 @@ class AppConfig {
     required this.logoPath,
     required this.appScheme,
     required this.appDomain,
+    required this.devBaseUrl,
+    required this.prodBaseUrl,
+    required this.appStoreUrl,
+    required this.appStoreId,
     this.themeData,
     this.darkThemeData,
   });
