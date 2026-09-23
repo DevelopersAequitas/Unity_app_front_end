@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../app/app_config.dart';
 
 enum Flavor { dev, prod }
 
@@ -72,7 +73,9 @@ class AppEnvironment {
     }
   }
 
-  static String get packageName => 'com.peers.peersunity';
+  static String get packageName => AppConfig.isInitialized
+      ? AppConfig.current.androidPackageName
+      : 'com.peers.peersunity';
 
   static String get playStoreUrl =>
       'https://play.google.com/store/apps/details?id=$packageName';
@@ -82,12 +85,15 @@ class AppEnvironment {
 
   static String get appStoreId => '6739198477';
 
-  static String get appName => 'Peers Global Unity';
+  static String get appName =>
+      AppConfig.isInitialized ? AppConfig.current.appName : 'Peers Global Unity';
 
-  static String get appScheme => 'peersunity';
+  static String get appScheme =>
+      AppConfig.isInitialized ? AppConfig.current.appScheme : 'peersunity';
 
-  static String get appDomain =>
-      flavor == Flavor.dev ? 'dev.peersunity.com' : 'peersunity.com';
+  static String get appDomain => AppConfig.isInitialized
+      ? AppConfig.current.appDomain
+      : (flavor == Flavor.dev ? 'dev.peersunity.com' : 'peersunity.com');
 
   /// 1. Peer Profile Deep Link
   static String getPeerProfileDeepLink(String peerId) {

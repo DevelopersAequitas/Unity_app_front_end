@@ -15,19 +15,36 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.unity_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // Default base application ID
+        applicationId = "com.peers.peersunity"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "default"
+
+    productFlavors {
+        create("peersGlobal") {
+            dimension = "default"
+            applicationId = "com.peers.peersunit"
+            resValue("string", "app_name", "Peers Global Unity")
+        }
+        create("greenpreneur") {
+            dimension = "default"
+            applicationId = "com.unity.greenpreneur"
+            resValue("string", "app_name", "Greenpreneur Unity")
+        }
+        create("fempreneur") {
+            dimension = "default"
+            applicationId = "com.unity.fempreneur"
+            resValue("string", "app_name", "Fempreneur Unity")
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }

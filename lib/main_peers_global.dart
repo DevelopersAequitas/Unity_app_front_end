@@ -7,17 +7,15 @@ import 'core/di/app_dependencies.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Default to Peers Global configuration
-  if (!AppConfig.isInitialized) {
-    AppConfig.set(peersGlobalConfig);
-  }
+  // Initialize AppConfig for Peers Global Unity
+  AppConfig.set(peersGlobalConfig);
 
   final dependencies = await AppDependencies.initialize();
 
   runApp(
     MyApp(
       dependencies: dependencies,
-      config: AppConfig.current,
+      config: peersGlobalConfig,
     ),
   );
 }

@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'app.dart';
 import 'app/app_config.dart';
-import 'app/configs/peers_global_config.dart';
+import 'app/configs/fempreneur_config.dart';
 import 'core/di/app_dependencies.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Default to Peers Global configuration
-  if (!AppConfig.isInitialized) {
-    AppConfig.set(peersGlobalConfig);
-  }
+  // Initialize AppConfig for Fempreneur Unity
+  AppConfig.set(fempreneurConfig);
 
   final dependencies = await AppDependencies.initialize();
 
   runApp(
     MyApp(
       dependencies: dependencies,
-      config: AppConfig.current,
+      config: fempreneurConfig,
     ),
   );
 }

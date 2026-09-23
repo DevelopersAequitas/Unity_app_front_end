@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app/app_config.dart';
 import 'core/di/app_dependencies.dart';
 import 'core/di/app_providers.dart';
 import 'core/router/app_router.dart';
@@ -9,19 +10,30 @@ import 'core/widgets/connectivity_overlay.dart';
 
 class MyApp extends StatelessWidget {
   final AppDependencies dependencies;
+  final AppConfig? config;
 
-  const MyApp({super.key, required this.dependencies});
+  const MyApp({
+    super.key,
+    required this.dependencies,
+    this.config,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final activeConfig =
+        config ?? (AppConfig.isInitialized ? AppConfig.current : null);
+    final appTitle = activeConfig?.appName ?? 'Peers Global Unity';
+    final appTheme = activeConfig?.activeTheme ?? AppTheme.lightTheme;
+    final appDarkTheme = activeConfig?.activeDarkTheme ?? AppTheme.darkTheme;
+
     return AppProviders(
       dependencies: dependencies,
       child: MaterialApp(
-        title: 'Peers Global Unity',
+        title: appTitle,
         navigatorKey: DeepLinkService.instance.navigatorKey,
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+        theme: appTheme,
+        darkTheme: appDarkTheme,
         themeMode: ThemeMode.light,
         initialRoute: AppRoutes.splash,
         onGenerateRoute: AppRouter.onGenerateRoute,
