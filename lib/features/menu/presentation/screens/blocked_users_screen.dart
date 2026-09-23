@@ -7,6 +7,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../peers/domain/usecases/get_blocked_peers_usecase.dart';
 import '../../../peers/domain/usecases/unblock_peer_usecase.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../widgets/blocked_user_tile.dart';
 
 class BlockedUsersScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class BlockedUsersScreen extends StatefulWidget {
 class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   final DioClient _dio = DioClient();
   bool _isLoading = true;
+  String? _errorMessage;
   List<Map<String, dynamic>> _users = [];
 
   @override
@@ -32,10 +34,11 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   Future<void> _fetchBlockedUsers() async {
     setState(() => _isLoading = true);
     List<Map<String, dynamic>> items = [];
+    String? error;
     try {
       final useCase = context.read<GetBlockedPeersUseCase>();
       items = await useCase();
-    } catch (_) {
+    } catch (e) {
       try {
         final res = await _dio.dio.get(ApiEndpoints.blockedPeers);
         final data = res.data;
@@ -58,12 +61,15 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
         if (raw != null) {
           items = raw.whereType<Map<String, dynamic>>().toList();
         }
-      } catch (_) {}
+      } catch (err) {
+        error = err.toString();
+      }
     }
 
     if (mounted) {
       setState(() {
         _users = items;
+        _errorMessage = items.isEmpty ? error : null;
         _isLoading = false;
       });
     }
@@ -181,6 +187,15 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
             border: Border.all(color: AppColor.lightBorder),
           ),
         ),
+      );
+    }
+
+    if (_errorMessage != null && _users.isEmpty) {
+      return AppErrorView(
+        title: 'Unable to Load Blocked Users',
+        message: _errorMessage,
+        onRetry: _fetchBlockedUsers,
+        screenName: 'Blocked Users',
       );
     }
 

@@ -4,6 +4,7 @@ import 'package:unity_app/features/peers/presentation/widgets/peer_profile/peer_
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/peer_profile_bloc.dart';
 import '../bloc/peer_profile_event.dart';
 import '../bloc/peer_profile_state.dart';
@@ -87,14 +88,7 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
               ),
             ],
           ),
-          body: BlocConsumer<PeerProfileBloc, PeerProfileState>(
-            listener: (context, state) {
-              if (state.errorMessage != null &&
-                  state.errorMessage!.isNotEmpty &&
-                  !state.isBlocked) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          body: BlocBuilder<PeerProfileBloc, PeerProfileState>(
             builder: (context, state) => _buildBody(context, state),
           ),
         );
@@ -205,40 +199,13 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
     }
 
     if (state.status == PeerProfileStatus.failure || state.profile == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: AppColor.lightTextSecondary,
+      return AppErrorView(
+        title: 'Unable to Load Member Profile',
+        message: state.errorMessage,
+        onRetry: () => context.read<PeerProfileBloc>().add(
+              PeerProfileFetchRequested(widget.peerId),
             ),
-            const SizedBox(height: 12),
-            Text(
-              state.errorMessage ?? 'Failed to load profile',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColor.lightTextSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.read<PeerProfileBloc>().add(
-                PeerProfileFetchRequested(widget.peerId),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primaryBlue,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text(
-                'Try Again',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-            ),
-          ],
-        ),
+        screenName: 'Member Profile',
       );
     }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 
 class CreateActionSheet extends StatelessWidget {
   const CreateActionSheet({super.key});
@@ -60,6 +61,7 @@ class CreateActionSheet extends StatelessWidget {
               isDark: isDark,
               onTap: () {
                 Navigator.pop(context);
+                if (!OfflineGuard.check(context, actionName: 'create posts')) return;
                 Navigator.pushNamed(context, AppRoutes.createPost);
               },
             ),

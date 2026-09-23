@@ -335,18 +335,36 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
     Emitter<PeersState> emit,
   ) async {
     if (getBookmarkedPeersUseCase == null) return;
-    emit(state.copyWith(isLoadingBookmarks: true));
+    
+    // Instant cache-first load if empty
+    if (state.bookmarkedPeersList.isEmpty) {
+      final cached = await getBookmarkedPeersUseCase!.getCached();
+      if (cached.isNotEmpty) {
+        emit(state.copyWith(
+          bookmarkedPeersList: cached,
+          isLoadingBookmarks: false,
+        ));
+      } else {
+        emit(state.copyWith(isLoadingBookmarks: true));
+      }
+    }
+
     try {
       final list = await getBookmarkedPeersUseCase!();
       emit(state.copyWith(
         bookmarkedPeersList: list,
         isLoadingBookmarks: false,
+        errorMessage: null,
       ));
     } catch (e) {
-      emit(state.copyWith(
-        isLoadingBookmarks: false,
-        errorMessage: e.toString(),
-      ));
+      if (state.bookmarkedPeersList.isEmpty) {
+        emit(state.copyWith(
+          isLoadingBookmarks: false,
+          errorMessage: e.toString(),
+        ));
+      } else {
+        emit(state.copyWith(isLoadingBookmarks: false));
+      }
     }
   }
 

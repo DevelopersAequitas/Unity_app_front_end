@@ -4,8 +4,8 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/peer_requests_bloc.dart';
 import '../bloc/peer_requests_event.dart';
 import '../bloc/peer_requests_state.dart';
@@ -34,15 +34,7 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<PeerRequestsBloc, PeerRequestsState>(
-      listenWhen: (prev, curr) =>
-          curr.errorMessage != null &&
-          prev.errorMessage != curr.errorMessage,
-      listener: (context, state) {
-        if (state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
-        }
-      },
+    return BlocBuilder<PeerRequestsBloc, PeerRequestsState>(
       builder: (context, state) {
         final isReceivedTab = state.activeTab == 0;
         final list = isReceivedTab
@@ -103,6 +95,19 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                         list.isEmpty)
                       const SliverToBoxAdapter(
                         child: PeersSkeletonLoader(),
+                      )
+                    else if (state.status == PeerRequestsStatus.failure &&
+                        list.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: AppErrorView(
+                          title: 'Unable to Load Requests',
+                          message: state.errorMessage,
+                          onRetry: () => context
+                              .read<PeerRequestsBloc>()
+                              .add(const PeerRequestsRefreshRequested()),
+                          screenName: 'Peer Requests',
+                        ),
                       )
                     else if (list.isEmpty)
                       SliverToBoxAdapter(

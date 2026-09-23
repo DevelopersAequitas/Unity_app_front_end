@@ -15,4 +15,8 @@ class GetIntroVideosUseCase {
       perPage: perPage,
     );
   }
+
+  Future<List<IntroVideoEntity>> getCached() async {
+    return await repository.getCachedShorts();
+  }
 }

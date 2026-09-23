@@ -5,8 +5,10 @@ import '../../../../core/events/peers_event_bus.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../peers/presentation/bloc/peers_bloc.dart';
@@ -219,25 +221,11 @@ class _CircleMembersScreenState extends State<CircleMembersScreen> {
                   ),
                 )
               : _errorMessage != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _errorMessage!,
-                              style: TextStyle(fontSize: 13, color: secondaryText),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: _loadMembers,
-                              child: const Text('Try Again'),
-                            ),
-                          ],
-                        ),
-                      ),
+                  ? AppErrorView(
+                      title: 'Unable to Load Circle Peers',
+                      message: _errorMessage,
+                      onRetry: _loadMembers,
+                      screenName: '${widget.circle.name} Peers',
                     )
                   : _filteredMembers.isEmpty
                       ? Center(

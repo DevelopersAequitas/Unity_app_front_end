@@ -4,6 +4,7 @@ import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/widgets/app_common_bar.dart';
 import 'package:unity_app/core/widgets/app_snack_bar.dart';
+import 'package:unity_app/core/widgets/offline_prompt_dialog.dart';
 import 'package:unity_app/core/widgets/responsive_container.dart';
 import '../bloc/p2p_meetings_bloc.dart';
 import '../bloc/p2p_meetings_event.dart';
@@ -18,36 +19,74 @@ import '../widgets/scheduled/schedule_p2p_meeting_sheet.dart';
 
 class P2pMeetingsScreen extends StatelessWidget {
   final int initialTabIndex;
-  const P2pMeetingsScreen({super.key, this.initialTabIndex = 0});
+  final int initialSubTabIndex;
+
+  const P2pMeetingsScreen({
+    super.key,
+    this.initialTabIndex = 0,
+    this.initialSubTabIndex = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (ctx) => P2pMeetingsBloc(
-        getP2pMeetingsHistoryUseCase: ctx.read(),
-        getP2pMeetingRequestsInboxUseCase: ctx.read(),
-        getP2pMeetingRequestsSentUseCase: ctx.read(),
-        getPendingRescheduleRequestsReceivedUseCase: ctx.read(),
-        getP2pMeetingsLeaderboardUseCase: ctx.read(),
-        acceptP2pMeetingRequestUseCase: ctx.read(),
-        rejectP2pMeetingRequestUseCase: ctx.read(),
-        cancelP2pMeetingRequestUseCase: ctx.read(),
-        approveRescheduleRequestUseCase: ctx.read(),
-        rejectRescheduleRequestUseCase: ctx.read(),
-        requestRescheduleP2pMeetingUseCase: ctx.read(),
-      )..add(
-          initialTabIndex == 0
-              ? const P2pMeetingsFetchLeaderboardRequested()
-              : const P2pMeetingsFetchRequested(),
-        ),
-      child: _P2pMeetingsView(initialTabIndex: initialTabIndex),
+      create: (ctx) {
+        final bloc = P2pMeetingsBloc(
+          getP2pMeetingsHistoryUseCase: ctx.read(),
+          getP2pMeetingRequestsInboxUseCase: ctx.read(),
+          getP2pMeetingRequestsSentUseCase: ctx.read(),
+          getPendingRescheduleRequestsReceivedUseCase: ctx.read(),
+          getP2pMeetingsLeaderboardUseCase: ctx.read(),
+          acceptP2pMeetingRequestUseCase: ctx.read(),
+          rejectP2pMeetingRequestUseCase: ctx.read(),
+          cancelP2pMeetingRequestUseCase: ctx.read(),
+          approveRescheduleRequestUseCase: ctx.read(),
+          rejectRescheduleRequestUseCase: ctx.read(),
+          requestRescheduleP2pMeetingUseCase: ctx.read(),
+        );
+
+        if (initialTabIndex == 0) {
+          bloc.add(const P2pMeetingsFetchLeaderboardRequested());
+        } else {
+          bloc.add(const P2pMeetingsFetchRequested());
+          if (initialTabIndex == 1) {
+            bloc.add(const P2pMeetingsTopTabChanged('completed'));
+            if (initialSubTabIndex > 0) {
+              bloc.add(
+                P2pMeetingsCompletedSubTabChanged(
+                  initialSubTabIndex == 0 ? 'i_initiated' : 'peer_initiated',
+                ),
+              );
+            }
+          } else if (initialTabIndex == 2) {
+            bloc.add(const P2pMeetingsTopTabChanged('scheduled'));
+            if (initialSubTabIndex > 0) {
+              bloc.add(
+                P2pMeetingsScheduledSubTabChanged(
+                  initialSubTabIndex == 1 ? 'sent' : 'reschedules',
+                ),
+              );
+            }
+          }
+        }
+        return bloc;
+      },
+      child: _P2pMeetingsView(
+        initialTabIndex: initialTabIndex,
+        initialSubTabIndex: initialSubTabIndex,
+      ),
     );
   }
 }
 
 class _P2pMeetingsView extends StatefulWidget {
   final int initialTabIndex;
-  const _P2pMeetingsView({required this.initialTabIndex});
+  final int initialSubTabIndex;
+
+  const _P2pMeetingsView({
+    required this.initialTabIndex,
+    this.initialSubTabIndex = 0,
+  });
 
   @override
   State<_P2pMeetingsView> createState() => _P2pMeetingsViewState();
@@ -76,6 +115,11 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
   void initState() {
     super.initState();
     _mainTabIndex = widget.initialTabIndex;
+    if (_mainTabIndex == 1) {
+      _completedSubIndex = widget.initialSubTabIndex.clamp(0, 1);
+    } else if (_mainTabIndex == 2) {
+      _scheduledSubIndex = widget.initialSubTabIndex.clamp(0, 2);
+    }
   }
 
   @override
@@ -115,6 +159,9 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
 
   void _onFabPressed() async {
     if (_mainTabIndex == 1) {
+      if (!OfflineGuard.check(context, actionName: 'log 1-to-1 meetings')) {
+        return;
+      }
       final result = await Navigator.pushNamed(
         context,
         AppRoutes.addP2pMeeting,
@@ -125,6 +172,9 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
         );
       }
     } else if (_mainTabIndex == 2) {
+      if (!OfflineGuard.check(context, actionName: 'schedule 1-to-1 meetings')) {
+        return;
+      }
       ScheduleP2pMeetingSheet.show(
         context,
         onSuccess: () {
@@ -175,10 +225,6 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
             listener: (context, state) {
               if (state.successMessage != null) {
                 AppSnackBar.showSuccess(context, state.successMessage!);
-              }
-              if (state.status == P2pMeetingsStatus.failure &&
-                  state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
               }
             },
             builder: (context, state) {

@@ -4,8 +4,8 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/connections_bloc.dart';
 import '../bloc/connections_event.dart';
 import '../bloc/connections_state.dart';
@@ -67,15 +67,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
             ),
       body: AppGradientBackground(
         child: ResponsiveContainer(
-          child: BlocConsumer<ConnectionsBloc, ConnectionsState>(
-            listenWhen: (prev, curr) =>
-                curr.errorMessage != null &&
-                prev.errorMessage != curr.errorMessage,
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<ConnectionsBloc, ConnectionsState>(
             builder: (context, state) {
               return RefreshIndicator(
                 color: AppColor.primaryBlue,
@@ -106,6 +98,19 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                         state.connections.isEmpty)
                       const SliverToBoxAdapter(
                         child: PeersSkeletonLoader(),
+                      )
+                    else if (state.status == ConnectionsStatus.failure &&
+                        state.connections.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: AppErrorView(
+                          title: 'Unable to Load Connections',
+                          message: state.errorMessage,
+                          onRetry: () => context
+                              .read<ConnectionsBloc>()
+                              .add(const ConnectionsRefreshRequested()),
+                          screenName: 'My Connections',
+                        ),
                       )
                     else if (state.connections.isEmpty)
                       SliverToBoxAdapter(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/usecases/get_given_testimonials_usecase.dart';
 import '../../domain/usecases/get_received_testimonials_usecase.dart';
@@ -117,13 +116,7 @@ class _PeerTestimonialsViewState extends State<_PeerTestimonialsView> {
       body: SafeArea(
         top: false,
         child: ResponsiveContainer(
-          child: BlocConsumer<TestimonialsBloc, TestimonialsState>(
-            listener: (context, state) {
-              if (state.receivedStatus == TestimonialsStatus.failure &&
-                  state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<TestimonialsBloc, TestimonialsState>(
             builder: (context, state) {
               final status = state.receivedStatus;
               final list = state.filteredUserTestimonials;

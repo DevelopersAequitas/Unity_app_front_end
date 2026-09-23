@@ -8,6 +8,7 @@ import 'package:unity_app/core/constants/app_colors.dart';
 import 'package:unity_app/core/utils/paywall_gate_helper.dart';
 import 'package:unity_app/core/widgets/app_common_bar.dart';
 import 'package:unity_app/core/widgets/common_peer_selector_sheet.dart';
+import 'package:unity_app/core/widgets/offline_prompt_dialog.dart';
 import 'package:unity_app/features/p2p_meetings/domain/usecases/log_p2p_meeting_usecase.dart';
 import 'package:unity_app/features/p2p_meetings/domain/usecases/upload_activity_creative_usecase.dart';
 import 'package:unity_app/features/p2p_meetings/presentation/bloc/add_p2p_meeting_bloc.dart';
@@ -168,6 +169,10 @@ class _AddP2pMeetingViewState extends State<_AddP2pMeetingView> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to log and schedule P2P meetings.')) {
+      return;
+    }
+
+    if (!OfflineGuard.check(context, actionName: 'log P2P meetings')) {
       return;
     }
 

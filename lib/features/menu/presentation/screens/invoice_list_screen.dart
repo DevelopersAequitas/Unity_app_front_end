@@ -8,6 +8,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../widgets/invoice_item_card.dart';
 
 class InvoiceListScreen extends StatefulWidget {
@@ -153,20 +154,11 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     }
 
     if (_errorMessage != null && _invoices.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.lightTextTertiary),
-              const SizedBox(height: 8),
-              Text(_errorMessage!, style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary)),
-              const SizedBox(height: 12),
-              OutlinedButton(onPressed: _fetchInvoices, child: const Text('Try Again')),
-            ],
-          ),
-        ),
+      return AppErrorView(
+        title: 'Unable to Load Invoices',
+        message: _errorMessage,
+        onRetry: _fetchInvoices,
+        screenName: 'Invoices & Receipts',
       );
     }
 

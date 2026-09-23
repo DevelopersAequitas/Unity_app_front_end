@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_event.dart';
@@ -75,6 +78,9 @@ class _PaywallViewState extends State<_PaywallView>
   }
 
   Future<void> _handleCheckout(String checkoutUrl, String hostedPageId) async {
+    if (!OfflineGuard.check(context, actionName: 'open membership checkout')) {
+      return;
+    }
     _activeHostedPageId = hostedPageId;
     _isWaitingForPayment = true;
     try {
@@ -88,9 +94,7 @@ class _PaywallViewState extends State<_PaywallView>
       }
     } catch (e) {
       _isWaitingForPayment = false;
-      if (mounted) {
-        AppSnackBar.showError(context, 'Unable to open payment page: $e');
-      }
+      // Handled gracefully without popping intrusive errors
     }
   }
 
@@ -110,6 +114,20 @@ class _PaywallViewState extends State<_PaywallView>
         showNotifications: false,
         showProfile: false,
         onBackTap: () => Navigator.of(context).pop(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline_rounded, size: 21),
+            tooltip: 'Help & Support',
+            onPressed: () => Navigator.of(context).pushNamed(
+              AppRoutes.submitTicket,
+              arguments: {
+                'screen_name': 'Membership Paywall',
+                'department': 'Billing & Membership',
+                'subject': 'Help with Pro Membership',
+              },
+            ),
+          ),
+        ],
       ),
       body: BlocConsumer<MembershipBloc, MembershipState>(
         listener: (context, state) {
@@ -165,13 +183,9 @@ class _PaywallViewState extends State<_PaywallView>
             );
           } else if (state.status == MembershipStatus.verificationFailed) {
             _isWaitingForPayment = false;
-            if (state.errorMessage != null) {
-              AppSnackBar.showInfo(context, state.errorMessage!);
-            }
-          } else if (state.status == MembershipStatus.error &&
-              state.errorMessage != null) {
+          } else if (state.status == MembershipStatus.error) {
             _isWaitingForPayment = false;
-            AppSnackBar.showError(context, state.errorMessage!);
+            // Failure is handled in-screen via AppErrorView; no snackbar shown
           }
         },
         builder: (context, state) {
@@ -188,56 +202,68 @@ class _PaywallViewState extends State<_PaywallView>
                   : null) ??
               (plans.isNotEmpty ? plans.first : null);
 
+          if (isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColor.primaryBlue,
+              ),
+            );
+          }
+
+          if (state.status == MembershipStatus.error && plans.isEmpty) {
+            return AppErrorView(
+              screenName: 'Membership Paywall',
+              message: state.errorMessage,
+              onRetry: () => context.read<MembershipBloc>().add(
+                const MembershipPlansFetchRequested(),
+              ),
+            );
+          }
+
           return Container(
             color: isDark ? AppColor.darkBackground : AppColor.white,
             child: SafeArea(
               top: false,
               child: ResponsiveContainer(
-                child: isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColor.primaryBlue,
-                        ),
-                      )
-                    : Stack(
+                child: Stack(
+                  children: [
+                    SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const PaywallHeroSection(),
-                                const PaywallFeaturesGrid(),
-                                const SizedBox(height: 10),
-                                _buildPlansHeader(context),
-                                const SizedBox(height: 8),
-                                _buildPlansRow(
-                                  context,
-                                  plans,
-                                  selectedPlan,
-                                  userPlanCode,
-                                  isPro,
-                                ),
-                                const SizedBox(height: 6),
-                                _buildCheckoutCta(
-                                  context,
-                                  selectedPlan,
-                                  userPlanCode,
-                                  isPro,
-                                ),
-                                const SizedBox(height: 72),
-                                const PaywallFooterSkyline(),
-                              ],
-                            ),
+                          const PaywallHeroSection(),
+                          const PaywallFeaturesGrid(),
+                          const SizedBox(height: 10),
+                          _buildPlansHeader(context),
+                          const SizedBox(height: 8),
+                          _buildPlansRow(
+                            context,
+                            plans,
+                            selectedPlan,
+                            userPlanCode,
+                            isPro,
                           ),
-                          if (isCheckoutLoading || isVerifying)
-                            _buildVerifyingOverlay(
-                              context,
-                              isCheckoutLoading: isCheckoutLoading,
-                              isDark: isDark,
-                            ),
+                          const SizedBox(height: 6),
+                          _buildCheckoutCta(
+                            context,
+                            selectedPlan,
+                            userPlanCode,
+                            isPro,
+                          ),
+                          const SizedBox(height: 72),
+                          const PaywallFooterSkyline(),
                         ],
                       ),
+                    ),
+                    if (isCheckoutLoading || isVerifying)
+                      _buildVerifyingOverlay(
+                        context,
+                        isCheckoutLoading: isCheckoutLoading,
+                        isDark: isDark,
+                      ),
+                  ],
+                ),
               ),
             ),
           );
@@ -419,6 +445,9 @@ class _PaywallViewState extends State<_PaywallView>
         height: 46,
         child: ElevatedButton(
           onPressed: () {
+            if (!OfflineGuard.check(context, actionName: 'upgrade or renew membership')) {
+              return;
+            }
             context.read<MembershipBloc>().add(
               MembershipCheckoutInitiated(selectedPlan.planCode),
             );

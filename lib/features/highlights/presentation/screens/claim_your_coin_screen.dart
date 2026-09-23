@@ -5,6 +5,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/coins/coins_bloc.dart';
 import '../bloc/coins/coins_event.dart';
 import '../bloc/coins/coins_state.dart';
@@ -196,20 +197,11 @@ class _ClaimYourCoinScreenState extends State<ClaimYourCoinScreen>
   }
 
   Widget _buildErrorView({required String message, required VoidCallback onRetry}) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.error),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center, style: AppTypography.bodyMedium),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Coins Data',
+      message: message,
+      onRetry: onRetry,
+      screenName: 'Claim Your Coins',
     );
   }
 }

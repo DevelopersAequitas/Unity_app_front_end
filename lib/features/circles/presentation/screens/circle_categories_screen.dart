@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/events/peers_event_bus.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
+
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/entities/circle_closed_category_entity.dart';
 import '../../domain/entities/circle_entity.dart';
@@ -237,10 +239,6 @@ class _CircleCategoriesScreenState extends State<CircleCategoriesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final secondaryText =
-        isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary;
-
     final query = _searchController.text.trim();
     final openFiltered = _getFilteredOpen(query);
     final closedFiltered = _getFilteredClosed(query);
@@ -294,26 +292,11 @@ class _CircleCategoriesScreenState extends State<CircleCategoriesScreen>
                         ),
                       )
                     : _errorMessage != null
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _errorMessage!,
-                                    style: TextStyle(
-                                        fontSize: 13, color: secondaryText),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextButton(
-                                    onPressed: _loadCategories,
-                                    child: const Text('Try Again'),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        ? AppErrorView(
+                            title: 'Unable to Load Categories',
+                            message: _errorMessage,
+                            onRetry: _loadCategories,
+                            screenName: '${widget.circle.name} Categories',
                           )
                         : TabBarView(
                             controller: _tabController,

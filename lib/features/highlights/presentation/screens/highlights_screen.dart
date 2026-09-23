@@ -6,6 +6,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/highlights_bloc.dart';
 import '../bloc/highlights_event.dart';
 import '../bloc/highlights_state.dart';
@@ -211,42 +212,11 @@ class _HighlightsScreenState extends State<HighlightsScreen> {
   }
 
   Widget _buildErrorState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              size: 40,
-              color: AppColor.error,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Failed to load highlights',
-              style: AppTypography.titleMedium.copyWith(
-                color: AppColor.error,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => context
-                  .read<HighlightsBloc>()
-                  .add(const HighlightsFetchRequested()),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Highlights',
+      onRetry: () =>
+          context.read<HighlightsBloc>().add(const HighlightsFetchRequested()),
+      screenName: 'Highlights',
     );
   }
 }

@@ -5,6 +5,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/my_network/my_network_bloc.dart';
 import '../bloc/my_network/my_network_event.dart';
 import '../bloc/my_network/my_network_state.dart';
@@ -113,23 +114,12 @@ class MyNetworkScreen extends StatelessWidget {
   }
 
   Widget _buildErrorState(BuildContext context, String? error) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.error),
-            const SizedBox(height: 12),
-            Text(error ?? 'Failed to load network data', style: AppTypography.bodyMedium),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => context.read<MyNetworkBloc>().add(const FetchMyNetworkDataEvent()),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Network Data',
+      message: error,
+      onRetry: () =>
+          context.read<MyNetworkBloc>().add(const FetchMyNetworkDataEvent()),
+      screenName: 'My Network',
     );
   }
 }

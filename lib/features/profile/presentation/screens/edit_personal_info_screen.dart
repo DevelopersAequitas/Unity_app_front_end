@@ -7,6 +7,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/city_picker_sheet.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_edit_bloc.dart';
 import '../bloc/profile_edit_event.dart';
@@ -156,6 +157,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   }
 
   void _saveChanges() {
+    if (!OfflineGuard.check(context, actionName: 'save profile changes')) return;
     if (!_formKey.currentState!.validate()) return;
 
     final payload = <String, dynamic>{

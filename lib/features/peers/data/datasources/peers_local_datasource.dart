@@ -15,6 +15,10 @@ abstract class PeersLocalDataSource {
   Future<List<PeerRequestModel>> getCachedSentConnectionRequests();
   Future<void> cacheMatches(List<Map<String, dynamic>> list);
   Future<List<MatchPeerModel>> getCachedMatches();
+  Future<void> cacheNearbyPeers(List<Map<String, dynamic>> list);
+  Future<List<PeerModel>> getCachedNearbyPeers();
+  Future<void> cacheBookmarkedPeers(List<Map<String, dynamic>> list);
+  Future<List<PeerModel>> getCachedBookmarkedPeers();
 }
 
 class PeersLocalDataSourceImpl implements PeersLocalDataSource {
@@ -136,7 +140,6 @@ class PeersLocalDataSourceImpl implements PeersLocalDataSource {
               matchReasons: [
                 if (p.category != null) 'Shared Domain Focus: ${p.category}',
                 if (p.city != null) 'Based in ${p.city}',
-                'High Collaborative Compatibility',
               ],
             ),
           )
@@ -144,4 +147,45 @@ class PeersLocalDataSourceImpl implements PeersLocalDataSource {
     }
     return [];
   }
+
+  @override
+  Future<void> cacheNearbyPeers(List<Map<String, dynamic>> list) async {
+    await cacheStore.set(AppCacheBoxes.peersBox, AppCacheKeys.nearbyPeers, list);
+  }
+
+  @override
+  Future<List<PeerModel>> getCachedNearbyPeers() async {
+    final cached = await cacheStore.get<List<dynamic>>(
+      AppCacheBoxes.peersBox,
+      AppCacheKeys.nearbyPeers,
+    );
+    if (cached != null) {
+      return cached
+          .whereType<Map<String, dynamic>>()
+          .map((e) => PeerModel.fromJson(e))
+          .toList();
+    }
+    return [];
+  }
+
+  @override
+  Future<void> cacheBookmarkedPeers(List<Map<String, dynamic>> list) async {
+    await cacheStore.set(AppCacheBoxes.peersBox, AppCacheKeys.bookmarkedPeers, list);
+  }
+
+  @override
+  Future<List<PeerModel>> getCachedBookmarkedPeers() async {
+    final cached = await cacheStore.get<List<dynamic>>(
+      AppCacheBoxes.peersBox,
+      AppCacheKeys.bookmarkedPeers,
+    );
+    if (cached != null) {
+      return cached
+          .whereType<Map<String, dynamic>>()
+          .map((e) => PeerModel.fromJson(e))
+          .toList();
+    }
+    return [];
+  }
 }
+

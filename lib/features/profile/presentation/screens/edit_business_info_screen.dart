@@ -6,6 +6,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/location_picker_sheet.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_edit_bloc.dart';
 import '../bloc/profile_edit_event.dart';
@@ -159,6 +160,7 @@ class _EditBusinessInfoScreenState extends State<EditBusinessInfoScreen> {
   }
 
   void _saveChanges() {
+    if (!OfflineGuard.check(context, actionName: 'save business information')) return;
     if (!_formKey.currentState!.validate()) return;
 
     final subCategoryValue = _isOtherCategory

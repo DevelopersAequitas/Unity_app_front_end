@@ -4,7 +4,6 @@ import 'package:unity_app/features/business_deal/domain/usecases/get_business_de
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/usecases/get_given_business_deals_usecase.dart';
 import '../../domain/usecases/get_received_business_deals_usecase.dart';
@@ -176,13 +175,7 @@ class _PeerBusinessDealsViewState extends State<_PeerBusinessDealsView> {
       body: SafeArea(
         top: false,
         child: ResponsiveContainer(
-          child: BlocConsumer<BusinessDealsBloc, BusinessDealsState>(
-            listener: (context, state) {
-              if (state.receivedStatus == BusinessDealsStatus.failure &&
-                  state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<BusinessDealsBloc, BusinessDealsState>(
             builder: (context, state) {
               final status = state.receivedStatus;
               final list = state.filteredUserDeals;

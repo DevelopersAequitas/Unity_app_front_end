@@ -6,6 +6,7 @@ import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/requirements_bloc.dart';
 import '../bloc/requirements_event.dart';
 import '../bloc/requirements_state.dart';
@@ -73,9 +74,6 @@ class _OpenAsksScreenState extends State<OpenAsksScreen> {
         if (state.status == RequirementsStatus.success &&
             state.successMessage != null) {
           AppSnackBar.showSuccess(context, state.successMessage!);
-        } else if (state.status == RequirementsStatus.error &&
-            state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
         }
       },
       child: Scaffold(
@@ -175,6 +173,16 @@ class _OpenAsksScreenState extends State<OpenAsksScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (state.status == RequirementsStatus.error &&
+            state.openRequirements.isEmpty) {
+          return AppErrorView(
+            title: 'Unable to Load Open Asks',
+            message: state.errorMessage,
+            onRetry: _onRefreshOpen,
+            screenName: 'Open Asks',
+          );
+        }
+
         var list = state.openRequirements;
 
         if (_selectedStatusFilter == 'open') {
@@ -268,6 +276,16 @@ class _OpenAsksScreenState extends State<OpenAsksScreen> {
         if (state.status == RequirementsStatus.loading &&
             state.myRequirements.isEmpty) {
           return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state.status == RequirementsStatus.error &&
+            state.myRequirements.isEmpty) {
+          return AppErrorView(
+            title: 'Unable to Load My Asks',
+            message: state.errorMessage,
+            onRetry: _onRefreshMy,
+            screenName: 'My Asks',
+          );
         }
 
         var list = state.myRequirements;

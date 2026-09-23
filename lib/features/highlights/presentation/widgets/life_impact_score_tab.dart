@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/life_impact/life_impact_bloc.dart';
 import '../bloc/life_impact/life_impact_event.dart';
 import '../bloc/life_impact/life_impact_state.dart';
@@ -87,28 +88,12 @@ class LifeImpactScoreTab extends StatelessWidget {
   }
 
   Widget _buildError(BuildContext context, String? message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 36, color: AppColor.error),
-            const SizedBox(height: 10),
-            Text(
-              message ?? 'Failed to load impact history',
-              style: AppTypography.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 14),
-            TextButton(
-              onPressed: () =>
-                  context.read<LifeImpactBloc>().add(const FetchLifeImpactHistoryEvent()),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Impact History',
+      message: message,
+      onRetry: () => context.read<LifeImpactBloc>().add(const FetchLifeImpactHistoryEvent()),
+      screenName: 'Life Impact',
     );
   }
 }
+

@@ -96,6 +96,8 @@ import '../../features/profile/presentation/screens/edit_media_portfolio_screen.
 import '../../features/profile/presentation/screens/edit_professional_journey_screen.dart';
 import '../../features/profile/presentation/screens/edit_circle_membership_screen.dart';
 import '../../features/profile/presentation/screens/edit_additional_info_screen.dart';
+import '../../features/menu/presentation/screens/submit_ticket_screen.dart';
+import '../../features/menu/presentation/screens/ticket_history_screen.dart';
 
 // Chat Screens
 import '../../features/chat/presentation/screens/chat_hub_screen.dart';
@@ -219,6 +221,9 @@ class AppRoutes {
   static const String brandPartnerDetails = '/brand-partner-details';
   static const String circulars = '/circulars';
   static const String supportTicketDetails = '/support-ticket-details';
+  static const String helpSupport = '/help-support';
+  static const String submitTicket = '/submit-ticket';
+  static const String ticketHistory = '/ticket-history';
 }
 
 class AppRouter {
@@ -355,7 +360,21 @@ class AppRouter {
           settings: settings,
         );
       case AppRoutes.circleDetails:
-        final circle = settings.arguments as CircleEntity?;
+        CircleEntity? circle;
+        if (settings.arguments is CircleEntity) {
+          circle = settings.arguments as CircleEntity;
+        } else if (settings.arguments is String) {
+          circle = CircleEntity(
+            id: settings.arguments as String,
+            name: 'Circle',
+          );
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          circle = CircleEntity(
+            id: (map['circle_id'] ?? map['id'] ?? '').toString(),
+            name: (map['circle_name'] ?? map['name'] ?? 'Circle').toString(),
+          );
+        }
         return MaterialPageRoute(
           builder: (_) => CircleDetailScreen(circle: circle),
           settings: settings,
@@ -388,7 +407,7 @@ class AppRouter {
           );
         }
         return MaterialPageRoute(
-          builder: (_) => const WelcomeScreen(),
+          builder: (_) => const CirclesScreen(),
           settings: settings,
         );
       case AppRoutes.circleSubcategories:
@@ -493,9 +512,20 @@ class AppRouter {
           settings: settings,
         );
       case AppRoutes.p2pMeetings:
-        final initialTab = settings.arguments is int ? settings.arguments as int : 0;
+        int initialTab = 0;
+        int initialSubTab = 0;
+        if (settings.arguments is int) {
+          initialTab = settings.arguments as int;
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          initialTab = (map['initialTabIndex'] ?? map['tabIndex'] ?? map['tab'] ?? 0) as int;
+          initialSubTab = (map['initialSubTabIndex'] ?? map['subTabIndex'] ?? map['subTab'] ?? 0) as int;
+        }
         return MaterialPageRoute(
-          builder: (_) => P2pMeetingsScreen(initialTabIndex: initialTab),
+          builder: (_) => P2pMeetingsScreen(
+            initialTabIndex: initialTab,
+            initialSubTabIndex: initialSubTab,
+          ),
           settings: settings,
         );
       case AppRoutes.addP2pMeeting:
@@ -631,10 +661,28 @@ class AppRouter {
           settings: settings,
         );
       case AppRoutes.eventDetail:
-        final event = settings.arguments as EventEntity?;
-        if (event != null) {
+        EventEntity? event;
+        if (settings.arguments is EventEntity) {
+          event = settings.arguments as EventEntity;
+        } else if (settings.arguments is String) {
+          event = EventEntity(
+            eventId: settings.arguments as String,
+            occurrenceId: '',
+            title: '',
+            startAt: DateTime.now(),
+          );
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          event = EventEntity(
+            eventId: (map['event_id'] ?? map['id'] ?? '').toString(),
+            occurrenceId: (map['occurrence_id'] ?? '').toString(),
+            title: (map['event_title'] ?? map['title'] ?? '').toString(),
+            startAt: DateTime.now(),
+          );
+        }
+        if (event != null && event.eventId.isNotEmpty) {
           return MaterialPageRoute(
-            builder: (_) => EventDetailScreen(event: event),
+            builder: (_) => EventDetailScreen(event: event!),
             settings: settings,
           );
         }
@@ -916,14 +964,69 @@ class AppRouter {
             ),
             settings: settings,
           );
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          final partner = BrandPartnerEntity(
+            id: (map['partner_id'] ?? map['id'] ?? '').toString(),
+            name: (map['partner_name'] ?? map['name'] ?? 'Brand Partner').toString(),
+            logoUrl: (map['logo_url'] ?? map['logo'] ?? '').toString(),
+          );
+          return MaterialPageRoute(
+            builder: (_) => BrandPartnerDetailsScreen(partner: partner),
+            settings: settings,
+          );
+        } else if (settings.arguments is String) {
+          final partner = BrandPartnerEntity(
+            id: settings.arguments as String,
+            name: 'Brand Partner',
+          );
+          return MaterialPageRoute(
+            builder: (_) => BrandPartnerDetailsScreen(partner: partner),
+            settings: settings,
+          );
         }
         return MaterialPageRoute(
           builder: (_) => const HomeScreen(),
           settings: settings,
         );
+      case AppRoutes.helpSupport:
+      case AppRoutes.submitTicket:
+        String? subject;
+        String? description;
+        String? department;
+        String? priority;
+        dynamic attachment;
+        String? screenName;
+
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          subject = args['subject']?.toString();
+          description = args['description']?.toString();
+          department = args['department']?.toString();
+          priority = args['priority']?.toString();
+          attachment = args['attachment'];
+          screenName = args['screen_name']?.toString();
+        }
+
+        return MaterialPageRoute(
+          builder: (_) => SubmitTicketScreen(
+            initialSubject: subject,
+            initialDescription: description,
+            initialDepartment: department,
+            initialPriority: priority,
+            initialAttachment: attachment,
+            screenName: screenName,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.ticketHistory:
+        return MaterialPageRoute(
+          builder: (_) => const TicketHistoryScreen(),
+          settings: settings,
+        );
       default:
         return MaterialPageRoute(
-          builder: (_) => const WelcomeScreen(),
+          builder: (_) => const HomeScreen(),
           settings: settings,
         );
     }

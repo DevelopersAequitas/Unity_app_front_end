@@ -3,6 +3,7 @@ import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/utils/paywall_gate_helper.dart';
 import 'package:unity_app/core/widgets/app_snack_bar.dart';
+import 'package:unity_app/core/widgets/offline_prompt_dialog.dart';
 import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 import 'package:unity_app/features/profile/domain/entities/profile_entity.dart';
 
@@ -52,6 +53,7 @@ class PeerProfileActions extends StatelessWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onTap: () {
+                      if (!OfflineGuard.check(context, actionName: isPending ? 'cancel requests' : (isConnected ? 'chat with peers' : 'send connection requests'))) return;
                       if (profile.isBlocked) {
                         AppSnackBar.showError(
                           context,
@@ -147,6 +149,7 @@ class PeerProfileActions extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(6.8),
                       onTap: () {
+                        if (!OfflineGuard.check(context, actionName: 'follow peers')) return;
                         if (profile.isBlocked) {
                           AppSnackBar.showError(
                             context,
@@ -214,6 +217,7 @@ class PeerProfileActions extends StatelessWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onTap: () {
+                      if (!OfflineGuard.check(context, actionName: 'schedule P2P meetings')) return;
                       if (profile.isBlocked) {
                         AppSnackBar.showError(
                           context,

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/entities/testimonial_entity.dart';
 import '../../domain/usecases/get_given_testimonials_usecase.dart';
@@ -79,6 +79,9 @@ class _TestimonialsViewState extends State<_TestimonialsView> {
   }
 
   Future<void> _openAddTestimonial() async {
+    if (!OfflineGuard.check(context, actionName: 'give testimonials')) {
+      return;
+    }
     final result = await Navigator.pushNamed(context, AppRoutes.addTestimonial);
     if (!mounted || result == null) return;
 
@@ -137,12 +140,7 @@ class _TestimonialsViewState extends State<_TestimonialsView> {
       body: SafeArea(
         top: false,
         child: ResponsiveContainer(
-          child: BlocConsumer<TestimonialsBloc, TestimonialsState>(
-            listener: (context, state) {
-              if (state.currentStatus == TestimonialsStatus.failure && state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<TestimonialsBloc, TestimonialsState>(
             builder: (context, state) {
               final activeTab = state.activeTab;
 

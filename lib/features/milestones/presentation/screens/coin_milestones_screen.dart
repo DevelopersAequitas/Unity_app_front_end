@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../domain/entities/milestone_entity.dart';
 import '../bloc/milestone_bloc.dart';
@@ -116,37 +117,18 @@ class _CoinMilestonesViewState extends State<_CoinMilestonesView>
           }
 
           if (state.status == MilestoneStatus.failure && state.latestMilestone == null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 48, color: AppColor.error.withValues(alpha: 0.7)),
-                    const SizedBox(height: 12),
-                    Text(
-                      state.errorMessage ?? 'Failed to load badges',
-                      style: AppTypography.bodyMedium.copyWith(color: AppColor.lightTextSecondary),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_resolvedUserId != null) {
-                          context.read<MilestoneBloc>().add(FetchMilestonesEvent(userId: _resolvedUserId!));
-                        } else {
-                          _initUserId();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.primaryBlue,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('Retry', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                    ),
-                  ],
-                ),
-              ),
+            return AppErrorView(
+              title: 'Unable to Load Badges',
+              message: state.errorMessage,
+              onRetry: () {
+                if (_resolvedUserId != null) {
+                  context.read<MilestoneBloc>().add(
+                      FetchMilestonesEvent(userId: _resolvedUserId!));
+                } else {
+                  _initUserId();
+                }
+              },
+              screenName: 'Milestones & Badges',
             );
           }
 

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/usecases/get_coins_leaderboard_usecase.dart';
 import '../../domain/usecases/get_impacts_leaderboard_usecase.dart';
@@ -49,12 +48,7 @@ class _LeaderboardView extends StatelessWidget {
     final bgColor = isDark ? AppColor.darkBackground : AppColor.lightBackground;
     final isImpact = type == LeaderboardType.impact;
 
-    return BlocConsumer<LeaderboardBloc, LeaderboardState>(
-      listener: (context, state) {
-        if (state.isFailure && state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
-        }
-      },
+    return BlocBuilder<LeaderboardBloc, LeaderboardState>(
       builder: (context, state) {
         final leaderboard = state.leaderboard;
         final entries = leaderboard.entries;

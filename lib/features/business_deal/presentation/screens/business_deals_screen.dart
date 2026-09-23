@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/entities/business_deal_entity.dart';
 import '../../domain/usecases/get_business_deals_leaderboard_usecase.dart';
@@ -82,6 +82,9 @@ class _BusinessDealsViewState extends State<_BusinessDealsView> {
   }
 
   Future<void> _openAddBusinessDeal() async {
+    if (!OfflineGuard.check(context, actionName: 'record business deals')) {
+      return;
+    }
     final result = await Navigator.pushNamed(context, AppRoutes.addBusinessDeal);
     if (!mounted || result == null) return;
 
@@ -143,13 +146,7 @@ class _BusinessDealsViewState extends State<_BusinessDealsView> {
       body: SafeArea(
         top: false,
         child: ResponsiveContainer(
-          child: BlocConsumer<BusinessDealsBloc, BusinessDealsState>(
-            listener: (context, state) {
-              if (state.currentStatus == BusinessDealsStatus.failure &&
-                  state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<BusinessDealsBloc, BusinessDealsState>(
             builder: (context, state) {
               final activeTab = state.activeTab;
 

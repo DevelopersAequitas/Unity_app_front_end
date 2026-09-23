@@ -21,4 +21,8 @@ class GetNearbyPeersUseCase {
       longitude: longitude,
     );
   }
+
+  Future<List<GeoPeerEntity>> getCached() {
+    return repository.getCachedNearbyPeers();
+  }
 }

@@ -2,6 +2,7 @@ class AppCacheBoxes {
   AppCacheBoxes._();
 
   static const String authBox = 'peers_auth_box';
+  static const String profileBox = 'peers_profile_box';
   static const String sessionBox = 'peers_session_box';
   static const String appCacheBox = 'peers_offline_data_box';
   static const String homeFeedBox = 'peers_home_feed_box';
@@ -10,6 +11,7 @@ class AppCacheBoxes {
   static const String circlesBox = 'peers_circles_box';
   static const String leaderboardBox = 'peers_leaderboard_box';
   static const String chatBox = 'peers_chat_box';
+  static const String shortsBox = 'peers_shorts_box';
 }
 
 class AppCacheKeys {
@@ -25,12 +27,19 @@ class AppCacheKeys {
   static const String timelineFeed = 'cached_timeline_feed';
   static const String brandPartners = 'cached_brand_partners';
 
+  // Profile Caching
+  static const String userProfile = 'cached_user_profile';
+  static const String userPosts = 'cached_user_posts';
+  static const String savedPosts = 'cached_saved_posts';
+
   // Peers Caching
   static const String allPeers = 'cached_all_peers';
   static const String myConnections = 'cached_my_connections';
   static const String connectionRequests = 'cached_connection_requests';
   static const String sentConnectionRequests = 'cached_sent_connection_requests';
   static const String matchPeers = 'cached_match_peers';
+  static const String nearbyPeers = 'cached_nearby_peers';
+  static const String bookmarkedPeers = 'cached_bookmarked_peers';
 
   // Notifications Caching
   static const String notifications = 'cached_notifications';
@@ -38,6 +47,9 @@ class AppCacheKeys {
   // Circles Caching
   static const String myCircles = 'cached_my_circles';
   static const String circleCategories = 'cached_circle_categories';
+
+  // Shorts Caching
+  static const String shortsVideos = 'cached_shorts_videos';
 
   // Leaderboard Caching
   static const String coinsLeaderboard = 'cached_coins_leaderboard';

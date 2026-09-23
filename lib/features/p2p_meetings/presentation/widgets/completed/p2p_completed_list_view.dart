@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unity_app/core/theme/app_color.dart';
+import 'package:unity_app/core/widgets/app_error_view.dart';
 import 'package:unity_app/features/p2p_meetings/domain/entities/p2p_meeting_entity.dart';
 import 'package:unity_app/features/p2p_meetings/presentation/widgets/common/p2p_empty_state.dart';
 import 'package:unity_app/features/p2p_meetings/presentation/widgets/completed/p2p_completed_card.dart';
@@ -30,28 +31,11 @@ class P2pCompletedListView extends StatelessWidget {
     }
 
     if (errorMessage != null && items.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                errorMessage!,
-                style: const TextStyle(
-                  color: AppColor.error,
-                  fontSize: 13,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: onRefresh,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+      return AppErrorView(
+        title: 'Unable to Load Meetings',
+        message: errorMessage,
+        onRetry: onRefresh,
+        screenName: isInitiatedByMe ? 'Initiated 1-to-1 Meetings' : 'Received 1-to-1 Meetings',
       );
     }
 

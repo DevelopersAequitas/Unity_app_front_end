@@ -3,6 +3,7 @@ import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/utils/paywall_gate_helper.dart';
 import 'package:unity_app/core/widgets/app_avatar.dart';
+import 'package:unity_app/core/widgets/offline_prompt_dialog.dart';
 import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 
 class PeerCard extends StatelessWidget {
@@ -56,7 +57,12 @@ class PeerCard extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            if (onTap != null) {
+              if (!OfflineGuard.check(context, actionName: 'view this peer profile')) return;
+              onTap!();
+            }
+          },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding:
@@ -355,6 +361,7 @@ class PeerCard extends StatelessWidget {
                 onTap: hasScheduleP2P
                     ? (onScheduleP2P ??
                         () {
+                          if (!OfflineGuard.check(context, actionName: 'schedule P2P meetings')) return;
                           Navigator.pushNamed(
                             context,
                             AppRoutes.addP2pMeeting,
@@ -363,6 +370,7 @@ class PeerCard extends StatelessWidget {
                         })
                     : ((!isPending && !isConnected)
                         ? () {
+                            if (!OfflineGuard.check(context, actionName: 'send connection requests')) return;
                             if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to send connection requests.')) {
                               return;
                             }
@@ -447,7 +455,12 @@ class PeerCard extends StatelessWidget {
               child: Material(
                 color: AppColor.transparent,
                 child: InkWell(
-                  onTap: onFollow,
+                  onTap: () {
+                    if (onFollow != null) {
+                      if (!OfflineGuard.check(context, actionName: 'follow peers')) return;
+                      onFollow!();
+                    }
+                  },
                   borderRadius: BorderRadius.circular(6),
                   child: Center(
                     child: Row(
@@ -497,6 +510,7 @@ class PeerCard extends StatelessWidget {
               color: AppColor.transparent,
               child: InkWell(
                 onTap: () {
+                  if (!OfflineGuard.check(context, actionName: 'message peers')) return;
                   if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to message peers.')) {
                     return;
                   }
@@ -559,7 +573,10 @@ class PeerCard extends StatelessWidget {
           child: Material(
             color: AppColor.transparent,
             child: InkWell(
-              onTap: onBookmark,
+              onTap: () {
+                if (!OfflineGuard.check(context, actionName: 'bookmark peers')) return;
+                onBookmark();
+              },
               borderRadius: BorderRadius.circular(7),
               child: Icon(
                 peer.isBookmarked

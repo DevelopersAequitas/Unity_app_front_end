@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/coins/coins_bloc.dart';
 import '../bloc/coins/coins_event.dart';
 import '../bloc/coins/coins_state.dart';
@@ -186,23 +187,12 @@ class CoinsScreen extends StatelessWidget {
   }
 
   Widget _buildError(BuildContext context, String? message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.error),
-            const SizedBox(height: 12),
-            Text(message ?? 'Failed to load coin history', style: AppTypography.bodyMedium),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => context.read<CoinsBloc>().add(const FetchCoinsWalletEvent()),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Coin History',
+      message: message,
+      onRetry: () =>
+          context.read<CoinsBloc>().add(const FetchCoinsWalletEvent()),
+      screenName: 'Coins & Badges',
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/p2p_meetings_bloc.dart';
 import '../bloc/p2p_meetings_event.dart';
 import '../bloc/p2p_meetings_state.dart';
@@ -68,25 +69,13 @@ class P2pMeetingLeaderboardView extends StatelessWidget {
   }
 
   Widget _buildError(BuildContext context, String? message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.error),
-            const SizedBox(height: 12),
-            Text(message ?? 'Failed to load leaderboard', style: AppTypography.bodyMedium),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => context
-                  .read<P2pMeetingsBloc>()
-                  .add(const P2pMeetingsFetchLeaderboardRequested(forceRefresh: true)),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Leaderboard',
+      message: message,
+      onRetry: () => context.read<P2pMeetingsBloc>().add(
+            const P2pMeetingsFetchLeaderboardRequested(forceRefresh: true),
+          ),
+      screenName: '1-to-1 Meetings Leaderboard',
     );
   }
 }

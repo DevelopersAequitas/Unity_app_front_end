@@ -89,12 +89,31 @@ class _MentionTextViewState extends State<MentionTextView> {
   List<InlineSpan> _buildSpans(String text, TextStyle baseStyle) {
     final List<InlineSpan> spans = [];
 
+    // Sort mentions by name length descending so multi-word names take priority
+    final sortedMentions = List<TimelineMentionEntity>.from(widget.mentions)
+      ..sort((a, b) => b.name.length.compareTo(a.name.length));
+
+    final List<String> knownMentionPatterns = [];
+    for (final m in sortedMentions) {
+      if (m.name.trim().isNotEmpty) {
+        knownMentionPatterns.add('@${RegExp.escape(m.name.trim())}');
+      }
+      if (m.username != null && m.username!.trim().isNotEmpty) {
+        knownMentionPatterns.add('@${RegExp.escape(m.username!.trim())}');
+      }
+    }
+
+    final knownMentionsSubRegex = knownMentionPatterns.isNotEmpty ? '|(${knownMentionPatterns.join('|')})' : '';
+
     // Comprehensive regex that matches:
     // 1) Markdown mention: @[Display Name](peerId) or @[Display Name](id:123)
     // 2) Tagged mention: @{peerId:Display Name} or @[peerId:Display Name]
-    // 3) Plain mention: @[Word] or @(\w+)
+    // 3) Known mentions from payload: @Exact Full Name
+    // 4) Plain mention fallback: @Word or @Word Word
     final pattern = RegExp(
-      r'@\[([^\]]+)\]\(([^)]+)\)|@\{([^:]+):([^}]+)\}|@\[([^:]+):([^\]]+)\]|@([a-zA-Z0-9_\.\-]+(?:\s+[a-zA-Z0-9_\.\-]+)?)',
+      r'@\[([^\]]+)\]\(([^)]+)\)|@\{([^:]+):([^}]+)\}|@\[([^:]+):([^\]]+)\]' +
+          knownMentionsSubRegex +
+          r'|@([a-zA-Z0-9_\.\-]+(?:\s+[a-zA-Z0-9_\.\-]+)?)',
       multiLine: true,
     );
 
@@ -123,16 +142,21 @@ class _MentionTextViewState extends State<MentionTextView> {
         // @[peerId:Display Name]
         peerId = match.group(5)!.trim();
         mentionName = match.group(6)!;
-      } else if (match.group(7) != null) {
-        // Plain mention: @Name
-        mentionName = match.group(7)!;
+      } else {
+        // Known mention or plain mention
+        final fullMatch = match.group(0) ?? '';
+        final cleanName = fullMatch.startsWith('@') ? fullMatch.substring(1).trim() : fullMatch.trim();
+
         // Search in mentions list
         final matchedMention = widget.mentions.where((m) =>
-            m.name.toLowerCase() == mentionName.toLowerCase() ||
-            m.username?.toLowerCase() == mentionName.toLowerCase()).firstOrNull;
+            m.name.trim().toLowerCase() == cleanName.toLowerCase() ||
+            m.username?.trim().toLowerCase() == cleanName.toLowerCase()).firstOrNull;
+
         if (matchedMention != null) {
           peerId = matchedMention.id;
           mentionName = matchedMention.name;
+        } else {
+          mentionName = cleanName;
         }
       }
 

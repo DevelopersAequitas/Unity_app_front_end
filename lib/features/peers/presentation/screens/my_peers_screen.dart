@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/peers_bloc.dart';
 import '../bloc/peers_event.dart';
 import '../bloc/peers_state.dart';
@@ -195,14 +196,7 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
   }
 
   Widget _buildAllPeersTab() {
-    return BlocConsumer<PeersBloc, PeersState>(
-      listenWhen: (prev, curr) =>
-          curr.errorMessage != null && prev.errorMessage != curr.errorMessage,
-      listener: (context, state) {
-        if (state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
-        }
-      },
+    return BlocBuilder<PeersBloc, PeersState>(
       builder: (context, state) {
         return RefreshIndicator(
           color: AppColor.primaryBlue,
@@ -233,6 +227,18 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
               if (state.status == PeersStatus.loading && state.peers.isEmpty)
                 const SliverToBoxAdapter(
                   child: PeersSkeletonLoader(),
+                )
+              else if (state.status == PeersStatus.failure && state.peers.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: AppErrorView(
+                    title: 'Unable to Load Peers',
+                    message: state.errorMessage,
+                    onRetry: () => context
+                        .read<PeersBloc>()
+                        .add(const PeersRefreshRequested()),
+                    screenName: 'Peers Directory',
+                  ),
                 )
               else if (state.peers.isEmpty)
                 SliverToBoxAdapter(

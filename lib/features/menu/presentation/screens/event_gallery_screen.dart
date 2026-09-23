@@ -3,6 +3,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../widgets/gallery_album_card.dart';
 import 'event_gallery_detail_screen.dart';
 
@@ -16,6 +17,7 @@ class EventGalleryScreen extends StatefulWidget {
 class _EventGalleryScreenState extends State<EventGalleryScreen> {
   final DioClient _dio = DioClient();
   bool _isLoading = true;
+  String? _errorMessage;
   List<Map<String, dynamic>> _events = [];
 
   @override
@@ -25,7 +27,10 @@ class _EventGalleryScreenState extends State<EventGalleryScreen> {
   }
 
   Future<void> _fetchGalleries() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       dynamic res;
       try {
@@ -54,9 +59,12 @@ class _EventGalleryScreenState extends State<EventGalleryScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
       }
     }
   }
@@ -116,6 +124,15 @@ class _EventGalleryScreenState extends State<EventGalleryScreen> {
             border: Border.all(color: AppColor.lightBorder),
           ),
         ),
+      );
+    }
+
+    if (_errorMessage != null && _events.isEmpty) {
+      return AppErrorView(
+        title: 'Unable to Load Galleries',
+        message: _errorMessage,
+        onRetry: _fetchGalleries,
+        screenName: 'Event Gallery',
       );
     }
 
@@ -181,3 +198,4 @@ class _EventGalleryScreenState extends State<EventGalleryScreen> {
     );
   }
 }
+

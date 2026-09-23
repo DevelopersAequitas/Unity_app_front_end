@@ -5,6 +5,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/events_bloc.dart';
 import '../bloc/events_event.dart';
 import '../bloc/events_state.dart';
@@ -188,6 +189,15 @@ class _EventsScreenState extends State<EventsScreen> {
                         padding: EdgeInsets.all(32),
                         child: CircularProgressIndicator(),
                       ),
+                    )
+                  else if (state.status == EventsStatus.failure && filtered.isEmpty)
+                    AppErrorView(
+                      title: 'Unable to Load Events',
+                      message: state.errorMessage,
+                      onRetry: () => context
+                          .read<EventsBloc>()
+                          .add(const FetchAllEventsEvent(isRefresh: true)),
+                      screenName: 'Events',
                     )
                   else if (filtered.isEmpty)
                     Container(

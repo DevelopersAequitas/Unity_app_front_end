@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/paywall_gate_helper.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../highlights/presentation/widgets/certification_info_banner.dart';
 import '../../../highlights/presentation/widgets/post_ask_attachment_picker.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
@@ -98,6 +99,10 @@ class _RequirementFormState extends State<RequirementForm> {
     }
 
     if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to post requirements.')) {
+      return;
+    }
+
+    if (!OfflineGuard.check(context, actionName: 'post requirements')) {
       return;
     }
 

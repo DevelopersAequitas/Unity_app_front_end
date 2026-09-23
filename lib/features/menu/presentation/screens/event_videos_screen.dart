@@ -4,6 +4,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../widgets/event_video_card.dart';
 
 class EventVideosScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class EventVideosScreen extends StatefulWidget {
 class _EventVideosScreenState extends State<EventVideosScreen> {
   final DioClient _dio = DioClient();
   bool _isLoading = true;
+  String? _errorMessage;
   List<Map<String, dynamic>> _videos = [];
 
   @override
@@ -25,7 +27,10 @@ class _EventVideosScreenState extends State<EventVideosScreen> {
   }
 
   Future<void> _fetchVideos() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       dynamic res;
       try {
@@ -54,9 +59,12 @@ class _EventVideosScreenState extends State<EventVideosScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
       }
     }
   }
@@ -110,6 +118,15 @@ class _EventVideosScreenState extends State<EventVideosScreen> {
             border: Border.all(color: AppColor.lightBorder),
           ),
         ),
+      );
+    }
+
+    if (_errorMessage != null && _videos.isEmpty) {
+      return AppErrorView(
+        title: 'Unable to Load Videos',
+        message: _errorMessage,
+        onRetry: _fetchVideos,
+        screenName: 'Event Videos',
       );
     }
 
@@ -168,3 +185,4 @@ class _EventVideosScreenState extends State<EventVideosScreen> {
     );
   }
 }
+

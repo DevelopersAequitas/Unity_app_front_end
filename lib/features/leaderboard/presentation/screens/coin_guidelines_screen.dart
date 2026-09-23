@@ -3,6 +3,7 @@ import '../../../../core/cache/hive_cache_store.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../data/datasources/leaderboard_local_datasource.dart';
 import '../../data/datasources/leaderboard_remote_datasource.dart';
@@ -136,47 +137,17 @@ class _CoinGuidelinesScreenState extends State<CoinGuidelinesScreen> {
     }
 
     if (_errorMessage != null && _guidelines == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: AppColor.primaryPink,
-                size: 36,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Failed to load coin rules',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColor.lightTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _isLoading = true;
-                    _errorMessage = null;
-                  });
-                  _loadGuidelines();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primaryBlue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+      return AppErrorView(
+        title: 'Unable to Load Coin Rules',
+        message: _errorMessage,
+        onRetry: () {
+          setState(() {
+            _isLoading = true;
+            _errorMessage = null;
+          });
+          _loadGuidelines(isRefresh: true);
+        },
+        screenName: 'Coin Rules',
       );
     }
 

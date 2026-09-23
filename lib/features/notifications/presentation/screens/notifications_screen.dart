@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../bloc/notifications_bloc.dart';
 import '../bloc/notifications_event.dart';
@@ -203,15 +203,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: AppGradientBackground(
         child: ResponsiveContainer(
-          child: BlocConsumer<NotificationsBloc, NotificationsState>(
-            listenWhen: (prev, curr) =>
-                curr.errorMessage != null &&
-                prev.errorMessage != curr.errorMessage,
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<NotificationsBloc, NotificationsState>(
             builder: (context, state) {
               return RefreshIndicator(
                 color: AppColor.primaryBlue,
@@ -244,6 +236,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     if (state.status == NotificationsStatus.loading &&
                         state.notifications.isEmpty)
                       const SliverToBoxAdapter(child: NotificationSkeleton())
+                    else if (state.status == NotificationsStatus.error &&
+                        state.notifications.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: AppErrorView(
+                          title: 'Unable to Load Notifications',
+                          message: state.errorMessage,
+                          onRetry: () => context.read<NotificationsBloc>().add(
+                                const NotificationsRefreshRequested(),
+                              ),
+                          screenName: 'Notifications',
+                        ),
+                      )
                     else if (state.filteredNotifications.isEmpty)
                       SliverToBoxAdapter(
                         child: NotificationEmptyView(

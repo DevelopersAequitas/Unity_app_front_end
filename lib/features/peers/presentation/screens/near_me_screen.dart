@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/near_me_bloc.dart';
 import '../bloc/near_me_event.dart';
 import '../bloc/near_me_state.dart';
@@ -93,14 +93,7 @@ class _NearMeScreenState extends State<NearMeScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: BlocConsumer<NearMeBloc, NearMeState>(
-        listenWhen: (prev, curr) =>
-            curr.errorMessage != null && prev.errorMessage != curr.errorMessage,
-        listener: (context, state) {
-          if (state.errorMessage != null) {
-            AppSnackBar.showError(context, state.errorMessage!);
-          }
-        },
+      body: BlocBuilder<NearMeBloc, NearMeState>(
         builder: (context, state) {
           final userCenter =
               (state.userLatitude != null &&
@@ -262,6 +255,16 @@ class _NearMeScreenState extends State<NearMeScreen> {
                       state.status == NearMeStatus.loading &&
                           state.nearbyPeers.isEmpty
                       ? const PeersSkeletonLoader()
+                      : state.status == NearMeStatus.failure &&
+                          state.nearbyPeers.isEmpty
+                      ? AppErrorView(
+                          title: 'Unable to Load Nearby Peers',
+                          message: state.errorMessage,
+                          onRetry: () => context.read<NearMeBloc>().add(
+                                const NearMeFetchRequested(refresh: true),
+                              ),
+                          screenName: 'Near Me',
+                        )
                       : state.nearbyPeers.isEmpty
                       ? _buildEmptyState()
                       : NotificationListener<ScrollNotification>(

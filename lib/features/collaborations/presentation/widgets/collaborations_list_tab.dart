@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../bloc/collaborations_bloc.dart';
 import '../bloc/collaborations_event.dart';
@@ -31,6 +32,15 @@ class CollaborationsListTab extends StatelessWidget {
       builder: (context, state) {
         if (state.status == CollaborationsStatus.loading && state.collaborations.isEmpty) {
           return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+        }
+
+        if (state.status == CollaborationsStatus.error && state.collaborations.isEmpty) {
+          return AppErrorView(
+            title: 'Unable to Load Collaborations',
+            message: state.errorMessage,
+            onRetry: () => context.read<CollaborationsBloc>().add(const LoadCollaborationsInitialData()),
+            screenName: 'Collaborations',
+          );
         }
 
         final profileState = context.read<ProfileBloc>().state;

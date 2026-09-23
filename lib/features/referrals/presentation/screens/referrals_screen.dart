@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/entities/referral_entity.dart';
 import '../../domain/usecases/get_given_referrals_usecase.dart';
@@ -86,6 +86,9 @@ class _ReferralsViewState extends State<_ReferralsView> {
   }
 
   Future<void> _openAddReferral() async {
+    if (!OfflineGuard.check(context, actionName: 'share referrals')) {
+      return;
+    }
     final result = await Navigator.pushNamed(context, AppRoutes.addReferral);
     if (!mounted || result == null) return;
 
@@ -193,12 +196,7 @@ class _ReferralsViewState extends State<_ReferralsView> {
       body: SafeArea(
         top: false,
         child: ResponsiveContainer(
-          child: BlocConsumer<ReferralsBloc, ReferralsState>(
-            listener: (context, state) {
-              if (state.currentStatus == ReferralsStatus.failure && state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<ReferralsBloc, ReferralsState>(
             builder: (context, state) {
               final activeTab = state.activeTab;
 

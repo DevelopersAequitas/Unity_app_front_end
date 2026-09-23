@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/video_cache_service.dart';
 import '../../../../core/theme/app_color.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../bloc/shorts_bloc.dart';
 import '../bloc/shorts_event.dart';
@@ -215,36 +216,12 @@ class _ShortsScreenState extends State<ShortsScreen>
   }
 
   Widget _buildErrorState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, color: Colors.white60, size: 48),
-          const SizedBox(height: 12),
-          const Text(
-            'Failed to load intro videos',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => context
-                .read<ShortsBloc>()
-                .add(const FetchIntroVideosEvent(isRefresh: true)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.primaryBlue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text(
-              'Retry',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Intro Videos',
+      onRetry: () => context
+          .read<ShortsBloc>()
+          .add(const FetchIntroVideosEvent(isRefresh: true)),
+      screenName: 'Intro Videos',
     );
   }
 }

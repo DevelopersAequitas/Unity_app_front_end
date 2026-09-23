@@ -6,6 +6,8 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/image_source_picker_sheet.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
+import '../../../../core/widgets/app_error_view.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
@@ -91,6 +93,7 @@ class _ProfileViewState extends State<_ProfileView> {
   }
 
   Future<void> _handleEditPhoto({required bool isCover}) async {
+    if (!OfflineGuard.check(context, actionName: 'update your profile photos')) return;
     final croppedFile = isCover
         ? await ImageSourcePickerSheet.showCoverPhotoCropper(context)
         : await ImageSourcePickerSheet.showProfilePhotoCropper(context);
@@ -112,6 +115,7 @@ class _ProfileViewState extends State<_ProfileView> {
   }
 
   void _navigateToEditProfile() {
+    if (!OfflineGuard.check(context, actionName: 'edit your profile')) return;
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const EditProfileOverviewScreen()),
     );
@@ -210,14 +214,7 @@ class _ProfileViewState extends State<_ProfileView> {
         ],
       ),
       body: AppGradientBackground(
-        child: BlocConsumer<ProfileBloc, ProfileState>(
-          listener: (context, state) {
-            if (state.status == ProfileStatus.failure && state.errorMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage!)),
-              );
-            }
-          },
+        child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             if (state.status == ProfileStatus.loading && state.profile == null) {
               return const ProfileSkeletonLoader();
@@ -334,27 +331,13 @@ class _ProfileViewState extends State<_ProfileView> {
   }
 
   Widget _buildErrorState(String? errorMessage) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.lightTextTertiary),
-            const SizedBox(height: 8),
-            Text(
-              errorMessage ?? 'Failed to load profile',
-              style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => context.read<ProfileBloc>().add(const ProfileFetchRequested(forceRefresh: true)),
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Profile',
+      message: errorMessage,
+      onRetry: () => context
+          .read<ProfileBloc>()
+          .add(const ProfileFetchRequested(forceRefresh: true)),
+      screenName: 'My Profile',
     );
   }
 }

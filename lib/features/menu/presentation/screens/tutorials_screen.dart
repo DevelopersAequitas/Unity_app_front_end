@@ -4,6 +4,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../widgets/tutorial_video_card.dart';
 
 class TutorialsScreen extends StatefulWidget {
@@ -124,32 +125,11 @@ class _TutorialsScreenState extends State<TutorialsScreen> {
     }
 
     if (_errorMessage != null && _tutorials.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                size: 40,
-                color: AppColor.lightTextTertiary,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColor.lightTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: _fetchTutorials,
-                child: const Text('Try Again'),
-              ),
-            ],
-          ),
-        ),
+      return AppErrorView(
+        title: 'Unable to Load Tutorials',
+        message: _errorMessage,
+        onRetry: _fetchTutorials,
+        screenName: 'Tutorials & Guides',
       );
     }
 

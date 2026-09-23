@@ -5,8 +5,8 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/peers_bloc.dart';
 import '../bloc/peers_event.dart';
@@ -58,12 +58,7 @@ class _BookmarkedPeersScreenState extends State<BookmarkedPeersScreen> {
       ),
       body: AppGradientBackground(
         child: ResponsiveContainer(
-          child: BlocConsumer<PeersBloc, PeersState>(
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<PeersBloc, PeersState>(
             builder: (context, state) {
               final bookmarks = state.bookmarkedPeers;
 
@@ -98,7 +93,19 @@ class _BookmarkedPeersScreenState extends State<BookmarkedPeersScreen> {
                           ),
                         ),
                       ),
-                    if (bookmarks.isEmpty)
+                    if (state.status == PeersStatus.failure && bookmarks.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: AppErrorView(
+                          title: 'Unable to Load Bookmarks',
+                          message: state.errorMessage,
+                          onRetry: () => context
+                              .read<PeersBloc>()
+                              .add(const BookmarkedPeersRefreshRequested()),
+                          screenName: 'Bookmarks',
+                        ),
+                      )
+                    else if (bookmarks.isEmpty)
                       const SliverFillRemaining(
                         hasScrollBody: false,
                         child: BookmarkedPeersEmptyView(),

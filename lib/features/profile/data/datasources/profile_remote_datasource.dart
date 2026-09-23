@@ -11,7 +11,9 @@ abstract class ProfileRemoteDataSource {
   Future<ProfileModel> getProfile();
   Future<ProfileModel> updateProfile(Map<String, dynamic> data);
   Future<List<TimelineItemEntity>> getUserPosts({int page = 1});
+  Future<List<Map<String, dynamic>>> getUserPostsRaw({int page = 1});
   Future<List<TimelineItemEntity>> getSavedPosts({int page = 1});
+  Future<List<Map<String, dynamic>>> getSavedPostsRaw({int page = 1});
   Future<String> uploadFile(File file, {void Function(double progress)? onProgress});
 }
 
@@ -73,7 +75,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<List<TimelineItemEntity>> getUserPosts({int page = 1}) async {
+  Future<List<Map<String, dynamic>>> getUserPostsRaw({int page = 1}) async {
     try {
       final response = await dioClient.dio.get(
         ApiEndpoints.profilePosts,
@@ -84,22 +86,24 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         if (data is Map<String, dynamic>) {
           final items = data['data']?['items'] ?? data['items'] ?? data['data'];
           if (items is List) {
-            return items
-                .whereType<Map<String, dynamic>>()
-                .map((json) => TimelineItemModel.fromJson(json).toEntity())
-                .toList();
+            return items.whereType<Map<String, dynamic>>().toList();
           }
         }
-        return [];
       }
       return [];
-    } on DioException catch (_) {
+    } catch (_) {
       return [];
     }
   }
 
   @override
-  Future<List<TimelineItemEntity>> getSavedPosts({int page = 1}) async {
+  Future<List<TimelineItemEntity>> getUserPosts({int page = 1}) async {
+    final raw = await getUserPostsRaw(page: page);
+    return raw.map((json) => TimelineItemModel.fromJson(json).toEntity()).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getSavedPostsRaw({int page = 1}) async {
     try {
       final response = await dioClient.dio.get(
         ApiEndpoints.savedPosts,
@@ -110,18 +114,20 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         if (data is Map<String, dynamic>) {
           final items = data['data']?['items'] ?? data['items'] ?? data['data'];
           if (items is List) {
-            return items
-                .whereType<Map<String, dynamic>>()
-                .map((json) => TimelineItemModel.fromJson(json).toEntity())
-                .toList();
+            return items.whereType<Map<String, dynamic>>().toList();
           }
         }
-        return [];
       }
       return [];
-    } on DioException catch (_) {
+    } catch (_) {
       return [];
     }
+  }
+
+  @override
+  Future<List<TimelineItemEntity>> getSavedPosts({int page = 1}) async {
+    final raw = await getSavedPostsRaw(page: page);
+    return raw.map((json) => TimelineItemModel.fromJson(json).toEntity()).toList();
   }
 
   @override

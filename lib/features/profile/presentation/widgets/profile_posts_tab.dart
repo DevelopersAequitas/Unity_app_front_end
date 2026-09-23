@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../home/presentation/bloc/home_bloc.dart';
 import '../../../home/presentation/bloc/home_event.dart';
 import '../../../home/presentation/widgets/post_comments_bottom_sheet.dart';
@@ -29,24 +30,14 @@ class ProfilePostsTab extends StatelessWidget {
         }
 
         if (state.status == ProfilePostsStatus.failure && state.posts.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-            child: Column(
-              children: [
-                const Icon(Icons.error_outline_rounded, size: 36, color: AppColor.lightTextTertiary),
-                const SizedBox(height: 8),
-                Text(
-                  state.errorMessage ?? 'Failed to load posts',
-                  style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () => context.read<ProfilePostsBloc>().add(const ProfilePostsFetchRequested()),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+          return AppErrorView(
+            title: 'Unable to Load Posts',
+            message: state.errorMessage,
+            onRetry: () => context
+                .read<ProfilePostsBloc>()
+                .add(const ProfilePostsFetchRequested()),
+            screenName: 'Profile Posts',
+            isCompact: true,
           );
         }
 

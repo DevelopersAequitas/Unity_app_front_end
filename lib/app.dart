@@ -4,6 +4,7 @@ import 'core/di/app_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/app_screenshot_manager.dart';
 import 'core/widgets/connectivity_overlay.dart';
 
 class MyApp extends StatelessWidget {
@@ -25,8 +26,10 @@ class MyApp extends StatelessWidget {
         initialRoute: AppRoutes.splash,
         onGenerateRoute: AppRouter.onGenerateRoute,
         navigatorObservers: [AppRouter.routeObserver],
-        builder: (context, child) =>
-            ConnectivityOverlay(child: child ?? const SizedBox.shrink()),
+        builder: (context, child) => RepaintBoundary(
+          key: AppScreenshotManager.rootRepaintKey,
+          child: ConnectivityOverlay(child: child ?? const SizedBox.shrink()),
+        ),
       ),
     );
   }

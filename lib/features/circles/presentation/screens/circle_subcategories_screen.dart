@@ -6,6 +6,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../domain/entities/circle_category_entity.dart';
 import '../../domain/usecases/get_category_subcategories_usecase.dart';
 import '../bloc/circle_subcategories_bloc.dart';
@@ -198,25 +199,13 @@ class _CircleSubcategoriesViewState extends State<_CircleSubcategoriesView> {
   }
 
   Widget _buildErrorState(BuildContext context, String? message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.error),
-            const SizedBox(height: 12),
-            Text(message ?? 'Failed to load specializations', style: AppTypography.bodyMedium),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => context
-                  .read<CircleSubcategoriesBloc>()
-                  .add(CircleSubcategoriesFetchRequested(widget.circleId)),
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Specializations',
+      message: message,
+      onRetry: () => context
+          .read<CircleSubcategoriesBloc>()
+          .add(CircleSubcategoriesFetchRequested(widget.circleId)),
+      screenName: 'Circle Categories',
     );
   }
 

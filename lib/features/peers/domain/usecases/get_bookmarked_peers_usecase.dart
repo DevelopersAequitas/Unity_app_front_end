@@ -9,4 +9,8 @@ class GetBookmarkedPeersUseCase {
   Future<List<PeerEntity>> call({int page = 1, int limit = 20}) {
     return repository.getBookmarkedPeers(page: page, limit: limit);
   }
+
+  Future<List<PeerEntity>> getCached() {
+    return repository.getCachedBookmarkedPeers();
+  }
 }

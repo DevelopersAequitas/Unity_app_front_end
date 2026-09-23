@@ -6,6 +6,7 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -116,6 +117,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Future<void> _submitFeedback() async {
+    if (!OfflineGuard.check(context, actionName: 'submit feedback')) return;
     final text = _feedbackController.text.trim();
     final subject = _subjectController.text.trim();
     if (text.isEmpty) {

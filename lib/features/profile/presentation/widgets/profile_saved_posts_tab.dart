@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../home/presentation/bloc/home_bloc.dart';
 import '../../../home/presentation/bloc/home_event.dart';
 import '../../../home/presentation/widgets/post_comments_bottom_sheet.dart';
@@ -29,26 +30,14 @@ class ProfileSavedPostsTab extends StatelessWidget {
         }
 
         if (state.status == ProfileSavedPostsStatus.failure && state.posts.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-            child: Column(
-              children: [
-                const Icon(Icons.error_outline_rounded, size: 36, color: AppColor.lightTextTertiary),
-                const SizedBox(height: 8),
-                Text(
-                  state.errorMessage ?? 'Failed to load saved posts',
-                  style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () => context
-                      .read<ProfileSavedPostsBloc>()
-                      .add(const ProfileSavedPostsFetchRequested()),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+          return AppErrorView(
+            title: 'Unable to Load Saved Posts',
+            message: state.errorMessage,
+            onRetry: () => context
+                .read<ProfileSavedPostsBloc>()
+                .add(const ProfileSavedPostsFetchRequested()),
+            screenName: 'Saved Posts',
+            isCompact: true,
           );
         }
 

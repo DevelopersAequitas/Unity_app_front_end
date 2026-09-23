@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../domain/entities/circle_category_entity.dart';
 import '../bloc/circles_bloc.dart';
 import '../bloc/circles_event.dart';
@@ -179,6 +180,21 @@ class _CirclesScreenState extends State<CirclesScreen> {
                         state.categories.isEmpty &&
                         state.myJoinRequests.isEmpty)
                       const CirclesSkeletonLoader()
+                    else if (state.status == CirclesStatus.error &&
+                        state.myCircles.isEmpty &&
+                        state.categories.isEmpty &&
+                        state.myJoinRequests.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: AppErrorView(
+                          title: 'Unable to Load Circles',
+                          message: state.errorMessage,
+                          onRetry: () => context
+                              .read<CirclesBloc>()
+                              .add(const CirclesRefreshRequested()),
+                          screenName: 'Circles',
+                        ),
+                      )
                     else if (state.activeTab == 0)
                       MyCirclesView(
                         circles: state.filteredMyCircles,

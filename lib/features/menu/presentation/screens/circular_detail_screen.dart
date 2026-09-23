@@ -4,6 +4,8 @@ import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/app_date_formatter.dart';
+import '../../../../core/widgets/app_error_view.dart';
+
 
 class CircularDetailScreen extends StatefulWidget {
   final String circularId;
@@ -85,20 +87,11 @@ class _CircularDetailScreenState extends State<CircularDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColor.primaryBlue))
           : _errorMessage != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.lightTextTertiary),
-                        const SizedBox(height: 8),
-                        Text(_errorMessage!, style: AppTypography.bodySmall.copyWith(color: AppColor.lightTextSecondary)),
-                        const SizedBox(height: 12),
-                        OutlinedButton(onPressed: _fetchDetail, child: const Text('Try Again')),
-                      ],
-                    ),
-                  ),
+              ? AppErrorView(
+                  title: 'Unable to Load Notice',
+                  message: _errorMessage,
+                  onRetry: _fetchDetail,
+                  screenName: 'Circular Detail',
                 )
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),

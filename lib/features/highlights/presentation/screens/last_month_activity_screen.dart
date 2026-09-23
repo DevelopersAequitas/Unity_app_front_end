@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/last_month_activity/last_month_activity_bloc.dart';
 import '../bloc/last_month_activity/last_month_activity_event.dart';
 import '../bloc/last_month_activity/last_month_activity_state.dart';
@@ -90,23 +90,13 @@ class _LastMonthActivityScreenState extends State<LastMonthActivityScreen> {
   }
 
   Widget _buildError(BuildContext context, String? message) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 40, color: AppColor.error),
-            const SizedBox(height: 12),
-            Text(message ?? 'Failed to load activity', style: AppTypography.bodyMedium),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => context.read<LastMonthActivityBloc>().add(const FetchLastMonthActivityEvent()),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    return AppErrorView(
+      title: 'Unable to Load Activity',
+      message: message,
+      onRetry: () => context
+          .read<LastMonthActivityBloc>()
+          .add(const FetchLastMonthActivityEvent()),
+      screenName: 'Last Month Activity',
     );
   }
 }

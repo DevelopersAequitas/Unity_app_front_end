@@ -10,6 +10,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/common_peer_selector_sheet.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../profile/domain/usecases/upload_file_usecase.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
@@ -256,6 +257,9 @@ class _AddBusinessDealViewState extends State<_AddBusinessDealView> {
                           ? null
                           : () async {
                               if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to record business deals.')) {
+                                return;
+                              }
+                              if (!OfflineGuard.check(context, actionName: 'record business deals')) {
                                 return;
                               }
                               final File? creativeFile =

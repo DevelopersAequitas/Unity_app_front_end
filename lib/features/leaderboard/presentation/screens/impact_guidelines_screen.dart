@@ -3,6 +3,7 @@ import '../../../../core/cache/hive_cache_store.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../data/datasources/leaderboard_local_datasource.dart';
 import '../../data/datasources/leaderboard_remote_datasource.dart';
@@ -72,19 +73,27 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
 
   IconData _getActionIcon(String action, String category) {
     final lower = '${action.toLowerCase()} ${category.toLowerCase()}';
-    if (lower.contains('deal') || lower.contains('business'))
+    if (lower.contains('deal') || lower.contains('business')) {
       return Icons.handshake_outlined;
-    if (lower.contains('testimonial') || lower.contains('review'))
+    }
+    if (lower.contains('testimonial') || lower.contains('review')) {
       return Icons.rate_review_outlined;
-    if (lower.contains('referral')) return Icons.group_add_outlined;
-    if (lower.contains('connect') || lower.contains('collaboration'))
+    }
+    if (lower.contains('referral')) {
+      return Icons.group_add_outlined;
+    }
+    if (lower.contains('connect') || lower.contains('collaboration')) {
       return Icons.hub_outlined;
-    if (lower.contains('meeting') || lower.contains('p2p'))
+    }
+    if (lower.contains('meeting') || lower.contains('p2p')) {
       return Icons.video_call_outlined;
-    if (lower.contains('signup') || lower.contains('sign up'))
+    }
+    if (lower.contains('signup') || lower.contains('sign up')) {
       return Icons.person_add_alt_1_outlined;
-    if (lower.contains('visibility') || lower.contains('trust'))
+    }
+    if (lower.contains('visibility') || lower.contains('trust')) {
       return Icons.verified_user_outlined;
+    }
     return Icons.auto_awesome_rounded;
   }
 
@@ -126,47 +135,17 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
     }
 
     if (_errorMessage != null && _guidelines == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: AppColor.primaryPink,
-                size: 36,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Failed to load impact rules',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColor.lightTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _isLoading = true;
-                    _errorMessage = null;
-                  });
-                  _loadGuidelines();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC026D3),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+      return AppErrorView(
+        title: 'Unable to Load Impact Rules',
+        message: _errorMessage,
+        onRetry: () {
+          setState(() {
+            _isLoading = true;
+            _errorMessage = null;
+          });
+          _loadGuidelines(isRefresh: true);
+        },
+        screenName: 'Impact Rules',
       );
     }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/features/menu/presentation/screens/submit_ticket_screen.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../bloc/support_bloc.dart';
@@ -71,28 +72,13 @@ class TicketHistoryScreen extends StatelessWidget {
     }
 
     if (state.status == SupportStatus.failure && state.tickets.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 48, color: AppColor.lightTextTertiary),
-            const SizedBox(height: 12),
-            Text(
-              state.errorMessage ?? 'Failed to load tickets',
-              style: AppTypography.bodyMedium.copyWith(color: AppColor.lightTextSecondary),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.read<SupportBloc>().add(const SupportTicketsFetchRequested()),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
+      return AppErrorView(
+        title: 'Unable to Load Tickets',
+        message: state.errorMessage,
+        onRetry: () => context
+            .read<SupportBloc>()
+            .add(const SupportTicketsFetchRequested()),
+        screenName: 'Support Tickets',
       );
     }
 

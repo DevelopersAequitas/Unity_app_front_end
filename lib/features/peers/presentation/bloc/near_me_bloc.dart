@@ -103,12 +103,27 @@ class NearMeBloc extends Bloc<NearMeEvent, NearMeState> {
     NearMeFetchRequested event,
     Emitter<NearMeState> emit,
   ) async {
-    emit(state.copyWith(
-      status: NearMeStatus.loading,
-      page: 1,
-      hasMore: true,
-      isLoadingMore: false,
-    ));
+    // 1. Stale-while-revalidate: load cached nearby peers immediately if empty
+    if (state.nearbyPeers.isEmpty) {
+      final cached = await getNearbyPeersUseCase.getCached();
+      if (cached.isNotEmpty) {
+        emit(state.copyWith(
+          status: NearMeStatus.success,
+          nearbyPeers: cached,
+          page: 1,
+          hasMore: cached.length >= 20,
+          isLoadingMore: false,
+        ));
+      } else {
+        emit(state.copyWith(
+          status: NearMeStatus.loading,
+          page: 1,
+          hasMore: true,
+          isLoadingMore: false,
+        ));
+      }
+    }
+
     try {
       double? lat = state.userLatitude;
       double? lng = state.userLongitude;
@@ -158,12 +173,15 @@ class NearMeBloc extends Bloc<NearMeEvent, NearMeState> {
         hasMore: peers.length >= 20,
         userLatitude: lat,
         userLongitude: lng,
+        errorMessage: null,
       ));
     } catch (e) {
-      emit(state.copyWith(
-        status: NearMeStatus.failure,
-        errorMessage: e.toString(),
-      ));
+      if (state.nearbyPeers.isEmpty) {
+        emit(state.copyWith(
+          status: NearMeStatus.failure,
+          errorMessage: e.toString(),
+        ));
+      }
     }
   }
 

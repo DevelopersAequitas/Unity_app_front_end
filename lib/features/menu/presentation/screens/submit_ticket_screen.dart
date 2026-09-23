@@ -6,10 +6,26 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import 'ticket_history_screen.dart';
 
 class SubmitTicketScreen extends StatefulWidget {
-  const SubmitTicketScreen({super.key});
+  final String? initialSubject;
+  final String? initialDescription;
+  final String? initialDepartment;
+  final String? initialPriority;
+  final File? initialAttachment;
+  final String? screenName;
+
+  const SubmitTicketScreen({
+    super.key,
+    this.initialSubject,
+    this.initialDescription,
+    this.initialDepartment,
+    this.initialPriority,
+    this.initialAttachment,
+    this.screenName,
+  });
 
   @override
   State<SubmitTicketScreen> createState() => _SubmitTicketScreenState();
@@ -18,8 +34,8 @@ class SubmitTicketScreen extends StatefulWidget {
 class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
   final DioClient _dio = DioClient();
   final ImagePicker _picker = ImagePicker();
-  final TextEditingController _subjectController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  late final TextEditingController _subjectController;
+  late final TextEditingController _descriptionController;
   String _department = 'Technical Issue';
   String _priority = 'Medium';
   bool _isSubmitting = false;
@@ -36,6 +52,27 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
     'Feature Request',
   ];
   final List<String> _priorities = ['Low', 'Medium', 'High', 'Urgent'];
+
+  @override
+  void initState() {
+    super.initState();
+    _subjectController =
+        TextEditingController(text: widget.initialSubject ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.initialDescription ?? '');
+
+    if (widget.initialDepartment != null &&
+        _departments.contains(widget.initialDepartment)) {
+      _department = widget.initialDepartment!;
+    }
+    if (widget.initialPriority != null &&
+        _priorities.contains(widget.initialPriority)) {
+      _priority = widget.initialPriority!;
+    }
+    if (widget.initialAttachment != null) {
+      _attachment = widget.initialAttachment;
+    }
+  }
 
   @override
   void dispose() {
@@ -83,6 +120,7 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
   }
 
   Future<void> _submitTicket() async {
+    if (!OfflineGuard.check(context, actionName: 'submit support tickets')) return;
     final subject = _subjectController.text.trim();
     final description = _descriptionController.text.trim();
 
@@ -107,7 +145,7 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
       'category': _department,
       'priority': _priority,
       'message': description,
-      'screen_name': 'Support Screen',
+      'screen_name': widget.screenName ?? 'Support Screen',
       if (mediaId != null && mediaId.isNotEmpty) ...{
         'media_file_id': mediaId,
         'media_type': 'image',

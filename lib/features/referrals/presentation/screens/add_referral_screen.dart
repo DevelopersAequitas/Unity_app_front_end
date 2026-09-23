@@ -6,6 +6,7 @@ import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/common_peer_selector_sheet.dart';
 import '../../../../core/widgets/contact_picker_sheet.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/usecases/create_referral_usecase.dart';
 import '../bloc/add_referral_bloc.dart';
@@ -212,6 +213,9 @@ class _AddReferralViewState extends State<_AddReferralView> {
                           ? null
                           : () {
                               if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to give referrals.')) {
+                                return;
+                              }
+                              if (!OfflineGuard.check(context, actionName: 'give referrals')) {
                                 return;
                               }
                               bloc.add(const AddReferralSubmitted());

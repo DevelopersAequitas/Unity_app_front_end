@@ -5,6 +5,7 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../peers/domain/usecases/get_all_peers_usecase.dart';
 import '../../../profile/domain/usecases/upload_file_usecase.dart';
@@ -176,6 +177,9 @@ class _AddTestimonialViewState extends State<_AddTestimonialView> {
                           ? null
                           : () {
                               if (!PaywallGateHelper.checkPro(context, message: 'Upgrade to Pro to give testimonials.')) {
+                                return;
+                              }
+                              if (!OfflineGuard.check(context, actionName: 'give testimonials')) {
                                 return;
                               }
                               context.read<AddTestimonialBloc>().add(

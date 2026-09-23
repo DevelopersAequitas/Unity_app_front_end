@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/matches_bloc.dart';
 import '../bloc/matches_event.dart';
 import '../bloc/matches_state.dart';
@@ -57,22 +58,25 @@ class _MatchesScreenState extends State<MatchesScreen> {
             ),
       body: AppGradientBackground(
         child: ResponsiveContainer(
-          child: BlocConsumer<MatchesBloc, MatchesState>(
-            listenWhen: (prev, curr) =>
-                curr.errorMessage != null &&
-                prev.errorMessage != curr.errorMessage,
-            listener: (context, state) {
-              if (state.errorMessage != null) {
-                AppSnackBar.showError(context, state.errorMessage!);
-              }
-            },
+          child: BlocBuilder<MatchesBloc, MatchesState>(
             builder: (context, state) {
-              if (state.status == MatchesStatus.loading) {
+              if (state.status == MatchesStatus.loading && state.matches.isEmpty) {
                 return const Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: AppColor.primaryBlue,
                   ),
+                );
+              }
+
+              if (state.status == MatchesStatus.failure && state.matches.isEmpty) {
+                return AppErrorView(
+                  title: 'Unable to Load Matches',
+                  message: state.errorMessage,
+                  onRetry: () => context
+                      .read<MatchesBloc>()
+                      .add(const MatchesFetchRequested()),
+                  screenName: 'Peer Matches',
                 );
               }
 

@@ -1,4 +1,5 @@
 import 'package:lottie/lottie.dart';
+import '../services/local_notification_service.dart';
 import 'package:unity_app/features/circles/domain/usecases/cancel_circle_join_request_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_category_subcategories_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_closed_categories_usecase.dart';
@@ -308,6 +309,7 @@ import '../../features/chat/domain/usecases/get_leadership_messages_usecase.dart
 import '../../features/chat/domain/usecases/send_leadership_message_usecase.dart';
 import '../../features/chat/domain/usecases/mark_leadership_messages_read_usecase.dart';
 import '../../features/chat/domain/usecases/delete_leadership_message_usecase.dart';
+import '../../features/shorts/data/datasources/shorts_local_datasource.dart';
 import '../../features/shorts/data/datasources/shorts_remote_datasource.dart';
 import '../../features/shorts/data/repositories_impl/shorts_repository_impl.dart';
 import '../../features/shorts/domain/repositories/shorts_repository.dart';
@@ -813,9 +815,10 @@ class AppDependencies {
   });
 
   static Future<AppDependencies> initialize() async {
-    // Initialize deep linking service and network connectivity listener
+    // Initialize deep linking service, local notification service, and network connectivity listener
     await Future.wait([
       DeepLinkService.instance.init(),
+      LocalNotificationService.instance.init(),
       NetworkConnectivityService.instance.init(),
     ]);
 
@@ -1129,11 +1132,15 @@ class AppDependencies {
         DeleteLeadershipMessageUseCase(chatRepository);
 
     // Shorts Data Sources & Repositories
+    final shortsLocalDataSource = ShortsLocalDataSourceImpl(
+      cacheStore: cacheStore,
+    );
     final shortsRemoteDataSource = ShortsRemoteDataSourceImpl(
       dioClient: dioClient,
     );
     final shortsRepository = ShortsRepositoryImpl(
       remoteDataSource: shortsRemoteDataSource,
+      localDataSource: shortsLocalDataSource,
     );
     final getIntroVideosUseCase = GetIntroVideosUseCase(shortsRepository);
 

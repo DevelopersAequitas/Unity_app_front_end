@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../../home/data/models/timeline_item_model.dart';
 import '../../../home/domain/entities/timeline_item_entity.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../../domain/repositories/profile_repository.dart';
@@ -45,12 +46,54 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<List<TimelineItemEntity>> getUserPosts({int page = 1}) async {
-    return remoteDataSource.getUserPosts(page: page);
+    if (page == 1) {
+      final cached = await localDataSource.getCachedUserPosts();
+      if (cached.isNotEmpty) {
+        _refreshUserPostsInBackground();
+        return cached;
+      }
+    }
+
+    final raw = await remoteDataSource.getUserPostsRaw(page: page);
+    if (page == 1 && raw.isNotEmpty) {
+      await localDataSource.cacheUserPosts(raw);
+    }
+    return raw.map((json) => TimelineItemModel.fromJson(json).toEntity()).toList();
+  }
+
+  void _refreshUserPostsInBackground() async {
+    try {
+      final raw = await remoteDataSource.getUserPostsRaw(page: 1);
+      if (raw.isNotEmpty) {
+        await localDataSource.cacheUserPosts(raw);
+      }
+    } catch (_) {}
   }
 
   @override
   Future<List<TimelineItemEntity>> getSavedPosts({int page = 1}) async {
-    return remoteDataSource.getSavedPosts(page: page);
+    if (page == 1) {
+      final cached = await localDataSource.getCachedSavedPosts();
+      if (cached.isNotEmpty) {
+        _refreshSavedPostsInBackground();
+        return cached;
+      }
+    }
+
+    final raw = await remoteDataSource.getSavedPostsRaw(page: page);
+    if (page == 1 && raw.isNotEmpty) {
+      await localDataSource.cacheSavedPosts(raw);
+    }
+    return raw.map((json) => TimelineItemModel.fromJson(json).toEntity()).toList();
+  }
+
+  void _refreshSavedPostsInBackground() async {
+    try {
+      final raw = await remoteDataSource.getSavedPostsRaw(page: 1);
+      if (raw.isNotEmpty) {
+        await localDataSource.cacheSavedPosts(raw);
+      }
+    } catch (_) {}
   }
 
   @override

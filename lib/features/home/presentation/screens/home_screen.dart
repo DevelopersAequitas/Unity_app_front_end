@@ -25,6 +25,8 @@ import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../../core/widgets/app_error_view.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
@@ -277,14 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeFeedTab() {
-    return BlocConsumer<HomeBloc, HomeState>(
-      listenWhen: (prev, curr) =>
-          curr.errorMessage != null && prev.errorMessage != curr.errorMessage,
-      listener: (context, state) {
-        if (state.errorMessage != null) {
-          AppSnackBar.showError(context, state.errorMessage!);
-        }
-      },
+    return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
         return RefreshIndicator(
           color: AppColor.primaryBlue,
@@ -336,6 +331,18 @@ class _HomeScreenState extends State<HomeScreen> {
               if (state.status == HomeFeedStatus.loading &&
                   state.allItems.isEmpty)
                 const SliverToBoxAdapter(child: HomeSkeletonLoader())
+              else if (state.status == HomeFeedStatus.error &&
+                  state.allItems.isEmpty)
+                SliverToBoxAdapter(
+                  child: AppErrorView(
+                    title: 'Unable to Load Feed',
+                    message: state.errorMessage,
+                    onRetry: () => context
+                        .read<HomeBloc>()
+                        .add(const HomeFeedRefreshRequested()),
+                    screenName: 'Home Feed',
+                  ),
+                )
               else if (state.items.isEmpty && state.searchQuery.isNotEmpty)
                 SliverToBoxAdapter(
                   child: _buildSearchEmptyState(state.searchQuery),
@@ -537,7 +544,10 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.transparent,
         shape: const CircleBorder(),
         child: InkWell(
-          onTap: () => Navigator.of(context).pushNamed(AppRoutes.createPost),
+          onTap: () {
+            if (!OfflineGuard.check(context, actionName: 'create posts')) return;
+            Navigator.of(context).pushNamed(AppRoutes.createPost);
+          },
           customBorder: const CircleBorder(),
           child: const Center(
             child: Icon(Icons.add_rounded, color: Colors.white, size: 26),

@@ -46,6 +46,8 @@ abstract class PeersRepository {
     double? longitude,
   });
 
+  Future<List<GeoPeerEntity>> getCachedNearbyPeers();
+
   Future<List<MatchPeerEntity>> getMatchPeers();
 
   Future<List<MatchPeerEntity>> getCachedMatches();
@@ -71,6 +73,8 @@ abstract class PeersRepository {
   Future<void> togglePeerBookmark(String memberId, bool isCurrentlyBookmarked);
 
   Future<List<PeerEntity>> getBookmarkedPeers({int page = 1, int limit = 20});
+
+  Future<List<PeerEntity>> getCachedBookmarkedPeers();
 
   Future<List<IntroducedPeerEntity>> getMemberIntroducedPeers(String memberId);
 

@@ -6,6 +6,8 @@ abstract class ShortsRepository {
     int perPage = 10,
   });
 
+  Future<List<IntroVideoEntity>> getCachedShorts();
+
   Future<bool> toggleLike(String introVideoId, bool currentStatus);
 
   Future<bool> toggleBookmark(String memberId, bool currentStatus);

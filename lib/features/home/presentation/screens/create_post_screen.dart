@@ -11,6 +11,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/offline_prompt_dialog.dart';
 import '../../../peers/domain/entities/peer_entity.dart';
 import '../../../peers/domain/usecases/get_all_peers_usecase.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
@@ -49,7 +50,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   List<PeerEntity> _mentionSuggestions = [];
   bool _isSearchingMentions = false;
   int _mentionQueryStartIndex = -1;
-  final Map<String, String> _taggedMentions = {};
+  final Map<String, PeerEntity> _selectedMentions = {};
 
   @override
   void initState() {
@@ -147,12 +148,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     final beforeMention = text.substring(0, startIndex);
     final afterMention = text.substring(cursor);
 
-    // Markdown tag format: @[DisplayName](peerId)
-    final mentionTag = '@[${peer.displayName}](${peer.id}) ';
-    final newText = '$beforeMention$mentionTag$afterMention';
-    final newCursorPos = beforeMention.length + mentionTag.length;
+    // Clean user-friendly mention format in UI: @DisplayName
+    final mentionText = '@${peer.displayName} ';
+    final newText = '$beforeMention$mentionText$afterMention';
+    final newCursorPos = beforeMention.length + mentionText.length;
 
-    _taggedMentions[peer.id] = peer.displayName;
+    _selectedMentions[peer.id] = peer;
 
     _contentController.value = TextEditingValue(
       text: newText,
@@ -296,6 +297,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
+    if (!OfflineGuard.check(context, actionName: 'publish posts')) {
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _uploadProgress = 0.0;
@@ -323,11 +328,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       }
 
       final List<Map<String, dynamic>> mentionsPayload = [];
-      for (final entry in _taggedMentions.entries) {
-        if (text.contains(entry.key) || text.contains(entry.value)) {
+      for (final peer in _selectedMentions.values) {
+        final mentionName = peer.displayName.trim();
+        if (text.toLowerCase().contains('@${mentionName.toLowerCase()}') ||
+            text.toLowerCase().contains(mentionName.toLowerCase())) {
           mentionsPayload.add({
-            'id': entry.key,
-            'name': entry.value,
+            'id': peer.id,
+            'name': mentionName,
+            if (peer.profilePhotoUrl != null && peer.profilePhotoUrl!.isNotEmpty) 'profile_photo_url': peer.profilePhotoUrl,
           });
         }
       }

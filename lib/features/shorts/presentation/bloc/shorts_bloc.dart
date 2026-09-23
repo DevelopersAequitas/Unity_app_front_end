@@ -23,10 +23,23 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
     FetchIntroVideosEvent event,
     Emitter<ShortsState> emit,
   ) async {
-    if (event.isRefresh) {
-      emit(state.copyWith(status: ShortsStatus.loading, currentPage: 1));
-    } else if (state.status == ShortsStatus.initial) {
-      emit(state.copyWith(status: ShortsStatus.loading));
+    // 1. Stale-while-revalidate: load cached videos immediately on initial launch
+    if (state.status == ShortsStatus.initial && state.videos.isEmpty) {
+      final cached = await getIntroVideosUseCase.getCached();
+      if (cached.isNotEmpty) {
+        emit(state.copyWith(
+          status: ShortsStatus.loaded,
+          videos: cached,
+          currentPage: 2,
+          hasReachedMax: cached.length < 15,
+        ));
+      } else {
+        emit(state.copyWith(status: ShortsStatus.loading));
+      }
+    } else if (event.isRefresh) {
+      if (state.videos.isEmpty) {
+        emit(state.copyWith(status: ShortsStatus.loading, currentPage: 1));
+      }
     }
 
     try {
@@ -39,12 +52,15 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
         videos: updatedList,
         hasReachedMax: videos.length < 15,
         currentPage: page + 1,
+        errorMessage: null,
       ));
     } catch (e) {
-      emit(state.copyWith(
-        status: ShortsStatus.error,
-        errorMessage: e.toString(),
-      ));
+      if (state.videos.isEmpty) {
+        emit(state.copyWith(
+          status: ShortsStatus.error,
+          errorMessage: e.toString(),
+        ));
+      }
     }
   }
 
