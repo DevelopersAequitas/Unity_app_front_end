@@ -28,7 +28,7 @@ android {
     productFlavors {
         create("peersGlobal") {
             dimension = "default"
-            applicationId = "com.peers.peersunit"
+            applicationId = "com.peers.peersunity"
             resValue("string", "app_name", "Peers Global Unity")
         }
         create("greenpreneur") {
