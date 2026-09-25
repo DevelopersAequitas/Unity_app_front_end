@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +8,7 @@ import '../../../features/home/domain/entities/timeline_media_entity.dart';
 
 /// Full-screen preview for both images and videos.
 ///
-/// For images: pinch-zoom + dismiss-on-swipe.
+/// For images: full-screen pinch zoom + double-tap zoom across the entire display.
 /// For videos: Chewie player (full controls, landscape support).
 class MediaPreviewScreen extends StatefulWidget {
   final TimelineMediaEntity media;
@@ -38,6 +39,9 @@ class MediaPreviewScreen extends StatefulWidget {
 }
 
 class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
+  final TransformationController _transformationController =
+      TransformationController();
+  TapDownDetails? _doubleTapDetails;
   VideoPlayerController? _vpController;
   ChewieController? _chewieController;
   bool _videoReady = false;
@@ -71,8 +75,23 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
     if (mounted) setState(() => _videoReady = true);
   }
 
+  void _handleDoubleTap() {
+    if (_transformationController.value != Matrix4.identity()) {
+      _transformationController.value = Matrix4.identity();
+    } else {
+      final position = _doubleTapDetails?.localPosition ?? Offset.zero;
+      const double scale = 2.5;
+      final x = -position.dx * (scale - 1.0);
+      final y = -position.dy * (scale - 1.0);
+      _transformationController.value = Matrix4.identity()
+        ..translateByDouble(x, y, 0.0, 1.0)
+        ..scaleByDouble(scale, scale, 1.0, 1.0);
+    }
+  }
+
   @override
   void dispose() {
+    _transformationController.dispose();
     _chewieController?.dispose();
     _vpController?.dispose();
     super.dispose();
@@ -82,34 +101,80 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Center(
-        child: widget.media.isVideo ? _buildVideoPlayer() : _buildImageViewer(),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Full-screen media viewer
+          Positioned.fill(
+            child: widget.media.isVideo ? _buildVideoPlayer() : _buildImageViewer(),
+          ),
+
+          // Floating dismiss button in safe area
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildImageViewer() {
     final tag = widget.heroTag ?? widget.media.url;
-    return Hero(
-      tag: tag,
-      child: InteractiveViewer(
-        minScale: 0.5,
-        maxScale: 5.0,
-        child: Image.network(
-          widget.media.url,
-          fit: BoxFit.contain,
-          errorBuilder: (_, _, _) => const Icon(
-            Icons.broken_image_outlined,
-            color: Colors.white38,
-            size: 64,
+    return GestureDetector(
+      onDoubleTapDown: (details) => _doubleTapDetails = details,
+      onDoubleTap: _handleDoubleTap,
+      child: SizedBox.expand(
+        child: InteractiveViewer(
+          transformationController: _transformationController,
+          clipBehavior: Clip.hardEdge,
+          boundaryMargin: EdgeInsets.zero,
+          minScale: 1.0,
+          maxScale: 5.0,
+          child: Hero(
+            tag: tag,
+            child: Center(
+              child: CachedNetworkImage(
+                imageUrl: widget.media.url,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+                placeholder: (_, _) => const Center(
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColor.primaryBlue,
+                    ),
+                  ),
+                ),
+                errorWidget: (_, _, _) => const Center(
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white38,
+                    size: 64,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -118,8 +183,12 @@ class _MediaPreviewScreenState extends State<MediaPreviewScreen> {
 
   Widget _buildVideoPlayer() {
     if (!_videoReady || _chewieController == null) {
-      return const CircularProgressIndicator(color: AppColor.primaryBlue);
+      return const Center(
+        child: CircularProgressIndicator(color: AppColor.primaryBlue),
+      );
     }
-    return Chewie(controller: _chewieController!);
+    return Center(
+      child: Chewie(controller: _chewieController!),
+    );
   }
 }

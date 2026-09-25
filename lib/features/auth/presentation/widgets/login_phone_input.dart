@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_phone_field.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import 'country_code_sheet.dart';
 
@@ -30,6 +32,16 @@ class LoginPhoneInput extends StatelessWidget {
     }
   }
 
+  void _onChanged(String val) {
+    if (val.startsWith('0')) {
+      final clean = val.replaceFirst(RegExp(r'^0+'), '');
+      controller.value = TextEditingValue(
+        text: clean,
+        selection: TextSelection.collapsed(offset: clean.length),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -43,6 +55,12 @@ class LoginPhoneInput extends StatelessWidget {
       hintText: 'Phone number',
       keyboardType: TextInputType.phone,
       textInputAction: TextInputAction.done,
+      onChanged: _onChanged,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        const NoLeadingZeroFormatter(),
+        LengthLimitingTextInputFormatter(10),
+      ],
       onSubmitted: (_) => onSubmitted(),
       prefixIcon: GestureDetector(
         behavior: HitTestBehavior.opaque,

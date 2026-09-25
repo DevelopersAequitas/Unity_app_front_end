@@ -170,7 +170,9 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
       queryParams['radius'] = radiusKm;
     }
     if (latitude != null && latitude != 0) queryParams['latitude'] = latitude;
-    if (longitude != null && longitude != 0) queryParams['longitude'] = longitude;
+    if (longitude != null && longitude != 0) {
+      queryParams['longitude'] = longitude;
+    }
 
     final response = await _dio.get(
       ApiEndpoints.geoNearbyPeers,
@@ -192,7 +194,7 @@ class PeersRemoteDataSourceImpl implements PeersRemoteDataSource {
       return members.map((p) {
         return MatchPeerModel(
           peer: p,
-          matchPercentage: (80 + (p.id.hashCode.abs() % 19)), // 80% to 98%
+          matchPercentage: (50 + (p.id.hashCode.abs() % 49)), // 50% to 99%
           matchReasons: [
             if (p.category != null) 'Shared Domain Focus: ${p.category}',
             if (p.city != null) 'Based in ${p.city}',

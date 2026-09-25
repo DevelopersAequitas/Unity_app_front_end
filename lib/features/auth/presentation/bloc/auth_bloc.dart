@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/app_update_service.dart';
 import '../../../../core/services/location_sync_service.dart';
 import '../../../../core/services/user_presence_service.dart';
 import '../../../../core/utils/app_error_handler.dart';
@@ -44,6 +45,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (cached.user != null && cached.token != null) {
         UserPresenceService.instance.markOnlineAndStart();
         LocationSyncService.instance.syncLocationIfPermitted();
+        AppUpdateService.instance.syncMobileVersion();
         emit(AuthAuthenticated(user: cached.user!, token: cached.token!));
       } else {
         UserPresenceService.instance.markOfflineAndStop();
@@ -120,6 +122,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             );
       UserPresenceService.instance.markOnlineAndStart();
       LocationSyncService.instance.syncLocationIfPermitted();
+      AppUpdateService.instance.syncMobileVersion();
       emit(AuthVerifySuccess(user: result.user, token: result.token));
     } catch (e, stackTrace) {
       final msg = AppErrorHandler.toUserFriendlyMessage(e, stackTrace);

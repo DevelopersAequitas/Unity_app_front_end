@@ -32,6 +32,18 @@ class RegisterSubcategoriesRequested extends RegisterEvent {
   List<Object?> get props => [parentId];
 }
 
+class RegisterReferralCodeValidationRequested extends RegisterEvent {
+  final String code;
+  const RegisterReferralCodeValidationRequested(this.code);
+
+  @override
+  List<Object?> get props => [code];
+}
+
+class RegisterReferralCodeCleared extends RegisterEvent {
+  const RegisterReferralCodeCleared();
+}
+
 class RegisterStep1Submitted extends RegisterEvent {
   final String firstName;
   final String lastName;

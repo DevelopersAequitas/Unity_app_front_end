@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../peers/presentation/bloc/peers_bloc.dart';
 import '../../../peers/presentation/bloc/peers_event.dart';
@@ -28,7 +27,7 @@ class IntroducedPeerTile extends StatelessWidget {
     final peerEntity = peer.toPeerEntity();
 
     return PeerCard(
-      key: ValueKey(peer.id),
+      key: ValueKey('${peer.id}_${peer.isFollowing}_${peer.isBookmarked}_${peer.connectionStatus}'),
       peer: peerEntity,
       margin: margin,
       padding: padding,
@@ -37,17 +36,17 @@ class IntroducedPeerTile extends StatelessWidget {
           ? null
           : () {
               context.read<PeersBloc>().add(PeerConnectRequested(peer.id));
-              AppSnackBar.showSuccess(context, 'Connection request sent to ${peer.name}');
             },
       onFollow: isCurrentUser
           ? null
           : () => context.read<PeersBloc>().add(
-                PeerFollowToggled(peerId: peer.id, isCurrentlyFollowing: peer.isFollowing),
+                PeerFollowToggled(
+                  peerId: peer.id,
+                  isCurrentlyFollowing: peer.isFollowing,
+                ),
               ),
-      onScheduleP2P: (!isCurrentUser && peerEntity.isConnected)
-          ? () => AppSnackBar.showInfo(context, 'Scheduling P2P with ${peer.name}')
-          : null,
-      onMessage: isCurrentUser ? () {} : () => AppSnackBar.showInfo(context, 'Messaging ${peer.name}'),
+      onScheduleP2P: null,
+      onMessage: isCurrentUser ? () {} : null,
       onTap: () => Navigator.pushNamed(
         context,
         isCurrentUser ? AppRoutes.profile : AppRoutes.peerProfile,
@@ -56,7 +55,10 @@ class IntroducedPeerTile extends StatelessWidget {
       onBookmark: isCurrentUser
           ? () {}
           : () => context.read<PeersBloc>().add(
-                PeerBookmarkToggled(peerId: peer.id, isCurrentlyBookmarked: peer.isBookmarked),
+                PeerBookmarkToggled(
+                  peerId: peer.id,
+                  isCurrentlyBookmarked: peer.isBookmarked,
+                ),
               ),
     );
   }

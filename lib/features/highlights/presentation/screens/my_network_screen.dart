@@ -69,12 +69,12 @@ class MyNetworkScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Invited & Referral Peers', style: AppTypography.titleSmall),
+                          Text('Peers Joined via Referral', style: AppTypography.titleSmall),
                           Text(
-                            '${state.members.length} Peers',
+                            '${state.stats.totalInvited} Joined',
                             style: AppTypography.labelSmall.copyWith(
                               color: AppColor.primaryBlue,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],

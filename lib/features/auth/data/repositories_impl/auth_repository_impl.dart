@@ -1,8 +1,9 @@
-import '../models/register_request_model.dart';
-import '../../domain/entities/category_item_entity.dart';
-import '../../domain/entities/register_params.dart';
+import 'package:unity_app/features/auth/data/models/register_request_model.dart';
 
 import '../../domain/entities/auth_token_entity.dart';
+import '../../domain/entities/category_item_entity.dart';
+import '../../domain/entities/referral_validation_entity.dart';
+import '../../domain/entities/register_params.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
@@ -126,6 +127,11 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<List<CategoryItemEntity>> getSubcategories(dynamic parentId) async {
     final models = await remoteDataSource.getSubcategories(parentId);
     return models.map((m) => m.toEntity()).toList();
+  }
+
+  @override
+  Future<ReferralValidationEntity> validateReferralCode(String code) async {
+    return remoteDataSource.validateReferralCode(code);
   }
 
   @override

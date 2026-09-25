@@ -11,6 +11,10 @@ class ApiEndpoints {
     return '$base/api/ads';
   }
 
+  // System & App Version
+  static const String appVersion = '/app/version';
+  static const String syncMobileVersion = '/user/mobile-version';
+
   static const String requestOtp = '/auth/request-otp';
   static const String verifyOtp = '/auth/verify-otp';
   static const String requestWhatsappOtp = '/auth/request-whatsapp-otp';
@@ -41,12 +45,18 @@ class ApiEndpoints {
   static String postComments(String id) => '/posts/$id/comments';
   static String postSave(String id) => '/posts/$id/save';
   static const String savedPosts = '/posts/saved';
+  static String postReport(String id) => '/posts/$id/report';
+  static const String postReportReasons = '/posts/report-reasons';
 
   // Peers & Connections
   static const String membersLimited = '/members/limited';
   static String member(String id) => '/members/$id';
   static String followUser(String userId) => '/users/$userId/follow';
   static String unfollowUser(String userId) => '/users/$userId/unfollow';
+  static const String myFollowers = '/me/followers';
+  static String userFollowers(String userId) => '/users/$userId/followers';
+  static String userFollowersCount(String userId) =>
+      '/users/$userId/followers/count';
   static String memberFollow(String memberId) => '/members/$memberId/follow';
   static String memberUnfollow(String memberId) =>
       '/members/$memberId/unfollow';
@@ -149,6 +159,8 @@ class ApiEndpoints {
   static String updateReferralStatus(String id) =>
       '/activities/referrals/$id/status';
   static const String referralsStats = '/referrals/stats';
+  static const String referralsValidate = '/referrals/validate';
+  static String validateReferralCode(String code) => '/referrals/validate/$code';
   static const String peerReferrals = '/peer-referrals';
   static const String receivedReferrals =
       '/activities/referrals?filter=received';
@@ -229,7 +241,7 @@ class ApiEndpoints {
       '/event-feedbacks/event/$eventId';
 
   // Menu & Inner Screens
-  static const String events = '/events';
+  static const String events = '/events/all';
   static const String circulars = '/circulars';
   static String circularDetail(String id) => '/circulars/$id';
   static const String eventGalleries = '/events/galleries';
@@ -244,8 +256,10 @@ class ApiEndpoints {
   static const String feedbackCategories = '/feedback/categories';
   static const String support = '/support';
   static const String supportTickets = '/support/tickets';
+  static const String mySupportTickets = '/support/my-tickets';
+  static String singleSupportTicket(String id) => '/support/tickets/$id';
   static const String adminSupportTickets = '/admin/support-tickets';
-  static const String activitySummary = '/profile/activity-summary';
+  static const String activitySummary = '/profile/last-month-activity';
   static const String newsletter = '/newsletter/latest';
   static const String rewardsStore = '/rewards/store/items';
   static const String industryInsights = '/insights/industry';

@@ -18,6 +18,7 @@ class PeerCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final EdgeInsetsGeometry? padding;
   final bool showBorder;
+  final bool showActions;
 
   const PeerCard({
     super.key,
@@ -32,6 +33,7 @@ class PeerCard extends StatelessWidget {
     this.margin,
     this.padding,
     this.showBorder = true,
+    this.showActions = true,
   });
 
   @override
@@ -57,12 +59,17 @@ class PeerCard extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          onTap: () {
-            if (onTap != null) {
-              if (!OfflineGuard.check(context, actionName: 'view this peer profile')) return;
-              onTap!();
-            }
-          },
+          onTap: onTap != null
+              ? () {
+                  if (!OfflineGuard.check(
+                    context,
+                    actionName: 'view this peer profile',
+                  )) {
+                    return;
+                  }
+                  onTap!();
+                }
+              : null,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding:
@@ -72,7 +79,7 @@ class PeerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                if (!isCurrentUser) ...[
+                if (!isCurrentUser && showActions) ...[
                   const SizedBox(height: 12),
                   _buildActions(context),
                 ],
@@ -238,40 +245,31 @@ class PeerCard extends StatelessWidget {
                 ),
               ],
 
-              // Row 4: Category
+              // Row 4: Category (Gradient Colored Text, No Background)
               if (hasCategory) ...[
                 const SizedBox(height: 2.5),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColor.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                      color: AppColor.primaryBlue.withValues(
-                        alpha: 0.15,
-                      ),
-                      width: 0.8,
-                    ),
+                ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) => AppColor.brandGradient.createShader(
+                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
                         Icons.sell_outlined,
-                        size: 8.5,
-                        color: AppColor.primaryBlue,
+                        size: 9.0,
+                        color: Colors.white,
                       ),
-                      const SizedBox(width: 2.5),
+                      const SizedBox(width: 3.0),
                       Flexible(
                         child: Text(
                           peer.category!.trim(),
                           style: const TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w500,
-                            color: AppColor.primaryBlue,
+                            color: Colors.white,
+                            letterSpacing: 0.1,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -311,7 +309,7 @@ class PeerCard extends StatelessWidget {
           const Icon(
             Icons.person_rounded,
             size: 13,
-            color: Color(0xFFD946EF),
+            color: AppColor.primaryBlue,
           ),
           const SizedBox(width: 3),
           Text(
@@ -319,7 +317,7 @@ class PeerCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: Color(0xFFD946EF),
+              color: AppColor.primaryBlue,
             ),
           ),
         ],

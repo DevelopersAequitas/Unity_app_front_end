@@ -38,7 +38,12 @@ class P2pCompletedCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
               child: InteractiveViewer(
+                minScale: 1.0,
+                maxScale: 3.5,
+                boundaryMargin: EdgeInsets.zero,
+                clipBehavior: Clip.hardEdge,
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.contain,

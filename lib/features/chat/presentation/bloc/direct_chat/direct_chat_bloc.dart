@@ -7,6 +7,7 @@ import '../../../domain/usecases/get_or_create_direct_chat_usecase.dart';
 import '../../../domain/usecases/mark_direct_chat_read_usecase.dart';
 import '../../../domain/usecases/send_direct_message_usecase.dart';
 import '../../../domain/usecases/set_typing_status_usecase.dart';
+import '../../../domain/entities/chat_message_entity.dart';
 import 'direct_chat_event.dart';
 import 'direct_chat_state.dart';
 
@@ -48,6 +49,19 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
     emit(const DirectChatState());
   }
 
+  List<ChatMessageEntity> _sortMessages(List<ChatMessageEntity> messages) {
+    final unique = <String, ChatMessageEntity>{};
+    for (final m in messages) {
+      final key = m.id.isNotEmpty
+          ? m.id
+          : 'temp_${m.createdAt.microsecondsSinceEpoch}_${m.content}';
+      unique[key] = m;
+    }
+    final list = unique.values.toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
   Future<void> _onInitDirectChat(
     InitDirectChatEvent event,
     Emitter<DirectChatState> emit,
@@ -71,7 +85,7 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
 
     try {
       String resolvedChatId = event.chatId ?? '';
-      if (resolvedChatId.isEmpty && event.peerUserId != null) {
+      if (resolvedChatId.isEmpty && event.peerUserId != null && event.peerUserId!.isNotEmpty) {
         final conv = await getOrCreateDirectChatUseCase(event.peerUserId!);
         resolvedChatId = conv.id;
         emit(state.copyWith(
@@ -84,10 +98,11 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
 
       if (resolvedChatId.isNotEmpty) {
         final messages = await getDirectMessagesUseCase(resolvedChatId, page: 1);
+        final sorted = _sortMessages(messages);
         emit(state.copyWith(
           status: DirectChatStatus.success,
           chatId: resolvedChatId,
-          messages: messages,
+          messages: sorted,
           currentPage: 1,
           hasReachedEnd: messages.length < 50,
         ));
@@ -121,7 +136,7 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
     Emitter<DirectChatState> emit,
   ) async {
     final chatId = state.chatId;
-    if (chatId == null || state.isSending) return;
+    if (chatId == null || chatId.isEmpty || state.isSending) return;
 
     try {
       final latestMessages = await getDirectMessagesUseCase(chatId, page: 1);
@@ -140,11 +155,17 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
         return;
       }
 
-      final existingIds = state.messages.map((m) => m.id).toSet();
+      final existingIds = state.messages
+          .map((m) => m.id)
+          .where((id) => id.isNotEmpty)
+          .toSet();
       final newItems =
           latestMessages.where((m) => !existingIds.contains(m.id)).toList();
 
-      final latestMap = {for (var m in latestMessages) m.id: m};
+      final latestMap = {
+        for (var m in latestMessages)
+          if (m.id.isNotEmpty) m.id: m
+      };
       bool hasReadStatusChange = false;
       final updatedExisting = state.messages.map((m) {
         if (latestMap.containsKey(m.id)) {
@@ -166,7 +187,7 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
       if (newItems.isNotEmpty ||
           hasReadStatusChange ||
           isPeerTyping != state.isPeerTyping) {
-        final merged = [...newItems, ...updatedExisting];
+        final merged = _sortMessages([...newItems, ...updatedExisting]);
         emit(state.copyWith(
           messages: merged,
           isPeerTyping: isPeerTyping,
@@ -183,7 +204,7 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
     Emitter<DirectChatState> emit,
   ) async {
     final chatId = state.chatId;
-    if (chatId == null || state.isLoadingMore || state.hasReachedEnd) return;
+    if (chatId == null || chatId.isEmpty || state.isLoadingMore || state.hasReachedEnd) return;
 
     final nextPage = event.isInitial ? 1 : state.currentPage + 1;
     if (!event.isInitial) emit(state.copyWith(isLoadingMore: true));
@@ -191,8 +212,9 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
     try {
       final newMessages =
           await getDirectMessagesUseCase(chatId, page: nextPage);
-      final all =
-          event.isInitial ? newMessages : [...state.messages, ...newMessages];
+      final all = event.isInitial
+          ? _sortMessages(newMessages)
+          : _sortMessages([...state.messages, ...newMessages]);
       emit(state.copyWith(
         messages: all,
         currentPage: nextPage,
@@ -208,8 +230,23 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
     SendDirectMessageEvent event,
     Emitter<DirectChatState> emit,
   ) async {
-    final chatId = state.chatId;
-    if (chatId == null || state.isSending) return;
+    String? chatId = state.chatId;
+    if (chatId == null || chatId.isEmpty) {
+      if (state.peerUserId != null && state.peerUserId!.isNotEmpty) {
+        try {
+          final conv = await getOrCreateDirectChatUseCase(state.peerUserId!);
+          chatId = conv.id;
+          emit(state.copyWith(
+            chatId: chatId,
+            conversation: conv,
+            peerName: conv.otherUser?.displayName ?? state.peerName,
+            peerAvatar: conv.otherUser?.profilePhotoUrl ?? state.peerAvatar,
+          ));
+        } catch (_) {}
+      }
+    }
+
+    if (chatId == null || chatId.isEmpty || state.isSending) return;
 
     emit(state.copyWith(isSending: true));
     try {
@@ -219,9 +256,10 @@ class DirectChatBloc extends Bloc<DirectChatEvent, DirectChatState> {
         filePath: event.filePath,
         fileType: event.fileType,
       );
+      final updatedList = _sortMessages([sent, ...state.messages]);
       emit(state.copyWith(
         isSending: false,
-        messages: [sent, ...state.messages],
+        messages: updatedList,
       ));
     } catch (e) {
       emit(state.copyWith(isSending: false, errorMessage: e.toString()));

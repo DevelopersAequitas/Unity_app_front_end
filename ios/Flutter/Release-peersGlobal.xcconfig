@@ -1,0 +1,5 @@
+#include "Release.xcconfig"
+
+APP_DISPLAY_NAME = Peers Global Unity
+PRODUCT_BUNDLE_IDENTIFIER = com.peers.peersunity
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-peersGlobal

@@ -26,6 +26,8 @@ class P2pMeetingRequestModel {
   final String? inviteeCategory;
   final bool isInviteePro;
   final List<P2pRescheduleRequestModel> rescheduleRequests;
+  final bool? canLogMeeting;
+  final bool? isLogged;
 
   const P2pMeetingRequestModel({
     required this.id,
@@ -52,6 +54,8 @@ class P2pMeetingRequestModel {
     this.inviteeCategory,
     this.isInviteePro = false,
     this.rescheduleRequests = const [],
+    this.canLogMeeting,
+    this.isLogged,
   });
 
   factory P2pMeetingRequestModel.fromJson(Map<String, dynamic> json) {
@@ -79,6 +83,15 @@ class P2pMeetingRequestModel {
         }
       }
     }
+
+    final bool? canLog = json['can_log_meeting'] is bool
+        ? json['can_log_meeting'] as bool
+        : (json['canLogMeeting'] is bool ? json['canLogMeeting'] as bool : null);
+
+    final bool logged = json['is_logged'] == true ||
+        json['isLogged'] == true ||
+        json['is_completed'] == true ||
+        json['status'] == 'completed';
 
     return P2pMeetingRequestModel(
       id: (json['id'] ?? '').toString(),
@@ -113,6 +126,8 @@ class P2pMeetingRequestModel {
               ?.toString(),
       isInviteePro: invObj?['is_pro'] == true,
       rescheduleRequests: reschedList,
+      canLogMeeting: canLog,
+      isLogged: logged,
     );
   }
 
@@ -141,5 +156,7 @@ class P2pMeetingRequestModel {
     inviteeCategory: inviteeCategory,
     isInviteePro: isInviteePro,
     rescheduleRequests: rescheduleRequests.map((r) => r.toEntity()).toList(),
+    canLogMeeting: canLogMeeting,
+    isLogged: isLogged,
   );
 }

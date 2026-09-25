@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_color.dart';
 import '../../../../../core/theme/app_typography.dart';
+import '../../../../../core/widgets/app_phone_field.dart';
 
 class ReferralContactInputs extends StatelessWidget {
   final TextEditingController phoneController;
@@ -58,39 +59,23 @@ class ReferralContactInputs extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Phone Field
-        Text(
-          'Phone Number',
-          style: AppTypography.titleSmall.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 13,
-            color: AppColor.lightTextPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
+        // Phone Field with Country Code Picker & Leading Zero Prevention
+        AppPhoneField(
           controller: phoneController,
+          label: 'Phone Number',
+          hintText: '98765 43210',
           onChanged: onPhoneChanged,
-          keyboardType: TextInputType.phone,
-          decoration: _buildDecoration(
-            hintText: 'e.g. +91 98765 43210',
-            prefixIcon: Icons.phone_outlined,
-            suffixIcon: onPickContact != null
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.contacts_outlined,
-                      size: 20,
-                      color: AppColor.lightTextSecondary,
-                    ),
-                    tooltip: 'Pick from contacts',
-                    onPressed: onPickContact,
-                  )
-                : null,
-          ),
-          style: AppTypography.bodyMedium.copyWith(
-            fontSize: 13.5,
-            color: AppColor.lightTextPrimary,
-          ),
+          suffixIcon: onPickContact != null
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.contacts_outlined,
+                    size: 20,
+                    color: AppColor.lightTextSecondary,
+                  ),
+                  tooltip: 'Pick from contacts',
+                  onPressed: onPickContact,
+                )
+              : null,
         ),
         const SizedBox(height: 16),
 

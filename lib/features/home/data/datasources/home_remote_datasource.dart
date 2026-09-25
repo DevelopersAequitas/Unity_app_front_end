@@ -7,6 +7,7 @@ import '../models/brand_partner_model.dart';
 import '../models/post_comment_model.dart';
 import '../models/post_like_model.dart';
 import '../models/timeline_feed_response_model.dart';
+import '../../domain/entities/post_report_reason_entity.dart';
 
 abstract class HomeRemoteDataSource {
   Future<TimelineFeedResponseModel> getTimelineFeed({
@@ -41,6 +42,10 @@ abstract class HomeRemoteDataSource {
   Future<void> deletePost(String postId);
 
   Future<void> updatePost(String postId, {required String contentText});
+
+  Future<List<PostReportReasonEntity>> getPostReportReasons();
+
+  Future<void> reportPost(String postId, int reasonId);
 }
 
 class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
@@ -319,16 +324,23 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
   @override
   Future<void> deletePost(String postId) async {
-    final response = await _dio.delete(ApiEndpoints.postDetail(postId));
-    if (response.statusCode != null &&
-        response.statusCode! >= 200 &&
-        response.statusCode! < 300) {
-      return;
+    try {
+      final response = await _dio.delete(ApiEndpoints.postDetail(postId));
+      if (response.statusCode != null &&
+          ((response.statusCode! >= 200 && response.statusCode! < 300) ||
+              response.statusCode == 404)) {
+        return;
+      }
+      throw ApiException(
+        message: response.statusMessage ?? 'Failed to delete post',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return;
+      }
+      rethrow;
     }
-    throw ApiException(
-      message: response.statusMessage ?? 'Failed to delete post',
-      statusCode: response.statusCode,
-    );
   }
 
   @override
@@ -344,6 +356,58 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     }
     throw ApiException(
       message: response.statusMessage ?? 'Failed to update post',
+      statusCode: response.statusCode,
+    );
+  }
+
+  @override
+  Future<List<PostReportReasonEntity>> getPostReportReasons() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.postReportReasons);
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300 &&
+          response.data != null) {
+        final data = response.data;
+        List? rawList;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'];
+          if (inner is Map<String, dynamic>) {
+            rawList = inner['items'] as List?;
+          } else if (inner is List) {
+            rawList = inner;
+          } else if (data['items'] is List) {
+            rawList = data['items'] as List?;
+          }
+        } else if (data is List) {
+          rawList = data;
+        }
+        if (rawList != null) {
+          return rawList
+              .whereType<Map<String, dynamic>>()
+              .map((e) => PostReportReasonEntity.fromJson(e))
+              .toList();
+        }
+      }
+      return const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<void> reportPost(String postId, int reasonId) async {
+    final response = await _dio.post(
+      ApiEndpoints.postReport(postId),
+      data: {'reason_id': reasonId},
+    );
+    if (response.statusCode != null &&
+        response.statusCode! >= 200 &&
+        response.statusCode! < 300) {
+      return;
+    }
+    throw ApiException(
+      message: response.statusMessage ?? 'Failed to report post',
       statusCode: response.statusCode,
     );
   }

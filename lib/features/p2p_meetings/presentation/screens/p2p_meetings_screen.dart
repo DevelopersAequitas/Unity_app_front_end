@@ -261,7 +261,10 @@ class _P2pMeetingsViewState extends State<_P2pMeetingsView> {
                           state.iInitiatedMeetings.length +
                           state.peerInitiatedMeetings.length,
                       scheduledCount:
-                          state.receivedRequests.length +
+                          state.receivedRequests.where((r) {
+                            final s = r.status.toLowerCase();
+                            return s != 'completed' && s != 'done' && s != 'rejected' && s != 'cancelled';
+                          }).length +
                           state.rescheduleRequests.length,
                       onTabChanged: _onMainTabChanged,
                     ),

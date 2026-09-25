@@ -114,11 +114,22 @@ class _BottomTabItem extends StatelessWidget {
                   scale: isSelected ? 1.12 : 1.0,
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOutBack,
-                  child: Icon(
-                    isSelected ? activeIcon : icon,
-                    size: 22,
-                    color: color,
-                  ),
+                  child: isSelected
+                      ? ShaderMask(
+                          shaderCallback: (bounds) =>
+                              AppColor.brandGradient.createShader(bounds),
+                          blendMode: BlendMode.srcIn,
+                          child: Icon(
+                            activeIcon,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          icon,
+                          size: 22,
+                          color: color,
+                        ),
                 ),
                 if (count != null && count! > 0)
                   Positioned(
@@ -147,14 +158,28 @@ class _BottomTabItem extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 3),
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: color,
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-              ),
-            ),
+            isSelected
+                ? ShaderMask(
+                    shaderCallback: (bounds) =>
+                        AppColor.brandGradient.createShader(bounds),
+                    blendMode: BlendMode.srcIn,
+                    child: Text(
+                      label,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: color,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
           ],
         ),
       ),

@@ -41,27 +41,51 @@ class _VerifyOtpInputSectionState extends State<VerifyOtpInputSection> {
   }
 
   void _onChanged(String value, int index) {
-    if (value.isNotEmpty) {
-      if (value.length > 1) {
-        final digits = value.replaceAll(RegExp(r'\D'), '');
-        for (int i = 0; i < 4 && i < digits.length; i++) {
-          widget.controllers[i].text = digits[i];
-        }
-        if (digits.length >= 4) {
-          widget.focusNodes[3].unfocus();
-          widget.onCompleted?.call(digits.substring(0, 4));
-        }
-        setState(() {});
-        return;
+    if (value.isEmpty) {
+      setState(() {});
+      return;
+    }
+
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) {
+      widget.controllers[index].clear();
+      setState(() {});
+      return;
+    }
+
+    // If user pasted a 4+ digit OTP code into any box:
+    if (digits.length >= 4) {
+      for (int i = 0; i < 4; i++) {
+        widget.controllers[i].text = digits[i];
       }
-      if (index < 3) {
-        widget.focusNodes[index + 1].requestFocus();
-      } else {
-        widget.focusNodes[index].unfocus();
-        final otp = widget.controllers.map((c) => c.text).join();
-        if (otp.length == 4) {
-          widget.onCompleted?.call(otp);
-        }
+      for (final node in widget.focusNodes) {
+        node.unfocus();
+      }
+      widget.onCompleted?.call(digits.substring(0, 4));
+      setState(() {});
+      return;
+    }
+
+    // If user typed a single character or typed over an existing character:
+    if (digits.length == 2) {
+      // Replace existing digit with the latest entered one
+      widget.controllers[index].text = digits[digits.length - 1];
+    } else if (digits.length == 1) {
+      widget.controllers[index].text = digits[0];
+    } else {
+      // 2 or 3 digits pasted
+      for (int i = 0; i < digits.length && (index + i) < 4; i++) {
+        widget.controllers[index + i].text = digits[i];
+      }
+    }
+
+    if (index < 3) {
+      widget.focusNodes[index + 1].requestFocus();
+    } else {
+      widget.focusNodes[index].unfocus();
+      final otp = widget.controllers.map((c) => c.text).join();
+      if (otp.length == 4) {
+        widget.onCompleted?.call(otp);
       }
     }
     setState(() {});
@@ -124,7 +148,7 @@ class _VerifyOtpInputSectionState extends State<VerifyOtpInputSection> {
                 fontWeight: FontWeight.w500,
               ),
               inputFormatters: [
-                LengthLimitingTextInputFormatter(1),
+                LengthLimitingTextInputFormatter(10),
                 FilteringTextInputFormatter.digitsOnly,
               ],
               onChanged: (val) => _onChanged(val, index),

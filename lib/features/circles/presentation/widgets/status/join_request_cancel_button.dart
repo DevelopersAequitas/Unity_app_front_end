@@ -17,7 +17,16 @@ class JoinRequestCancelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (request == null || request!.isApproved || request!.isRejected) {
+    if (request == null ||
+        request!.isApproved ||
+        request!.isRejected ||
+        request!.isPaid ||
+        request!.isPaymentRequired ||
+        request!.canPay ||
+        (request!.paymentUrl != null && request!.paymentUrl!.isNotEmpty) ||
+        request!.status.toLowerCase().contains('fee') ||
+        request!.displayStatus.toLowerCase().contains('fee') ||
+        request!.statusLabel.toLowerCase().contains('fee')) {
       return const SizedBox.shrink();
     }
 

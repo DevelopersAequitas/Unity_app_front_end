@@ -2,6 +2,7 @@ import 'dart:io';
 import '../entities/brand_partner_entity.dart';
 import '../entities/post_comment_entity.dart';
 import '../entities/post_like_entity.dart';
+import '../entities/post_report_reason_entity.dart';
 import '../entities/timeline_item_entity.dart';
 import '../entities/timeline_pagination_entity.dart';
 
@@ -37,4 +38,8 @@ abstract class HomeRepository {
   Future<void> deletePost(String postId);
 
   Future<void> updatePost(String postId, {required String contentText});
+
+  Future<List<PostReportReasonEntity>> getPostReportReasons();
+
+  Future<void> reportPost(String postId, int reasonId);
 }

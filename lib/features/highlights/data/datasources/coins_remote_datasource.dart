@@ -105,13 +105,33 @@ class CoinsRemoteDataSourceImpl implements CoinsRemoteDataSource {
         }
       });
 
-      final multipart = await MultipartFile.fromFile(
+      final isVideo = fileName.toLowerCase().endsWith('.mp4') ||
+          fileName.toLowerCase().endsWith('.mov') ||
+          fileName.toLowerCase().endsWith('.mkv') ||
+          fileName.toLowerCase().endsWith('.webm') ||
+          fileName.toLowerCase().endsWith('.avi') ||
+          activityCode.toLowerCase().contains('video') ||
+          activityCode.toLowerCase().contains('feedback');
+
+      final fileBytes = await MultipartFile.fromFile(
         proofFile.path,
         filename: fileName,
       );
 
-      map['payment_proof_file'] = multipart;
-      map['files[payment_proof_file]'] = multipart;
+      map['proof_file'] = fileBytes;
+      map['file'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+      map['payment_proof_file'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+
+      if (isVideo) {
+        map['feedback_video'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+        map['video'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+        map['feedback_video_file'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+        map['fields[feedback_video]'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+        map['fields[video]'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+      } else {
+        map['fields[proof_file]'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+        map['fields[payment_proof_file]'] = await MultipartFile.fromFile(proofFile.path, filename: fileName);
+      }
 
       final formData = FormData.fromMap(map);
 
@@ -119,8 +139,8 @@ class CoinsRemoteDataSourceImpl implements CoinsRemoteDataSource {
         ApiEndpoints.coinClaims,
         data: formData,
         options: Options(
-          sendTimeout: const Duration(minutes: 3),
-          receiveTimeout: const Duration(minutes: 3),
+          sendTimeout: const Duration(minutes: 5),
+          receiveTimeout: const Duration(minutes: 5),
         ),
       );
       return response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : {};

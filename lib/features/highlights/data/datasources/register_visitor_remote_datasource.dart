@@ -51,10 +51,31 @@ class RegisterVisitorRemoteDataSourceImpl
     List<dynamic> items = [];
     if (data is Map<String, dynamic>) {
       final inner = data['data'];
-      if (inner is Map<String, dynamic> && inner['items'] is List) {
-        items = inner['items'] as List;
+      if (inner is Map<String, dynamic>) {
+        final liveEvents = inner['live_events'] as List? ?? [];
+        final todayEvents = inner['today_events'] as List? ?? [];
+        final upcomingEvents = inner['upcoming_events'] as List? ?? [];
+        final genericEvents = inner['events'] as List? ?? inner['items'] as List? ?? [];
+
+        items = [
+          ...liveEvents,
+          ...todayEvents,
+          ...upcomingEvents,
+          ...genericEvents,
+        ];
       } else if (inner is List) {
         items = inner;
+      } else {
+        final liveEvents = data['live_events'] as List? ?? [];
+        final todayEvents = data['today_events'] as List? ?? [];
+        final upcomingEvents = data['upcoming_events'] as List? ?? [];
+        final genericItems = data['items'] as List? ?? data['events'] as List? ?? [];
+        items = [
+          ...liveEvents,
+          ...todayEvents,
+          ...upcomingEvents,
+          ...genericItems,
+        ];
       }
     } else if (data is List) {
       items = data;

@@ -19,6 +19,26 @@ class NetworkStatsEntity extends Equatable {
     this.referralLink = '',
   });
 
+  NetworkStatsEntity copyWith({
+    int? totalInvited,
+    int? activeMembers,
+    int? rewardsEarned,
+    int? referralsGiven,
+    int? referralsReceived,
+    String? referralCode,
+    String? referralLink,
+  }) {
+    return NetworkStatsEntity(
+      totalInvited: totalInvited ?? this.totalInvited,
+      activeMembers: activeMembers ?? this.activeMembers,
+      rewardsEarned: rewardsEarned ?? this.rewardsEarned,
+      referralsGiven: referralsGiven ?? this.referralsGiven,
+      referralsReceived: referralsReceived ?? this.referralsReceived,
+      referralCode: referralCode ?? this.referralCode,
+      referralLink: referralLink ?? this.referralLink,
+    );
+  }
+
   @override
   List<Object?> get props => [
         totalInvited,

@@ -13,6 +13,7 @@ import '../bloc/highlights_state.dart';
 import '../widgets/highlights_bottom_banner.dart';
 import '../widgets/highlights_navigation_handler.dart';
 import '../widgets/highlights_sections_grid.dart';
+import 'welcome_creative_template_screen.dart';
 
 class HighlightsScreen extends StatefulWidget {
   const HighlightsScreen({super.key});
@@ -107,7 +108,16 @@ class _HighlightsScreenState extends State<HighlightsScreen> {
                     children: [
                       _buildBody(state),
                       const SizedBox(height: 8),
-                      const HighlightsBottomBanner(),
+                      HighlightsBottomBanner(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const WelcomeCreativeTemplateScreen(),
+                            ),
+                          );
+                        },
+                      ),
                       SizedBox(height: 24 + MediaQuery.of(context).padding.bottom),
                     ],
                   ),

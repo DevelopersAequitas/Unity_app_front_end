@@ -57,6 +57,14 @@ class AddP2pMeetingCreativeSelected extends AddP2pMeetingEvent {
   List<Object?> get props => [creativeImage];
 }
 
+class AddP2pMeetingRequestIdChanged extends AddP2pMeetingEvent {
+  final String? requestId;
+  const AddP2pMeetingRequestIdChanged(this.requestId);
+
+  @override
+  List<Object?> get props => [requestId];
+}
+
 class AddP2pMeetingSubmitted extends AddP2pMeetingEvent {
   final File? creativeImage;
   const AddP2pMeetingSubmitted({this.creativeImage});

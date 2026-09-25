@@ -17,6 +17,7 @@ import '../../../peers/domain/usecases/get_all_peers_usecase.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
 import '../../../profile/presentation/bloc/profile_posts_event.dart';
+import '../../domain/entities/timeline_item_entity.dart';
 import '../../domain/usecases/create_post_usecase.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
@@ -26,7 +27,10 @@ import '../widgets/create_post/create_post_options_sheet.dart';
 import '../widgets/create_post/create_post_user_header.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  /// When non-null, the screen opens in edit mode.
+  final TimelineItemEntity? editPost;
+
+  const CreatePostScreen({super.key, this.editPost});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -55,6 +59,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   void initState() {
     super.initState();
+    // Pre-fill text when in edit mode
+    if (widget.editPost != null) {
+      _contentController.text = widget.editPost!.contentText;
+    }
     _contentController.addListener(_handleTextChanged);
   }
 
@@ -141,15 +149,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     final text = _contentController.text;
     final selection = _contentController.selection;
     final startIndex = _mentionQueryStartIndex;
-
     if (startIndex < 0 || startIndex >= text.length) return;
 
     final cursor = selection.baseOffset > startIndex ? selection.baseOffset : text.length;
     final beforeMention = text.substring(0, startIndex);
     final afterMention = text.substring(cursor);
 
-    // Clean user-friendly mention format in UI: @DisplayName
-    final mentionText = '@${peer.displayName} ';
+    // Clean user-friendly mention format in UI: DisplayName without @ sign
+    final mentionText = '${peer.displayName} ';
     final newText = '$beforeMention$mentionText$afterMention';
     final newCursorPos = beforeMention.length + mentionText.length;
 
@@ -288,6 +295,42 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     final text = _contentController.text.trim();
     final hasMedia = _selectedMediaFile != null;
 
+    // ── EDIT MODE ──────────────────────────────────────────────────────────
+    if (widget.editPost != null) {
+      if (text.isEmpty) {
+        AppSnackBar.showInfo(context, 'Post text cannot be empty.');
+        return;
+      }
+      if (!OfflineGuard.check(context, actionName: 'edit posts')) return;
+
+      setState(() {
+        _isSubmitting = true;
+        _statusText = 'Updating post...';
+      });
+
+      try {
+        final postId = widget.editPost!.id;
+        try {
+          context.read<HomeBloc>().add(HomePostEdited(postId: postId, contentText: text));
+        } catch (_) {}
+        try {
+          context.read<ProfilePostsBloc>().add(ProfilePostEdited(postId: postId, contentText: text));
+        } catch (_) {}
+
+        if (mounted) {
+          AppSnackBar.showSuccess(context, 'Post updated successfully!');
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          AppSnackBar.showError(context, 'Failed to update post: $e');
+        }
+      }
+      return;
+    }
+
+    // ── CREATE MODE ────────────────────────────────────────────────────────
     if (text.isEmpty && !hasMedia) {
       AppSnackBar.showInfo(context, 'Please write a description or attach media to post.');
       return;
@@ -327,11 +370,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         if (mounted) setState(() => _statusText = 'Publishing post...');
       }
 
+      String postText = text;
       final List<Map<String, dynamic>> mentionsPayload = [];
       for (final peer in _selectedMentions.values) {
         final mentionName = peer.displayName.trim();
-        if (text.toLowerCase().contains('@${mentionName.toLowerCase()}') ||
-            text.toLowerCase().contains(mentionName.toLowerCase())) {
+        if (postText.toLowerCase().contains('@${mentionName.toLowerCase()}') ||
+            postText.toLowerCase().contains(mentionName.toLowerCase())) {
+          // Clean @ sign from description for mentioned names
+          postText = postText.replaceAll('@$mentionName', mentionName);
           mentionsPayload.add({
             'id': peer.id,
             'name': mentionName,
@@ -341,7 +387,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       }
 
       await createPostUseCase(
-        contentText: text.isEmpty ? '\u200B' : text,
+        contentText: postText.isEmpty ? '\u200B' : postText,
         visibility: 'public',
         media: mediaList,
         mentions: mentionsPayload,
@@ -539,7 +585,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Create Post',
+          widget.editPost != null ? 'Edit Post' : 'Create Post',
           style: AppTypography.titleMedium.copyWith(
             fontWeight: FontWeight.w500,
             color: primaryTextColor,
@@ -570,7 +616,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         ),
                       )
                     : Text(
-                        'Post',
+                        widget.editPost != null ? 'Update' : 'Post',
                         style: AppTypography.labelLarge.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,

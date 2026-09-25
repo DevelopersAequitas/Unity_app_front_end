@@ -24,18 +24,29 @@ import '../widgets/business_deals_bottom_nav.dart';
 
 class BusinessDealsScreen extends StatelessWidget {
   final bool isModal;
+  final BusinessDealTab initialTab;
 
-  const BusinessDealsScreen({super.key, this.isModal = false});
+  const BusinessDealsScreen({
+    super.key,
+    this.isModal = false,
+    this.initialTab = BusinessDealTab.received,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (ctx) => BusinessDealsBloc(
-        getReceivedBusinessDealsUseCase: ctx.read<GetReceivedBusinessDealsUseCase>(),
-        getGivenBusinessDealsUseCase: ctx.read<GetGivenBusinessDealsUseCase>(),
-        getUserBusinessDealsUseCase: ctx.read<GetUserBusinessDealsUseCase>(),
-        getBusinessDealsLeaderboardUseCase: ctx.read<GetBusinessDealsLeaderboardUseCase>(),
-      )..add(const BusinessDealsFetchLeaderboardRequested()),
+      create: (ctx) {
+        final bloc = BusinessDealsBloc(
+          getReceivedBusinessDealsUseCase: ctx.read<GetReceivedBusinessDealsUseCase>(),
+          getGivenBusinessDealsUseCase: ctx.read<GetGivenBusinessDealsUseCase>(),
+          getUserBusinessDealsUseCase: ctx.read<GetUserBusinessDealsUseCase>(),
+          getBusinessDealsLeaderboardUseCase: ctx.read<GetBusinessDealsLeaderboardUseCase>(),
+        )..add(const BusinessDealsFetchLeaderboardRequested());
+        if (initialTab != BusinessDealTab.received) {
+          bloc.add(BusinessDealsTabChanged(initialTab));
+        }
+        return bloc;
+      },
       child: _BusinessDealsView(isModal: isModal),
     );
   }

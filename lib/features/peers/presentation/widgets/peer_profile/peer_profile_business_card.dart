@@ -28,20 +28,40 @@ class PeerProfileBusinessCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.business_center_rounded, size: 16, color: AppColor.primaryBlue),
+              Icon(
+                Icons.business_center_rounded,
+                size: 16,
+                color: AppColor.primaryBlue,
+              ),
               SizedBox(width: 6),
               Text(
                 'Business Information',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColor.lightTextPrimary),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColor.lightTextPrimary,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          _BusinessInfoRow(icon: Icons.domain_outlined, title: 'Company', value: company),
+          _BusinessInfoRow(
+            icon: Icons.domain_outlined,
+            title: 'Company',
+            value: company,
+          ),
           const SizedBox(height: 8),
-          _BusinessInfoRow(icon: Icons.sell_outlined, title: 'Business Category', value: subCategory),
+          _BusinessInfoRow(
+            icon: Icons.sell_outlined,
+            title: 'Business Category',
+            value: subCategory,
+          ),
           const SizedBox(height: 8),
-          _BusinessInfoRow(icon: Icons.grid_view_rounded, title: 'Main Category', value: mainCategory),
+          _BusinessInfoRow(
+            icon: Icons.grid_view_rounded,
+            title: 'Main Category',
+            value: mainCategory,
+          ),
         ],
       ),
     );
@@ -86,12 +106,6 @@ class _BusinessInfoRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-        ),
-        const SizedBox(width: 4),
-        const Icon(
-          Icons.chevron_right,
-          size: 16,
-          color: AppColor.lightTextSecondary,
         ),
       ],
     );

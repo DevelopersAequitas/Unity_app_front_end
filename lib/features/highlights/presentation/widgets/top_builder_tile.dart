@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../peers/presentation/bloc/peers_bloc.dart';
 import '../../../peers/presentation/bloc/peers_event.dart';
@@ -74,30 +73,39 @@ class TopBuilderTile extends StatelessWidget {
             ),
           ),
           PeerCard(
-            key: ValueKey(builder.id),
+            key: ValueKey('${builder.id}_${builder.isFollowing}_${builder.isBookmarked}_${builder.connectionStatus}'),
             peer: peerEntity,
             isCurrentUser: isCurrentUser,
             margin: EdgeInsets.zero,
             showBorder: false,
-            onConnect: isCurrentUser ? null : () {
-              context.read<PeersBloc>().add(PeerConnectRequested(builder.id));
-              AppSnackBar.showSuccess(context, 'Connection request sent to ${builder.name}');
-            },
-            onFollow: isCurrentUser ? null : () => context.read<PeersBloc>().add(
-              PeerFollowToggled(peerId: builder.id, isCurrentlyFollowing: builder.isFollowing),
-            ),
-            onScheduleP2P: (!isCurrentUser && peerEntity.isConnected)
-                ? () => AppSnackBar.showInfo(context, 'Scheduling P2P with ${builder.name}')
-                : null,
-            onMessage: isCurrentUser ? () {} : () => AppSnackBar.showInfo(context, 'Messaging ${builder.name}'),
+            onConnect: isCurrentUser
+                ? null
+                : () {
+                    context.read<PeersBloc>().add(PeerConnectRequested(builder.id));
+                  },
+            onFollow: isCurrentUser
+                ? null
+                : () => context.read<PeersBloc>().add(
+                      PeerFollowToggled(
+                        peerId: builder.id,
+                        isCurrentlyFollowing: builder.isFollowing,
+                      ),
+                    ),
+            onScheduleP2P: null,
+            onMessage: isCurrentUser ? () {} : null,
             onTap: () => Navigator.pushNamed(
               context,
               isCurrentUser ? AppRoutes.profile : AppRoutes.peerProfile,
               arguments: builder.id,
             ),
-            onBookmark: isCurrentUser ? () {} : () => context.read<PeersBloc>().add(
-              PeerBookmarkToggled(peerId: builder.id, isCurrentlyBookmarked: builder.isBookmarked),
-            ),
+            onBookmark: isCurrentUser
+                ? () {}
+                : () => context.read<PeersBloc>().add(
+                      PeerBookmarkToggled(
+                        peerId: builder.id,
+                        isCurrentlyBookmarked: builder.isBookmarked,
+                      ),
+                    ),
           ),
         ],
       ),

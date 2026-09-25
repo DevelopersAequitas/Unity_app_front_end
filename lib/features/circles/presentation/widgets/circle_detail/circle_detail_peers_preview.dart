@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/core/events/peers_event_bus.dart';
-import 'package:unity_app/core/widgets/app_snack_bar.dart';
 import '../../../../../core/router/app_router.dart';
 import '../../../../../core/theme/app_color.dart';
 import '../../../../../core/theme/app_typography.dart';
@@ -244,20 +243,8 @@ class _CircleDetailPeersPreviewState extends State<CircleDetailPeersPreview> {
                             ),
                           );
                     },
-              onScheduleP2P: isCurrentUser
-                  ? null
-                  : () {
-                      AppSnackBar.showInfo(
-                        context,
-                        'Scheduling P2P with ${peer.displayName}',
-                      );
-                    },
-              onMessage: () {
-                AppSnackBar.showInfo(
-                  context,
-                  'Messaging ${peer.displayName}',
-                );
-              },
+              onScheduleP2P: null,
+              onMessage: isCurrentUser ? () {} : null,
               onBookmark: () {
                 if (!isCurrentUser) {
                   context.read<PeersBloc>().add(

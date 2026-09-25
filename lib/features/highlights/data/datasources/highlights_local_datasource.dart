@@ -51,7 +51,20 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         category: 'Highlights',
         icon: Icons.chat_bubble_rounded,
         accentColor: Color(0xFF8B5CF6),
-        isLocked: true,
+      ),
+      HighlightSectionModel(
+        id: 'bookmarked_peers',
+        title: 'Bookmarks',
+        category: 'Highlights',
+        icon: Icons.bookmark_rounded,
+        accentColor: Color(0xFF8B5CF6),
+      ),
+      HighlightSectionModel(
+        id: 'intro_videos',
+        title: 'Intro Videos',
+        category: 'Highlights',
+        icon: Icons.play_circle_fill_rounded,
+        accentColor: Color(0xFFEC4899),
       ),
       HighlightSectionModel(
         id: 'open_asks',
@@ -124,7 +137,51 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         accentColor: Color(0xFFD97706),
       ),
 
-      // Category 2: Core Collaboration Actions
+      // Category 2: Leaderboards
+      HighlightSectionModel(
+        id: 'business_deals_leaderboard',
+        title: 'Business Deals',
+        category: 'Leaderboards',
+        icon: Icons.business_center_rounded,
+        accentColor: Color(0xFF059669),
+      ),
+      HighlightSectionModel(
+        id: 'p2p_meetings_leaderboard',
+        title: 'P2P Meetings',
+        category: 'Leaderboards',
+        icon: Icons.groups_rounded,
+        accentColor: Color(0xFF7C3AED),
+      ),
+      HighlightSectionModel(
+        id: 'testimonials_leaderboard',
+        title: 'Testimonials',
+        category: 'Leaderboards',
+        icon: Icons.thumb_up_rounded,
+        accentColor: Color(0xFFD97706),
+      ),
+      HighlightSectionModel(
+        id: 'referrals_leaderboard',
+        title: 'Referrals',
+        category: 'Leaderboards',
+        icon: Icons.person_pin_circle_rounded,
+        accentColor: Color(0xFF2563EB),
+      ),
+      HighlightSectionModel(
+        id: 'impact_leaderboard',
+        title: 'Life Impact',
+        category: 'Leaderboards',
+        icon: Icons.volunteer_activism_rounded,
+        accentColor: Color(0xFFF43F5E),
+      ),
+      HighlightSectionModel(
+        id: 'coins_leaderboard',
+        title: 'Coins',
+        category: 'Leaderboards',
+        icon: Icons.monetization_on_rounded,
+        accentColor: Color(0xFFF59E0B),
+      ),
+
+      // Category 3: Core Collaboration Actions
       HighlightSectionModel(
         id: 'referral',
         title: 'Referral',

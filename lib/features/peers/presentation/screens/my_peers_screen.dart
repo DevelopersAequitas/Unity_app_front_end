@@ -267,7 +267,7 @@ class _MyPeersScreenState extends State<MyPeersScreen> {
 
                     return RepaintBoundary(
                       child: PeerCard(
-                        key: ValueKey(peer.id),
+                        key: ValueKey('${peer.id}_${peer.isFollowing}_${peer.isBookmarked}_${peer.connectionStatus}'),
                         peer: peer,
                         onConnect: () {
                           context.read<PeersBloc>().add(
@@ -476,23 +476,50 @@ class _PeersBottomTabItem extends StatelessWidget {
               scale: isSelected ? 1.12 : 1.0,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOutBack,
-              child: Icon(
-                isSelected ? activeIcon : icon,
-                size: 20,
-                color: color,
-              ),
+              child: isSelected
+                  ? ShaderMask(
+                      shaderCallback: (bounds) =>
+                          AppColor.brandGradient.createShader(bounds),
+                      blendMode: BlendMode.srcIn,
+                      child: Icon(
+                        activeIcon,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      size: 20,
+                      color: color,
+                    ),
             ),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: color,
-                fontSize: 9.5,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            isSelected
+                ? ShaderMask(
+                    shaderCallback: (bounds) =>
+                        AppColor.brandGradient.createShader(bounds),
+                    blendMode: BlendMode.srcIn,
+                    child: Text(
+                      label,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: Colors.white,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: color,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
           ],
         ),
       ),

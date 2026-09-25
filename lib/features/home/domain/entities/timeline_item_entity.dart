@@ -67,6 +67,7 @@ class TimelineItemEntity extends Equatable {
     bool? isLikedByMe,
     bool? isSaved,
     List<TimelineMentionEntity>? mentions,
+    TimelineAuthorEntity? author,
   }) {
     return TimelineItemEntity(
       id: id,
@@ -77,7 +78,7 @@ class TimelineItemEntity extends Equatable {
       media: media,
       tags: tags,
       mentions: mentions ?? this.mentions,
-      author: author,
+      author: author ?? this.author,
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
       savesCount: savesCount ?? this.savesCount,

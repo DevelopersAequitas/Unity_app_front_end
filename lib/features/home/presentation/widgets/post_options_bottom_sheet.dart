@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/post_share_helper.dart';
@@ -10,6 +11,7 @@ import '../../../profile/presentation/bloc/profile_posts_event.dart';
 import '../../domain/entities/timeline_item_entity.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
+import 'report_post_bottom_sheet.dart';
 
 class PostOptionsBottomSheet extends StatelessWidget {
   final TimelineItemEntity item;
@@ -21,30 +23,40 @@ class PostOptionsBottomSheet extends StatelessWidget {
     required this.isOwner,
   });
 
-  static Future<void> show(BuildContext context, {required TimelineItemEntity item}) {
+  static Future<void> show(
+    BuildContext context, {
+    required TimelineItemEntity item,
+  }) {
     final profile = context.read<ProfileBloc>().state.profile;
     final currentUserId = profile?.userId ?? profile?.id ?? '';
     final authorId = item.author?.id ?? '';
-    final isOwner = (currentUserId.isNotEmpty && authorId.isNotEmpty && currentUserId == authorId) ||
+    final isOwner =
+        (currentUserId.isNotEmpty &&
+            authorId.isNotEmpty &&
+            currentUserId == authorId) ||
         (profile != null && item.author?.displayName == profile.displayName);
 
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => PostOptionsBottomSheet(
-        item: item,
-        isOwner: isOwner,
-      ),
+      builder: (_) => PostOptionsBottomSheet(item: item, isOwner: isOwner),
     );
   }
 
   void _handleDelete(BuildContext context) {
-    Navigator.pop(context);
+    final homeBloc = context.read<HomeBloc>();
+    ProfilePostsBloc? profilePostsBloc;
+    try {
+      profilePostsBloc = context.read<ProfilePostsBloc>();
+    } catch (_) {}
+    final navigator = Navigator.of(context, rootNavigator: true);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    Navigator.pop(context);
+
     showDialog(
-      context: context,
+      context: navigator.context,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: isDark ? AppColor.darkSurface : AppColor.lightSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -52,13 +64,17 @@ class PostOptionsBottomSheet extends StatelessWidget {
           'Delete Post',
           style: AppTypography.titleMedium.copyWith(
             fontWeight: FontWeight.w500,
-            color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
+            color: isDark
+                ? AppColor.darkTextPrimary
+                : AppColor.lightTextPrimary,
           ),
         ),
         content: Text(
           'Are you sure you want to delete this post? This action cannot be undone.',
           style: AppTypography.bodySmall.copyWith(
-            color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+            color: isDark
+                ? AppColor.darkTextSecondary
+                : AppColor.lightTextSecondary,
           ),
         ),
         actions: [
@@ -67,26 +83,31 @@ class PostOptionsBottomSheet extends StatelessWidget {
             child: Text(
               'Cancel',
               style: AppTypography.labelMedium.copyWith(
-                color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+                color: isDark
+                    ? AppColor.darkTextSecondary
+                    : AppColor.lightTextSecondary,
               ),
             ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogCtx);
-              try {
-                context.read<HomeBloc>().add(HomePostDeleted(item.id));
-              } catch (_) {}
-              try {
-                context.read<ProfilePostsBloc>().add(ProfilePostDeleted(item.id));
-              } catch (_) {}
-              AppSnackBar.showSuccess(context, 'Post deleted successfully');
+              homeBloc.add(HomePostDeleted(item.id));
+              if (profilePostsBloc != null) {
+                profilePostsBloc.add(ProfilePostDeleted(item.id));
+              }
+              if (navigator.context.mounted) {
+                AppSnackBar.showSuccess(
+                    navigator.context, 'Post deleted successfully');
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.error,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Delete'),
           ),
@@ -96,115 +117,23 @@ class PostOptionsBottomSheet extends StatelessWidget {
   }
 
   void _handleEdit(BuildContext context) {
-    Navigator.pop(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final controller = TextEditingController(text: item.contentText);
+    Navigator.pop(context); // close the options sheet
+    // Navigate to CreatePostScreen in edit mode
+    Navigator.pushNamed(context, AppRoutes.createPost, arguments: item);
+  }
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(sheetCtx).viewInsets.bottom),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          decoration: BoxDecoration(
-            color: isDark ? AppColor.darkSurface : AppColor.lightSurface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Edit Post',
-                      style: AppTypography.titleMedium.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        final newText = controller.text.trim();
-                        if (newText.isEmpty) {
-                          AppSnackBar.showInfo(context, 'Post text cannot be empty');
-                          return;
-                        }
-                        Navigator.pop(sheetCtx);
-                        try {
-                          context.read<HomeBloc>().add(HomePostEdited(postId: item.id, contentText: newText));
-                        } catch (_) {}
-                        try {
-                          context.read<ProfilePostsBloc>().add(ProfilePostEdited(postId: item.id, contentText: newText));
-                        } catch (_) {}
-                        AppSnackBar.showSuccess(context, 'Post updated successfully');
-                      },
-                      child: Text(
-                        'Save',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: AppColor.primaryBlue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: controller,
-                  maxLines: 5,
-                  minLines: 2,
-                  autofocus: true,
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Edit post description...',
-                    hintStyle: AppTypography.bodyMedium.copyWith(
-                      color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextDisabled,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: isDark ? AppColor.darkBorder : AppColor.lightBorder,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColor.primaryBlue),
-                    ),
-                    contentPadding: const EdgeInsets.all(12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  void _handleReport(BuildContext context) {
+    Navigator.pop(context);
+    ReportPostBottomSheet.show(context, item: item);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColor.darkSurface : AppColor.lightSurface;
-    final primaryTextColor = isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
+    final primaryTextColor = isDark
+        ? AppColor.darkTextPrimary
+        : AppColor.lightTextPrimary;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -267,18 +196,20 @@ class PostOptionsBottomSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _buildTile(
-                icon: item.isSaved ? Icons.bookmark_remove_outlined : Icons.bookmark_border_rounded,
+                icon: item.isSaved
+                    ? Icons.bookmark_remove_outlined
+                    : Icons.bookmark_border_rounded,
                 title: item.isSaved ? 'Unsave Post' : 'Save Post',
                 color: primaryTextColor,
                 onTap: () {
                   Navigator.pop(context);
                   try {
                     context.read<HomeBloc>().add(
-                          HomePostSaveToggled(
-                            postId: item.id,
-                            isCurrentlySaved: item.isSaved,
-                          ),
-                        );
+                      HomePostSaveToggled(
+                        postId: item.id,
+                        isCurrentlySaved: item.isSaved,
+                      ),
+                    );
                   } catch (_) {}
                 },
                 isDark: isDark,
@@ -288,10 +219,7 @@ class PostOptionsBottomSheet extends StatelessWidget {
                 icon: Icons.flag_outlined,
                 title: 'Report Post',
                 color: AppColor.warning,
-                onTap: () {
-                  Navigator.pop(context);
-                  AppSnackBar.showInfo(context, 'Report submitted. Thank you for keeping Peers safe.');
-                },
+                onTap: () => _handleReport(context),
                 isDark: isDark,
               ),
             ],

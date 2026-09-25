@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../app/app_config.dart';
 import '../router/app_router.dart';
 import '../theme/app_color.dart';
 import '../theme/app_typography.dart';
@@ -80,8 +81,8 @@ class AppCommonBar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isForcedDark = backgroundColor == Colors.black;
     final bgColor = backgroundColor ?? (isDark ? AppColor.darkBackground : AppColor.lightBackground);
-    final iconColor = foregroundColor ?? (isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary);
-    final primaryTextColor = foregroundColor ?? (isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary);
+    final iconColor = foregroundColor ?? (isForcedDark ? Colors.white : (isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary));
+    final primaryTextColor = foregroundColor ?? (isForcedDark ? Colors.white : (isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary));
 
     if (isSearching) {
       return AppBar(
@@ -241,17 +242,43 @@ class _LogoTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final logoPath = AppConfig.isInitialized
+        ? AppConfig.current.logoPath
+        : 'assets/logo/peers_global_logo.png';
+
+    final String firstWord;
+    final String secondWord;
+    final Color firstColor;
+    final Color secondColor;
+
+    if (AppConfig.isInitialized && AppConfig.current.flavor.isFempreneur) {
+      firstWord = 'Fempreneur';
+      secondWord = ' Unity';
+      firstColor = AppColor.primaryPink;
+      secondColor = isDark ? AppColor.white : const Color(0xFFC2185B);
+    } else if (AppConfig.isInitialized && AppConfig.current.flavor.isGreenpreneur) {
+      firstWord = 'Greenpreneur';
+      secondWord = ' Unity';
+      firstColor = const Color(0xFF2E7D32);
+      secondColor = isDark ? AppColor.white : const Color(0xFF1B5E20);
+    } else {
+      firstWord = 'Peers';
+      secondWord = 'Global';
+      firstColor = AppColor.primaryPink;
+      secondColor = AppColor.primaryBlue;
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset('assets/images/icon.png', width: 28, height: 28, fit: BoxFit.contain),
+        Image.asset(logoPath, width: 28, height: 28, fit: BoxFit.contain),
         const SizedBox(width: 8),
         RichText(
           text: TextSpan(
             style: AppTypography.titleMedium.copyWith(fontSize: 18),
-            children: const [
-              TextSpan(text: 'Peers', style: TextStyle(color: AppColor.primaryPink)),
-              TextSpan(text: 'Global', style: TextStyle(color: AppColor.primaryBlue)),
+            children: [
+              TextSpan(text: firstWord, style: TextStyle(color: firstColor)),
+              TextSpan(text: secondWord, style: TextStyle(color: secondColor)),
             ],
           ),
         ),

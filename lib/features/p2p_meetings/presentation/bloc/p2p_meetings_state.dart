@@ -55,9 +55,13 @@ class P2pMeetingsState extends Equatable {
 
   List<P2pMeetingRequestEntity> get filteredScheduledRequests {
     final list = scheduledSubTab == 'received' ? receivedRequests : sentRequests;
-    if (searchQuery.trim().isEmpty) return list;
+    final activeList = list.where((r) {
+      final s = r.status.toLowerCase();
+      return s != 'completed' && s != 'done' && s != 'rejected' && s != 'cancelled';
+    }).toList();
+    if (searchQuery.trim().isEmpty) return activeList;
     final q = searchQuery.trim().toLowerCase();
-    return list.where((r) {
+    return activeList.where((r) {
       final reqName = r.requesterName.toLowerCase();
       final invName = r.inviteeName.toLowerCase();
       final place = (r.place ?? '').toLowerCase();

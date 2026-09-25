@@ -18,6 +18,8 @@ class PeerProfileState extends Equatable {
   final bool hasMorePosts;
   final bool isLoadingMorePosts;
   final bool isBlocked;
+  final bool isBlockedByMe;
+  final bool isBlockedByPeer;
   final bool isBlockLoading;
 
   const PeerProfileState({
@@ -33,6 +35,8 @@ class PeerProfileState extends Equatable {
     this.hasMorePosts = false,
     this.isLoadingMorePosts = false,
     this.isBlocked = false,
+    this.isBlockedByMe = false,
+    this.isBlockedByPeer = false,
     this.isBlockLoading = false,
   });
 
@@ -49,6 +53,8 @@ class PeerProfileState extends Equatable {
     bool? hasMorePosts,
     bool? isLoadingMorePosts,
     bool? isBlocked,
+    bool? isBlockedByMe,
+    bool? isBlockedByPeer,
     bool? isBlockLoading,
   }) {
     return PeerProfileState(
@@ -65,6 +71,8 @@ class PeerProfileState extends Equatable {
       hasMorePosts: hasMorePosts ?? this.hasMorePosts,
       isLoadingMorePosts: isLoadingMorePosts ?? this.isLoadingMorePosts,
       isBlocked: isBlocked ?? this.isBlocked,
+      isBlockedByMe: isBlockedByMe ?? this.isBlockedByMe,
+      isBlockedByPeer: isBlockedByPeer ?? this.isBlockedByPeer,
       isBlockLoading: isBlockLoading ?? this.isBlockLoading,
     );
   }
@@ -83,6 +91,8 @@ class PeerProfileState extends Equatable {
         hasMorePosts,
         isLoadingMorePosts,
         isBlocked,
+        isBlockedByMe,
+        isBlockedByPeer,
         isBlockLoading,
       ];
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_color.dart';
 import '../theme/app_typography.dart';
 
@@ -14,6 +15,7 @@ class AppTextField extends StatelessWidget {
   final bool autofocus;
   final bool enabled;
   final FocusNode? focusNode;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -28,6 +30,7 @@ class AppTextField extends StatelessWidget {
     this.autofocus = false,
     this.enabled = true,
     this.focusNode,
+    this.inputFormatters,
   });
 
   @override
@@ -48,6 +51,7 @@ class AppTextField extends StatelessWidget {
         enabled: enabled,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
+        inputFormatters: inputFormatters,
         onChanged: onChanged,
         onSubmitted: onSubmitted,
         style: AppTypography.bodyLarge.copyWith(

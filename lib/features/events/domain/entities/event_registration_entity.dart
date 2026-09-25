@@ -56,13 +56,18 @@ class EventRegistrationEntity extends Equatable {
   });
 
   bool get isConfirmed =>
+      paymentStatus?.toLowerCase() == 'paid' ||
+      paymentStatus?.toLowerCase() == 'success' ||
       status == 'confirmed' ||
       status == 'checked_in' ||
       status == 'registered' ||
       status == 'true' ||
       status == 'completed' ||
-      status == 'attended';
-  bool get isPendingPayment => status == 'pending_payment' || paymentStatus == 'pending';
+      status == 'attended' ||
+      status == 'paid';
+  bool get isPendingPayment =>
+      !isConfirmed &&
+      (status == 'pending_payment' || paymentStatus == 'pending');
   bool get isPendingApproval =>
       status == 'pending' ||
       status == 'pending_approval' ||

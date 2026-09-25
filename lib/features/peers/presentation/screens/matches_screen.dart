@@ -92,6 +92,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                             child: CardSwiper(
                               controller: _controller,
                               cardsCount: matches.length,
+                              isLoop: true,
                               numberOfCardsDisplayed:
                                   matches.length > 2 ? 3 : matches.length,
                               backCardOffset: const Offset(0, 14),

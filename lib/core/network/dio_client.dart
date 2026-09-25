@@ -35,10 +35,7 @@ class DioClient {
                 p.contains('/members/online-heartbeat') ||
                 p.contains('/me/connection-requests');
             if (!isMuted) {
-              debugPrint('\n*** Request ***');
-              debugPrint('uri: ${options.uri}');
-              debugPrint('method: ${options.method}');
-              if (options.data != null) debugPrint('data: ${options.data}');
+              debugPrint('[HTTP] -> ${options.method} ${options.uri}');
             }
             return handler.next(options);
           },
@@ -48,10 +45,7 @@ class DioClient {
                 p.contains('/members/online-heartbeat') ||
                 p.contains('/me/connection-requests');
             if (!isMuted) {
-              debugPrint('\n*** Response ***');
-              debugPrint('uri: ${response.requestOptions.uri}');
-              debugPrint('status: ${response.statusCode}');
-              debugPrint('Response Text:\n${response.data}\n');
+              debugPrint('[HTTP] <- ${response.statusCode} ${response.requestOptions.uri}');
             }
             return handler.next(response);
           },
@@ -61,11 +55,7 @@ class DioClient {
                 p.contains('/members/online-heartbeat') ||
                 p.contains('/me/connection-requests');
             if (!isMuted) {
-              debugPrint('\n*** DioException ***:');
-              debugPrint('uri: ${error.requestOptions.uri}');
-              debugPrint('status: ${error.response?.statusCode}');
-              debugPrint('message: ${error.message}');
-              debugPrint('response: ${error.response?.data}\n');
+              debugPrint('[HTTP] ERR ${error.response?.statusCode ?? '---'} ${error.requestOptions.uri} (${error.message})');
             }
             return handler.next(error);
           },

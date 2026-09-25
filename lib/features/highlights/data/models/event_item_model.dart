@@ -40,24 +40,40 @@ class EventItemModel extends EventItemEntity {
       venueName = loc['venue_name']?.toString() ?? loc['address_line']?.toString();
       city = loc['city']?.toString();
       locationText ??= loc['text']?.toString();
+    } else if (json['location'] is String) {
+      locationText = json['location'] as String;
     }
+
+    final formattedStart = json['formatted_start_at']?.toString();
+    final startAtStr = (json['start_at'] ?? '').toString();
+    final displayDate = (json['display_date'] != null && json['display_date'].toString().isNotEmpty)
+        ? json['display_date'].toString()
+        : (formattedStart ?? (startAtStr.isNotEmpty ? startAtStr.split('T').first : ''));
+    final displayTime = (json['display_time'] != null && json['display_time'].toString().isNotEmpty)
+        ? json['display_time'].toString()
+        : (startAtStr.contains('T') ? startAtStr.split('T').last : '');
+
+    final meetingLink = json['meeting_link']?.toString() ?? json['online_meeting_url']?.toString();
+    final deliveryMode = json['mode']?.toString() ??
+        json['delivery_mode']?.toString() ??
+        (meetingLink != null && meetingLink.isNotEmpty ? 'online' : 'physical');
 
     return EventItemModel(
       id: (json['id'] ?? json['event_id'] ?? '').toString(),
-      occurrenceId: (json['occurrence_id'] ?? json['id'] ?? '').toString(),
+      occurrenceId: (json['occurrence_id'] ?? json['id'] ?? json['event_id'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
       eventType: (json['event_type'] ?? json['type'] ?? 'circle_meeting').toString(),
-      deliveryMode: json['delivery_mode']?.toString(),
+      deliveryMode: deliveryMode,
       circleName: circleName,
-      startAt: (json['start_at'] ?? '').toString(),
-      startDate: (json['start_date'] ?? '').toString(),
+      startAt: startAtStr,
+      startDate: (json['start_date'] ?? (startAtStr.isNotEmpty ? startAtStr.split('T').first : '')).toString(),
       startTime: (json['start_time'] ?? '').toString(),
-      displayDate: (json['display_date'] ?? '').toString(),
-      displayTime: (json['display_time'] ?? '').toString(),
+      displayDate: displayDate,
+      displayTime: displayTime,
       locationText: locationText,
       venueName: venueName,
       city: city,
-      onlineMeetingUrl: json['online_meeting_url']?.toString(),
+      onlineMeetingUrl: meetingLink,
       isPaid: json['is_paid'] == true || json['is_paid'] == 1,
       ticketPrice: json['ticket_price']?.toString(),
     );

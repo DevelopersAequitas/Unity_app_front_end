@@ -8,7 +8,7 @@ class ShortsSideActions extends StatelessWidget {
   final bool isMuted;
   final VoidCallback onToggleMute;
   final VoidCallback onToggleLike;
-  final VoidCallback onToggleBookmark;
+  final VoidCallback? onToggleBookmark;
   final VoidCallback onToggleFollow;
 
   const ShortsSideActions({
@@ -17,7 +17,7 @@ class ShortsSideActions extends StatelessWidget {
     required this.isMuted,
     required this.onToggleMute,
     required this.onToggleLike,
-    required this.onToggleBookmark,
+    this.onToggleBookmark,
     required this.onToggleFollow,
   });
 
@@ -33,13 +33,6 @@ class ShortsSideActions extends StatelessWidget {
           color: video.isLiked ? const Color(0xFFEF4444) : Colors.white,
           label: video.likesCount > 0 ? '${video.likesCount}' : 'Like',
           onTap: onToggleLike,
-        ),
-        const SizedBox(height: 16),
-        _buildActionButton(
-          icon: video.isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-          color: video.isBookmarked ? AppColor.warning : Colors.white,
-          label: 'Save',
-          onTap: onToggleBookmark,
         ),
         const SizedBox(height: 16),
         _buildActionButton(
@@ -84,7 +77,7 @@ class ShortsSideActions extends StatelessWidget {
   Widget _buildImpactCounter() {
     return Column(
       children: [
-        const Icon(Icons.person_rounded, color: AppColor.success, size: 24),
+        const Icon(Icons.person_rounded, color: AppColor.primaryBlue, size: 24),
         const SizedBox(height: 2),
         Text(
           '${video.lifeImpactedCount}',

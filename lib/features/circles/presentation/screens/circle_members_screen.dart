@@ -7,8 +7,6 @@ import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../../../../core/widgets/app_gradient_background.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
-
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../peers/presentation/bloc/peers_bloc.dart';
@@ -278,22 +276,8 @@ class _CircleMembersScreenState extends State<CircleMembersScreen> {
                                               ),
                                             );
                                       },
-                                onScheduleP2P: isCurrentUser
-                                    ? null
-                                    : () {
-                                        AppSnackBar.showInfo(
-                                          context,
-                                          'Scheduling P2P with ${peer.displayName}',
-                                        );
-                                      },
-                                onMessage: isCurrentUser
-                                    ? () {}
-                                    : () {
-                                        AppSnackBar.showInfo(
-                                          context,
-                                          'Messaging ${peer.displayName}',
-                                        );
-                                      },
+                                onScheduleP2P: null,
+                                onMessage: isCurrentUser ? () {} : null,
                                 onBookmark: isCurrentUser
                                     ? () {}
                                     : () {

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import '../cache/app_cache_keys.dart';
+import '../cache/hive_cache_store.dart';
 import '../router/app_router.dart';
 import '../../features/events/domain/entities/event_entity.dart';
 
@@ -52,7 +54,7 @@ class DeepLinkService {
     _handleUri(uri, context);
   }
 
-  void _handleUri(Uri uri, BuildContext context) {
+  Future<void> _handleUri(Uri uri, BuildContext context) async {
     debugPrint(
         '[DeepLinkService] Handling URI: $uri (path: ${uri.path}, host: ${uri.host}, query: ${uri.queryParameters})');
 
@@ -72,7 +74,11 @@ class DeepLinkService {
           if (uri.pathSegments.length > 1) {
             ref = uri.pathSegments[1];
           }
-        } else if (first == 'profile' || first == 'peer_profile' || first == 'peer') {
+        } else if (first == 'profile' ||
+            first == 'peer_profile' ||
+            first == 'peer' ||
+            first == 'member' ||
+            first == 'user') {
           if (uri.pathSegments.length > 1) {
             type = 'peer_profile';
             id = uri.pathSegments[1];
@@ -86,6 +92,9 @@ class DeepLinkService {
           }
         } else {
           type = first;
+          if (uri.pathSegments.length > 1 && (id == null || id.isEmpty)) {
+            id = uri.pathSegments[1];
+          }
         }
       }
     }
@@ -93,12 +102,21 @@ class DeepLinkService {
     // Fallback to host for custom scheme links: peersunity://peer_profile?id=...
     if (type == null || type.isEmpty) {
       type = uri.host;
+      if (uri.pathSegments.isNotEmpty && (id == null || id.isEmpty)) {
+        id = uri.pathSegments.first;
+      }
     }
 
     if (id == null || id.isEmpty) {
       id = uri.queryParameters['id'] ??
           uri.queryParameters['profile_id'] ??
           uri.queryParameters['peer_id'] ??
+          uri.queryParameters['member_id'] ??
+          uri.queryParameters['user_id'] ??
+          uri.queryParameters['peerId'] ??
+          uri.queryParameters['profileId'] ??
+          uri.queryParameters['memberId'] ??
+          uri.queryParameters['userId'] ??
           uri.queryParameters['post_id'] ??
           uri.queryParameters['circle_id'] ??
           uri.queryParameters['event_id'];
@@ -135,6 +153,10 @@ class DeepLinkService {
 
       case 'peer_profile':
       case 'member_profile':
+      case 'peer':
+      case 'member':
+      case 'user':
+      case 'user_profile':
         if (cleanId != null && cleanId.isNotEmpty) {
           safePush(AppRoutes.peerProfile, arguments: cleanId);
         } else {
@@ -484,6 +506,17 @@ class DeepLinkService {
         break;
 
       case 'register':
+        try {
+          final token = await HiveCacheStore().get<String>(
+            AppCacheBoxes.authBox,
+            AppCacheKeys.authToken,
+          );
+          if (token != null && token.trim().isNotEmpty) {
+            debugPrint(
+                '[DeepLinkService] User is already signed in; ignoring register deep link.');
+            return;
+          }
+        } catch (_) {}
         safePush(AppRoutes.register, arguments: ref);
         break;
 

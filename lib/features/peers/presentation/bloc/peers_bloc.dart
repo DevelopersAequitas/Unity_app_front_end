@@ -45,7 +45,12 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
             ? p.copyWith(isFollowing: event.isFollowing)
             : p;
       }).toList();
-      emit(state.copyWith(allPeers: updated));
+      final updatedBookmarks = state.bookmarkedPeersList.map((p) {
+        return p.id == event.peerId
+            ? p.copyWith(isFollowing: event.isFollowing)
+            : p;
+      }).toList();
+      emit(state.copyWith(allPeers: updated, bookmarkedPeersList: updatedBookmarks));
     });
     on<PeerBookmarkStatusSynced>((event, emit) {
       final updated = state.allPeers.map((p) {
@@ -53,7 +58,32 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
             ? p.copyWith(isBookmarked: event.isBookmarked)
             : p;
       }).toList();
-      emit(state.copyWith(allPeers: updated));
+      List<PeerEntity> updatedBookmarks;
+      if (!event.isBookmarked) {
+        updatedBookmarks = state.bookmarkedPeersList
+            .where((p) => p.id != event.peerId)
+            .toList();
+      } else {
+        final existingIndex =
+            state.bookmarkedPeersList.indexWhere((p) => p.id == event.peerId);
+        if (existingIndex >= 0) {
+          updatedBookmarks = state.bookmarkedPeersList.map((p) {
+            return p.id == event.peerId ? p.copyWith(isBookmarked: true) : p;
+          }).toList();
+        } else {
+          final peerInAll =
+              state.allPeers.where((p) => p.id == event.peerId).firstOrNull;
+          if (peerInAll != null) {
+            updatedBookmarks = [
+              ...state.bookmarkedPeersList,
+              peerInAll.copyWith(isBookmarked: true),
+            ];
+          } else {
+            updatedBookmarks = state.bookmarkedPeersList;
+          }
+        }
+      }
+      emit(state.copyWith(allPeers: updated, bookmarkedPeersList: updatedBookmarks));
     });
 
     _busSubscription = PeersEventBus.instance.stream.listen((event) {
@@ -137,7 +167,15 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
           ? p.copyWith(connectionStatus: event.status)
           : p;
     }).toList();
-    emit(state.copyWith(allPeers: updated));
+    final updatedBookmarks = state.bookmarkedPeersList.map((p) {
+      return p.id == event.peerId
+          ? p.copyWith(connectionStatus: event.status)
+          : p;
+    }).toList();
+    emit(state.copyWith(
+      allPeers: updated,
+      bookmarkedPeersList: updatedBookmarks,
+    ));
   }
 
   @override
@@ -302,7 +340,16 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
       }
       return p;
     }).toList();
-    emit(state.copyWith(allPeers: updated));
+    final updatedBookmarks = state.bookmarkedPeersList.map((p) {
+      if (p.id == event.peerId) {
+        return p.copyWith(isFollowing: nextFollowing);
+      }
+      return p;
+    }).toList();
+    emit(state.copyWith(
+      allPeers: updated,
+      bookmarkedPeersList: updatedBookmarks,
+    ));
     PeersEventBus.instance.emit(
       PeerFollowToggledEvent(peerId: event.peerId, isFollowing: nextFollowing),
     );
@@ -320,7 +367,16 @@ class PeersBloc extends Bloc<PeersEvent, PeersState> {
         }
         return p;
       }).toList();
-      emit(state.copyWith(allPeers: reverted));
+      final revertedBookmarks = state.bookmarkedPeersList.map((p) {
+        if (p.id == event.peerId) {
+          return p.copyWith(isFollowing: event.isCurrentlyFollowing);
+        }
+        return p;
+      }).toList();
+      emit(state.copyWith(
+        allPeers: reverted,
+        bookmarkedPeersList: revertedBookmarks,
+      ));
       PeersEventBus.instance.emit(
         PeerFollowToggledEvent(
           peerId: event.peerId,

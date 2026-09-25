@@ -67,6 +67,56 @@ class GratitudeScriptEntity extends Equatable {
     return buffer.toString().trim();
   }
 
+  GratitudeScriptEntity copyWith({
+    String? authorName,
+    String? businessName,
+    String? category,
+    String? profilePhotoUrl,
+    String? startDate,
+    String? endDate,
+    int? totalDays,
+    int? livesImpacted,
+    double? businessDone,
+    int? lifetimeLivesImpacted,
+    double? lifetimeBusinessDone,
+    String? greetingText,
+    String? introductionText,
+    String? monthlyLivesImpactedText,
+    String? monthlyBusinessDoneText,
+    String? lifetimeImpactText,
+    String? businessDealsText,
+    String? progressWord,
+    String? nextMonthGoal,
+    String? experienceStory,
+    String? closingText,
+    List<String>? checklist,
+  }) {
+    return GratitudeScriptEntity(
+      authorName: authorName ?? this.authorName,
+      businessName: businessName ?? this.businessName,
+      category: category ?? this.category,
+      profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      totalDays: totalDays ?? this.totalDays,
+      livesImpacted: livesImpacted ?? this.livesImpacted,
+      businessDone: businessDone ?? this.businessDone,
+      lifetimeLivesImpacted: lifetimeLivesImpacted ?? this.lifetimeLivesImpacted,
+      lifetimeBusinessDone: lifetimeBusinessDone ?? this.lifetimeBusinessDone,
+      greetingText: greetingText ?? this.greetingText,
+      introductionText: introductionText ?? this.introductionText,
+      monthlyLivesImpactedText: monthlyLivesImpactedText ?? this.monthlyLivesImpactedText,
+      monthlyBusinessDoneText: monthlyBusinessDoneText ?? this.monthlyBusinessDoneText,
+      lifetimeImpactText: lifetimeImpactText ?? this.lifetimeImpactText,
+      businessDealsText: businessDealsText ?? this.businessDealsText,
+      progressWord: progressWord ?? this.progressWord,
+      nextMonthGoal: nextMonthGoal ?? this.nextMonthGoal,
+      experienceStory: experienceStory ?? this.experienceStory,
+      closingText: closingText ?? this.closingText,
+      checklist: checklist ?? this.checklist,
+    );
+  }
+
   @override
   List<Object?> get props => [
         authorName,

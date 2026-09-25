@@ -103,13 +103,18 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
           isBookmarked: event.isBookmarked,
         ));
       } else if (event is PeerBlockedEvent) {
-        if (state.profile?.id == event.peerId) {
-          add(const PeerProfileBlockRequested());
-        }
+        add(PeerProfileEventBusUpdateReceived(
+          peerId: event.peerId,
+          isBlocked: true,
+          connectionStatus: 'none',
+          isConnected: false,
+          isRequested: false,
+        ));
       } else if (event is PeerUnblockedEvent) {
-        if (state.profile?.id == event.peerId) {
-          add(PeerProfileFetchRequested(event.peerId));
-        }
+        add(PeerProfileEventBusUpdateReceived(
+          peerId: event.peerId,
+          isBlocked: false,
+        ));
       }
     });
   }
@@ -126,10 +131,10 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     if (!matches) return;
 
     var updated = profile;
-    if (event.isFollowing != null) {
+    if (event.isFollowing != null && profile.isFollowing != event.isFollowing) {
       final nextCount = event.isFollowing!
-          ? (profile.isFollowing ? profile.followersCount : profile.followersCount + 1)
-          : (profile.isFollowing ? (profile.followersCount > 0 ? profile.followersCount - 1 : 0) : profile.followersCount);
+          ? profile.followersCount + 1
+          : (profile.followersCount > 0 ? profile.followersCount - 1 : 0);
       updated = updated.copyWith(
         isFollowing: event.isFollowing,
         followersCount: nextCount,
@@ -147,7 +152,23 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     if (event.isRequested != null) {
       updated = updated.copyWith(isRequested: event.isRequested);
     }
-    emit(state.copyWith(profile: updated));
+    if (event.isBlocked != null) {
+      updated = updated.copyWith(
+        isBlocked: event.isBlocked,
+        isBlockedByMe: event.isBlockedByMe ?? (event.isBlocked == true),
+        isBlockedByPeer: event.isBlockedByPeer ?? false,
+        isConnected: event.isBlocked == true ? false : updated.isConnected,
+        isRequested: event.isBlocked == true ? false : updated.isRequested,
+        connectionStatus: event.isBlocked == true ? 'none' : updated.connectionStatus,
+      );
+    }
+    emit(state.copyWith(
+      profile: updated,
+      isBlocked: event.isBlocked ?? state.isBlocked,
+      isBlockedByMe: event.isBlockedByMe ?? (event.isBlocked == true ? true : state.isBlockedByMe),
+      isBlockedByPeer: event.isBlockedByPeer ?? state.isBlockedByPeer,
+      isBlockLoading: false,
+    ));
   }
 
   @override
@@ -174,7 +195,10 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     PeerProfileFetchRequested event,
     Emitter<PeerProfileState> emit,
   ) async {
-    emit(state.copyWith(status: PeerProfileStatus.loading));
+    emit(state.copyWith(
+      status: PeerProfileStatus.loading,
+      isBlockLoading: false,
+    ));
     try {
       bool isBlocked = false;
       if (getPeerBlockStatusUseCase != null) {
@@ -189,10 +213,20 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
           profile = await getMemberProfileUseCase(event.peerId);
         } catch (_) {}
 
+        final isBlockedByPeer = profile?.isBlockedByPeer ?? false;
+        final isBlockedByMe = profile?.isBlockedByMe ?? !isBlockedByPeer;
+
         emit(state.copyWith(
           status: PeerProfileStatus.success,
-          profile: (profile ?? state.profile)?.copyWith(isBlocked: true),
+          profile: (profile ?? state.profile)?.copyWith(
+            isBlocked: true,
+            isBlockedByMe: isBlockedByMe,
+            isBlockedByPeer: isBlockedByPeer,
+          ),
           isBlocked: true,
+          isBlockedByMe: isBlockedByMe,
+          isBlockedByPeer: isBlockedByPeer,
+          isBlockLoading: false,
           errorMessage: null,
           isPostsLoading: false,
           isIntroducedPeersLoading: false,
@@ -202,10 +236,16 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
 
       final profile = await getMemberProfileUseCase(event.peerId);
       final effectiveBlocked = profile.isBlocked;
+      final effectiveBlockedByMe = profile.isBlockedByMe;
+      final effectiveBlockedByPeer = profile.isBlockedByPeer;
+
       emit(state.copyWith(
         status: PeerProfileStatus.success,
         profile: profile,
         isBlocked: effectiveBlocked,
+        isBlockedByMe: effectiveBlockedByMe,
+        isBlockedByPeer: effectiveBlockedByPeer,
+        isBlockLoading: false,
         errorMessage: null,
         isPostsLoading: !effectiveBlocked,
         isIntroducedPeersLoading: !effectiveBlocked,
@@ -260,14 +300,19 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
       }
       final errStr = e.toString().toLowerCase();
       if (errStr.contains('block') || errStr.contains('403') || isBlocked) {
+        final isByPeer = errStr.contains('403') || errStr.contains('peer');
         emit(state.copyWith(
           status: PeerProfileStatus.success,
           isBlocked: true,
+          isBlockedByMe: !isByPeer,
+          isBlockedByPeer: isByPeer,
+          isBlockLoading: false,
           errorMessage: null,
         ));
       } else {
         emit(state.copyWith(
           status: PeerProfileStatus.failure,
+          isBlockLoading: false,
           errorMessage: e.toString(),
         ));
       }
@@ -278,9 +323,15 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     PeerProfileBlockRequested event,
     Emitter<PeerProfileState> emit,
   ) async {
+    if (state.isBlockLoading) return;
     final profile = state.profile;
-    final targetId = profile?.id ?? '';
-    if (targetId.isEmpty) return;
+    final targetId = (event.peerId != null && event.peerId!.isNotEmpty)
+        ? event.peerId!
+        : (profile?.id.isNotEmpty == true ? profile!.id : (profile?.userId ?? ''));
+    if (targetId.isEmpty) {
+      emit(state.copyWith(isBlockLoading: false));
+      return;
+    }
 
     final updatedProfile = profile?.copyWith(
       isBlocked: true,
@@ -288,7 +339,6 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
       isRequested: false,
       connectionStatus: 'none',
     );
-    // Instantly show the blocked overlay without waiting for network response
     emit(state.copyWith(
       isBlocked: true,
       isBlockLoading: true,
@@ -322,9 +372,15 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
     PeerProfileUnblockRequested event,
     Emitter<PeerProfileState> emit,
   ) async {
+    if (state.isBlockLoading) return;
     final profile = state.profile;
-    final targetId = profile?.id ?? '';
-    if (targetId.isEmpty) return;
+    final targetId = (event.peerId != null && event.peerId!.isNotEmpty)
+        ? event.peerId!
+        : (profile?.id.isNotEmpty == true ? profile!.id : (profile?.userId ?? ''));
+    if (targetId.isEmpty) {
+      emit(state.copyWith(isBlockLoading: false));
+      return;
+    }
 
     emit(state.copyWith(isBlockLoading: true));
     try {
@@ -470,16 +526,26 @@ class PeerProfileBloc extends Bloc<PeerProfileEvent, PeerProfileState> {
       PeerFollowToggledEvent(peerId: profile.id, isFollowing: nextFollowing),
     );
 
+    final targetId = profile.id.isNotEmpty ? profile.id : (profile.userId ?? '');
     try {
-      final targetUserId = (profile.userId != null && profile.userId!.isNotEmpty)
-          ? profile.userId!
-          : profile.id;
       if (currentlyFollowing) {
-        await unfollowUserUseCase(targetUserId);
+        await unfollowUserUseCase(targetId);
       } else {
-        await followUserUseCase(targetUserId);
+        await followUserUseCase(targetId);
       }
     } catch (_) {
+      if (profile.userId != null &&
+          profile.userId!.isNotEmpty &&
+          profile.userId != targetId) {
+        try {
+          if (currentlyFollowing) {
+            await unfollowUserUseCase(profile.userId!);
+          } else {
+            await followUserUseCase(profile.userId!);
+          }
+          return;
+        } catch (_) {}
+      }
       emit(state.copyWith(profile: profile));
       PeersEventBus.instance.emit(
         PeerFollowToggledEvent(peerId: profile.id, isFollowing: currentlyFollowing),

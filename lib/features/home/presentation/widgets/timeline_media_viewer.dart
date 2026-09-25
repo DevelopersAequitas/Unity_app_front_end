@@ -133,16 +133,23 @@ class _TimelineMediaViewerState extends State<TimelineMediaViewer> {
     final mediaContent = GestureDetector(
       onTap: _openPreview,
       onDoubleTap: widget.onDoubleTap,
-      child: AspectRatio(
-        aspectRatio: 4 / 5,
-        child: widget.media.isVideo ? _buildVideo() : _buildImage(),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 480),
+        child: ClipRect(
+          clipBehavior: Clip.hardEdge,
+          child: AspectRatio(
+            aspectRatio: 4 / 5,
+            child: widget.media.isVideo ? _buildVideo() : _buildImage(),
+          ),
+        ),
       ),
     );
 
     if (widget.media.isVideo) {
       return VisibilityDetector(
         key: Key('timeline_video_${widget.media.url}'),
-        onVisibilityChanged: (info) => _handleVisibilityChange(info.visibleFraction),
+        onVisibilityChanged: (info) =>
+            _handleVisibilityChange(info.visibleFraction),
         child: mediaContent,
       );
     }
@@ -168,54 +175,82 @@ class _TimelineMediaViewerState extends State<TimelineMediaViewer> {
       return _buildVideoPlaceholder();
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: _controller!.value.size.width,
-            height: _controller!.value.size.height,
-            child: VideoPlayer(_controller!),
-          ),
-        ),
-        // Play icon hint overlay (muted indicator)
-        Positioned(
-          bottom: 10,
-          right: 10,
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
+    final videoSize = _controller!.value.size;
+    final hasValidSize = videoSize.width > 0 && videoSize.height > 0;
+
+    return ClipRect(
+      clipBehavior: Clip.hardEdge,
+      child: Container(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          alignment: Alignment.center,
+          children: [
+            Center(
+              child: hasValidSize
+                  ? FittedBox(
+                      fit: BoxFit.cover,
+                      clipBehavior: Clip.hardEdge,
+                      child: SizedBox(
+                        width: videoSize.width,
+                        height: videoSize.height,
+                        child: VideoPlayer(_controller!),
+                      ),
+                    )
+                  : AspectRatio(
+                      aspectRatio: _controller!.value.aspectRatio > 0
+                          ? _controller!.value.aspectRatio
+                          : 4 / 5,
+                      child: VideoPlayer(_controller!),
+                    ),
             ),
-            child: const Icon(Icons.volume_off_rounded, size: 16, color: Colors.white),
-          ),
-        ),
-        // Tap-to-expand hint
-        Positioned(
-          top: 10,
-          right: 10,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.play_circle_outline_rounded, size: 14, color: Colors.white),
-                SizedBox(width: 4),
-                Text(
-                  'Tap to watch',
-                  style: TextStyle(color: Colors.white, fontSize: 11),
+            // Play icon hint overlay (muted indicator)
+            Positioned(
+              bottom: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
                 ),
-              ],
+                child: const Icon(
+                  Icons.volume_off_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
+            // Tap-to-expand hint
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.play_circle_outline_rounded,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Tap to watch',
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 

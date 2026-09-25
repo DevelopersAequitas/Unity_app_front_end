@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/entities/intro_video_entity.dart';
 import '../../domain/repositories/shorts_repository.dart';
 import '../../domain/usecases/get_intro_videos_usecase.dart';
 import 'shorts_event.dart';
@@ -7,6 +9,8 @@ import 'shorts_state.dart';
 class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
   final GetIntroVideosUseCase getIntroVideosUseCase;
   final ShortsRepository repository;
+
+  Timer? _bgSyncTimer;
 
   ShortsBloc({
     required this.getIntroVideosUseCase,
@@ -17,6 +21,20 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
     on<ToggleShortLikeEvent>(_onToggleLike);
     on<ToggleShortBookmarkEvent>(_onToggleBookmark);
     on<ToggleShortFollowEvent>(_onToggleFollow);
+    on<_ShortsBackgroundSyncEvent>(_onBackgroundSync);
+
+    // Periodic background sync every 90 seconds to pick up new videos
+    _bgSyncTimer = Timer.periodic(const Duration(seconds: 90), (_) {
+      if (!isClosed) {
+        add(const _ShortsBackgroundSyncEvent());
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _bgSyncTimer?.cancel();
+    return super.close();
   }
 
   Future<void> _onFetchIntroVideos(
@@ -31,7 +49,7 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
           status: ShortsStatus.loaded,
           videos: cached,
           currentPage: 2,
-          hasReachedMax: cached.length < 15,
+          hasReachedMax: false,
         ));
       } else {
         emit(state.copyWith(status: ShortsStatus.loading));
@@ -44,14 +62,23 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
 
     try {
       final page = event.isRefresh ? 1 : state.currentPage;
-      final videos = await getIntroVideosUseCase(page: page, perPage: 15);
-      final updatedList = event.isRefresh ? videos : [...state.videos, ...videos];
+      final result = await getIntroVideosUseCase(page: page, perPage: 10);
+      final newVideos = result.videos;
+
+      final updatedList =
+          event.isRefresh ? newVideos : _mergeVideos(state.videos, newVideos);
+
+      // hasReachedMax: if we got fewer than per_page OR total is known and list covers it
+      final total = result.total;
+      final hasReachedMax = total != null
+          ? updatedList.length >= total
+          : newVideos.length < 10;
 
       emit(state.copyWith(
         status: ShortsStatus.loaded,
         videos: updatedList,
-        hasReachedMax: videos.length < 15,
-        currentPage: page + 1,
+        hasReachedMax: hasReachedMax,
+        currentPage: event.isRefresh ? 2 : page + 1,
         errorMessage: null,
       ));
     } catch (e) {
@@ -61,6 +88,40 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
           errorMessage: e.toString(),
         ));
       }
+    }
+  }
+
+  /// Merges newly fetched page into the existing list, deduplicating by id.
+  List<IntroVideoEntity> _mergeVideos(
+    List<IntroVideoEntity> existing,
+    List<IntroVideoEntity> incoming,
+  ) {
+    final ids = existing.map((v) => v.id).toSet();
+    final fresh = incoming.where((v) => !ids.contains(v.id)).toList();
+    return [...existing, ...fresh];
+  }
+
+  /// Background sync: silently refresh page 1 and prepend any new videos.
+  Future<void> _onBackgroundSync(
+    _ShortsBackgroundSyncEvent event,
+    Emitter<ShortsState> emit,
+  ) async {
+    if (state.status != ShortsStatus.loaded) return;
+    try {
+      final result = await getIntroVideosUseCase(page: 1, perPage: 10);
+      final incoming = result.videos;
+      if (incoming.isEmpty) return;
+
+      final existingIds = state.videos.map((v) => v.id).toSet();
+      final brandNew = incoming.where((v) => !existingIds.contains(v.id)).toList();
+
+      if (brandNew.isNotEmpty) {
+        // Prepend new videos to the front (newest first)
+        final merged = [...brandNew, ...state.videos];
+        emit(state.copyWith(videos: merged));
+      }
+    } catch (_) {
+      // Silently ignore background sync errors
     }
   }
 
@@ -78,12 +139,15 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
     ToggleShortLikeEvent event,
     Emitter<ShortsState> emit,
   ) async {
-    final index = state.videos.indexWhere((v) => v.id == event.videoId || v.introVideoId == event.videoId);
+    final index = state.videos.indexWhere(
+        (v) => v.id == event.videoId || v.introVideoId == event.videoId);
     if (index == -1) return;
 
     final current = state.videos[index];
     final newStatus = !current.isLiked;
-    final newCount = newStatus ? current.likesCount + 1 : (current.likesCount > 0 ? current.likesCount - 1 : 0);
+    final newCount = newStatus
+        ? current.likesCount + 1
+        : (current.likesCount > 0 ? current.likesCount - 1 : 0);
 
     final updated = List.of(state.videos);
     updated[index] = current.copyWith(isLiked: newStatus, likesCount: newCount);
@@ -102,7 +166,8 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
     ToggleShortBookmarkEvent event,
     Emitter<ShortsState> emit,
   ) async {
-    final index = state.videos.indexWhere((v) => v.userId == event.memberId || v.id == event.memberId);
+    final index = state.videos
+        .indexWhere((v) => v.userId == event.memberId || v.id == event.memberId);
     if (index == -1) return;
 
     final current = state.videos[index];
@@ -124,7 +189,8 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
     ToggleShortFollowEvent event,
     Emitter<ShortsState> emit,
   ) async {
-    final index = state.videos.indexWhere((v) => v.userId == event.memberId || v.id == event.memberId);
+    final index = state.videos
+        .indexWhere((v) => v.userId == event.memberId || v.id == event.memberId);
     if (index == -1) return;
 
     final current = state.videos[index];
@@ -141,4 +207,9 @@ class ShortsBloc extends Bloc<ShortsEvent, ShortsState> {
       emit(state.copyWith(videos: updated));
     }
   }
+}
+
+/// Internal event for background sync — not user-initiated.
+class _ShortsBackgroundSyncEvent extends ShortsEvent {
+  const _ShortsBackgroundSyncEvent();
 }

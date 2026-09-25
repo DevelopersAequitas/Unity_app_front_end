@@ -26,22 +26,34 @@ import '../widgets/referrals_bottom_nav.dart';
 
 class ReferralsScreen extends StatelessWidget {
   final bool isModal;
-  const ReferralsScreen({super.key, this.isModal = false});
+  final ReferralTab initialTab;
+
+  const ReferralsScreen({
+    super.key,
+    this.isModal = false,
+    this.initialTab = ReferralTab.received,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (ctx) => ReferralsBloc(
-        getReceivedReferralsUseCase: ctx.read<GetReceivedReferralsUseCase>(),
-        getGivenReferralsUseCase: ctx.read<GetGivenReferralsUseCase>(),
-        getReferralsStatsUseCase: ctx.read<GetReferralsStatsUseCase>(),
-        getReferralStatusesUseCase: ctx.read<GetReferralStatusesUseCase>(),
-        updateReferralStatusUseCase: ctx.read<UpdateReferralStatusUseCase>(),
-        getReferralsLeaderboardUseCase: ctx.read<GetReferralsLeaderboardUseCase>(),
-      )
-        ..add(const ReferralsFetchLeaderboardRequested())
-        ..add(const ReferralsFetchStatsRequested())
-        ..add(const ReferralsStatusesFetchRequested()),
+      create: (ctx) {
+        final bloc = ReferralsBloc(
+          getReceivedReferralsUseCase: ctx.read<GetReceivedReferralsUseCase>(),
+          getGivenReferralsUseCase: ctx.read<GetGivenReferralsUseCase>(),
+          getReferralsStatsUseCase: ctx.read<GetReferralsStatsUseCase>(),
+          getReferralStatusesUseCase: ctx.read<GetReferralStatusesUseCase>(),
+          updateReferralStatusUseCase: ctx.read<UpdateReferralStatusUseCase>(),
+          getReferralsLeaderboardUseCase: ctx.read<GetReferralsLeaderboardUseCase>(),
+        )
+          ..add(const ReferralsFetchLeaderboardRequested())
+          ..add(const ReferralsFetchStatsRequested())
+          ..add(const ReferralsStatusesFetchRequested());
+        if (initialTab != ReferralTab.received) {
+          bloc.add(ReferralsTabChanged(initialTab));
+        }
+        return bloc;
+      },
       child: _ReferralsView(isModal: isModal),
     );
   }

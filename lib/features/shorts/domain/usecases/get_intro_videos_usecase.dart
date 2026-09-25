@@ -6,7 +6,7 @@ class GetIntroVideosUseCase {
 
   GetIntroVideosUseCase(this.repository);
 
-  Future<List<IntroVideoEntity>> call({
+  Future<ShortsPageResult> call({
     int page = 1,
     int perPage = 10,
   }) async {

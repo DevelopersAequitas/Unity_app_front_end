@@ -53,8 +53,7 @@ class ImpactBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveIconColor = iconColor ??
-        (isPodium ? const Color(0xFFD946EF) : const Color(0xFFC026D3));
+    final effectiveIconColor = iconColor ?? AppColor.primaryBlue;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

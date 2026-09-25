@@ -87,8 +87,12 @@ class CircleJoinRequestStatusBloc
         ));
       }
     } catch (e) {
-      if (e.toString().contains('404') || e.toString().contains('not found')) {
-        // Request already removed on server
+      final err = e.toString().toLowerCase();
+      if (err.contains('404') ||
+          err.contains('not found') ||
+          err.contains('already cancelled') ||
+          err.contains('success')) {
+        // Request already removed or cancelled on server
         emit(state.copyWith(status: CircleJoinRequestStatusStateStatus.cancelled));
         return;
       }

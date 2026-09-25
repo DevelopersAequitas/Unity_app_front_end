@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/primary_pill_button.dart';
 import 'register_dropdown_field.dart';
@@ -70,6 +71,15 @@ class RegisterStep1View extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
+                    'Welcome to new world of collaborations',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColor.primaryBlue,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
                     'Tell us a few basic details to create your account.',
                     style: AppTypography.bodyMedium.copyWith(
                       color: secondaryTextColor,
@@ -120,7 +130,7 @@ class RegisterStep1View extends StatelessWidget {
                   const SizedBox(height: 14),
                   RegisterDropdownField(
                     hintText: 'Date of birth',
-                    value: dob,
+                    value: dob != null && dob!.isNotEmpty ? AppDateFormatter.format(dob) : null,
                     prefixIcon: const Icon(
                       Icons.calendar_today_outlined,
                       size: 20,

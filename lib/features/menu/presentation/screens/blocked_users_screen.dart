@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/api_endpoints.dart';
@@ -22,6 +23,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   List<Map<String, dynamic>> _users = [];
+  StreamSubscription<PeerBusEvent>? _busSubscription;
 
   @override
   void initState() {
@@ -29,9 +31,26 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchBlockedUsers();
     });
+
+    _busSubscription = PeersEventBus.instance.stream.listen((event) {
+      if (event is PeerBlockedEvent ||
+          event is PeerUnblockedEvent ||
+          event is PeersSyncNeededEvent) {
+        if (mounted) {
+          _fetchBlockedUsers();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _busSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _fetchBlockedUsers() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     List<Map<String, dynamic>> items = [];
     String? error;
@@ -62,7 +81,26 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
           items = raw.whereType<Map<String, dynamic>>().toList();
         }
       } catch (err) {
-        error = err.toString();
+        try {
+          final res2 = await _dio.dio.get(ApiEndpoints.blockedUsers);
+          final data2 = res2.data;
+          List? raw2;
+          if (data2 is Map<String, dynamic>) {
+            final inner = data2['data'];
+            if (inner is Map<String, dynamic>) {
+              raw2 = (inner['items'] as List?) ?? (inner['users'] as List?);
+            } else if (inner is List) {
+              raw2 = inner;
+            }
+          } else if (data2 is List) {
+            raw2 = data2;
+          }
+          if (raw2 != null) {
+            items = raw2.whereType<Map<String, dynamic>>().toList();
+          }
+        } catch (_) {
+          error = err.toString();
+        }
       }
     }
 
@@ -116,20 +154,36 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
     if (confirm != true) return;
     if (!mounted) return;
 
+    // Optimistically remove from list
+    setState(() {
+      _users.removeWhere((item) {
+        final id = item['id']?.toString() ??
+            item['peer_id']?.toString() ??
+            item['user_id']?.toString() ??
+            item['blocked_user_id']?.toString() ??
+            '';
+        return id == userId;
+      });
+    });
+
     try {
       try {
         final unblockUseCase = context.read<UnblockPeerUseCase>();
         await unblockUseCase(userId);
       } catch (_) {
-        await _dio.dio.delete(ApiEndpoints.unblockPeer(userId));
+        try {
+          await _dio.dio.delete(ApiEndpoints.unblockPeer(userId));
+        } catch (_) {
+          await _dio.dio.delete(ApiEndpoints.unblockUser(userId));
+        }
       }
 
       if (mounted) {
         PeersEventBus.instance.emit(PeerUnblockedEvent(peerId: userId));
+        PeersEventBus.instance.emit(const PeersSyncNeededEvent());
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Unblocked $name successfully')));
-        _fetchBlockedUsers();
       }
     } catch (_) {
       if (mounted) {
@@ -138,6 +192,7 @@ class _BlockedUsersScreenState extends State<BlockedUsersScreen> {
             content: Text('Failed to unblock user. Please try again.'),
           ),
         );
+        _fetchBlockedUsers();
       }
     }
   }

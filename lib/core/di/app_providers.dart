@@ -74,6 +74,8 @@ import '../../features/home/domain/usecases/get_post_likes_usecase.dart';
 import '../../features/home/domain/usecases/toggle_post_like_usecase.dart';
 import '../../features/home/domain/usecases/toggle_post_save_usecase.dart';
 import '../../features/home/domain/usecases/update_post_usecase.dart';
+import '../../features/home/domain/usecases/report_post_usecase.dart';
+import '../../features/home/domain/usecases/get_post_report_reasons_usecase.dart';
 import '../../features/home/presentation/bloc/home_bloc.dart';
 import '../../features/peers/domain/usecases/block_peer_usecase.dart';
 import '../../features/peers/domain/usecases/cancel_sent_connection_request_usecase.dart';
@@ -244,6 +246,12 @@ class AppProviders extends StatelessWidget {
         ),
         RepositoryProvider<UpdatePostUseCase>.value(
           value: dependencies.updatePostUseCase,
+        ),
+        RepositoryProvider<ReportPostUseCase>.value(
+          value: dependencies.reportPostUseCase,
+        ),
+        RepositoryProvider<GetPostReportReasonsUseCase>.value(
+          value: dependencies.getPostReportReasonsUseCase,
         ),
         RepositoryProvider<GetSavedPostsUseCase>.value(
           value: dependencies.getSavedPostsUseCase,
@@ -518,6 +526,8 @@ class AppProviders extends StatelessWidget {
                   dependencies.getRegistrationDraftUseCase,
               clearRegistrationDraftUseCase:
                   dependencies.clearRegistrationDraftUseCase,
+              validateReferralCodeUseCase:
+                  dependencies.validateReferralCodeUseCase,
             ),
           ),
           BlocProvider<HomeBloc>(
@@ -528,6 +538,7 @@ class AppProviders extends StatelessWidget {
               togglePostSaveUseCase: dependencies.togglePostSaveUseCase,
               deletePostUseCase: dependencies.deletePostUseCase,
               updatePostUseCase: dependencies.updatePostUseCase,
+              reportPostUseCase: dependencies.reportPostUseCase,
               getCachedTimelineFeedUseCase:
                   dependencies.getCachedTimelineFeedUseCase,
               getCachedBrandPartnersUseCase:

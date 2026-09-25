@@ -3,10 +3,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/constants/app_environment.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_gradient_text.dart';
@@ -44,8 +47,62 @@ class ProfileShareCardSheet extends StatefulWidget {
 class _ProfileShareCardSheetState extends State<ProfileShareCardSheet> {
   final GlobalKey _cardKey = GlobalKey();
   bool _isSharing = false;
+  String? _loadedReferralCode;
+  String? _loadedReferralLink;
 
-  String get _shareUrl => AppEnvironment.getPeerProfileDeepLink(widget.profile.id);
+  @override
+  void initState() {
+    super.initState();
+    _fetchReferralInfoIfNeeded();
+  }
+
+  Future<void> _fetchReferralInfoIfNeeded() async {
+    if (!widget.isOwnProfile) return;
+    if (widget.profile.referralCode != null &&
+        widget.profile.referralCode!.trim().isNotEmpty) {
+      return;
+    }
+    try {
+      final dioClient = context.read<DioClient>();
+      final res = await dioClient.dio.get(ApiEndpoints.referralsValidate);
+      final data = res.data['data'] as Map<String, dynamic>? ?? {};
+      if (mounted && data.isNotEmpty) {
+        setState(() {
+          _loadedReferralCode = data['referral_code']?.toString();
+          _loadedReferralLink = data['referral_link']?.toString();
+        });
+      }
+    } catch (_) {}
+  }
+
+  String get _effectiveReferralCode {
+    if (_loadedReferralCode != null && _loadedReferralCode!.trim().isNotEmpty) {
+      return _loadedReferralCode!.trim();
+    }
+    final p = widget.profile;
+    if (p.referralCode != null && p.referralCode!.trim().isNotEmpty) {
+      return p.referralCode!.trim();
+    }
+    return '';
+  }
+
+  String get _shareUrl {
+    if (widget.isOwnProfile) {
+      if (_loadedReferralLink != null &&
+          _loadedReferralLink!.trim().isNotEmpty) {
+        return _loadedReferralLink!.trim();
+      }
+      if (widget.profile.referralLink != null &&
+          widget.profile.referralLink!.trim().isNotEmpty) {
+        return widget.profile.referralLink!.trim();
+      }
+      final code = _effectiveReferralCode;
+      if (code.isNotEmpty) {
+        return AppEnvironment.getRegisterDeepLink(code);
+      }
+    }
+    return AppEnvironment.getPeerProfileDeepLink(widget.profile.id);
+  }
 
   String? get _effectiveCategory {
     final p = widget.profile;
@@ -86,7 +143,10 @@ class _ProfileShareCardSheetState extends State<ProfileShareCardSheet> {
   void _onCopyLink() {
     Clipboard.setData(ClipboardData(text: _shareUrl));
     Navigator.pop(context);
-    AppSnackBar.showSuccess(context, 'Profile link copied to clipboard!');
+    final msg = widget.isOwnProfile
+        ? 'Invite referral link copied to clipboard!'
+        : 'Profile link copied to clipboard!';
+    AppSnackBar.showSuccess(context, msg);
   }
 
   Future<void> _onShare() async {
@@ -110,15 +170,19 @@ class _ProfileShareCardSheetState extends State<ProfileShareCardSheet> {
           await file.writeAsBytes(pngBytes);
 
           final title = widget.isOwnProfile
-              ? 'Connect with me on ${AppEnvironment.appName}'
+              ? 'Join me on ${AppEnvironment.appName}'
               : 'Connect with ${widget.profile.displayName} on ${AppEnvironment.appName}';
-          final text = '$title:\n$_shareUrl';
+          final text = widget.isOwnProfile
+              ? 'Join me on ${AppEnvironment.appName} - the premier entrepreneur collaboration community!\nRegister with my invite link: $_shareUrl\nInvite Code: $_effectiveReferralCode'
+              : '$title:\n$_shareUrl';
 
           await SharePlus.instance.share(
             ShareParams(
               files: [XFile(filePath)],
               text: text,
-              subject: '${widget.profile.displayName} - Peers Profile Card',
+              subject: widget.isOwnProfile
+                  ? 'Join ${widget.profile.displayName} on ${AppEnvironment.appName}'
+                  : '${widget.profile.displayName} - Peers Profile Card',
             ),
           );
           return;
@@ -134,13 +198,17 @@ class _ProfileShareCardSheetState extends State<ProfileShareCardSheet> {
 
     // Fallback if image capture is unavailable
     final title = widget.isOwnProfile
-        ? 'Connect with me on ${AppEnvironment.appName}'
+        ? 'Join me on ${AppEnvironment.appName}'
         : 'Connect with ${widget.profile.displayName} on ${AppEnvironment.appName}';
-    final text = '$title:\n$_shareUrl';
+    final text = widget.isOwnProfile
+        ? 'Join me on ${AppEnvironment.appName} - the premier entrepreneur collaboration community!\nRegister with my invite link: $_shareUrl\nInvite Code: $_effectiveReferralCode'
+        : '$title:\n$_shareUrl';
     await SharePlus.instance.share(
       ShareParams(
         text: text,
-        subject: '${widget.profile.displayName} - Peers Profile',
+        subject: widget.isOwnProfile
+            ? 'Join ${widget.profile.displayName} on ${AppEnvironment.appName}'
+            : '${widget.profile.displayName} - Peers Profile',
       ),
     );
   }
@@ -559,14 +627,40 @@ class _ProfileShareCardSheetState extends State<ProfileShareCardSheet> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Scan with any camera or QR app to connect',
-                  style: TextStyle(
+                Text(
+                  widget.isOwnProfile
+                      ? 'Scan with any camera to register & connect'
+                      : 'Scan with any camera or QR app to connect',
+                  style: const TextStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w400,
                     color: AppColor.lightTextTertiary,
                   ),
                 ),
+                if (widget.isOwnProfile && _effectiveReferralCode.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColor.primaryBlue.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: AppColor.primaryBlue.withValues(alpha: 0.25),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      'INVITE CODE: $_effectiveReferralCode',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColor.primaryBlue,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

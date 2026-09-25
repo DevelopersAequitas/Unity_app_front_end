@@ -121,3 +121,25 @@ class HomePostSaveSyncRequested extends HomeEvent {
   @override
   List<Object?> get props => [postId, isSaved];
 }
+
+class HomePostReported extends HomeEvent {
+  final String postId;
+  final int reasonId;
+
+  const HomePostReported({
+    required this.postId,
+    required this.reasonId,
+  });
+
+  @override
+  List<Object?> get props => [postId, reasonId];
+}
+
+class HomePostHidden extends HomeEvent {
+  final String postId;
+
+  const HomePostHidden(this.postId);
+
+  @override
+  List<Object?> get props => [postId];
+}

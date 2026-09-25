@@ -29,7 +29,7 @@ class LeaderboardRankingList extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: isImpact
                       ? const LinearGradient(
-                          colors: [Color(0xFF9333EA), Color(0xFFC026D3)],
+                          colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         )

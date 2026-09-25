@@ -47,7 +47,12 @@ class _EventPickerSheetState extends State<EventPickerSheet> {
     final textColor = isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary;
     final secondaryColor = isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary;
 
+    final now = DateTime.now().subtract(const Duration(hours: 6));
     final filtered = widget.events.where((e) {
+      final parsedDate = DateTime.tryParse(e.startAt) ?? DateTime.tryParse(e.startDate);
+      if (parsedDate != null && parsedDate.isBefore(now)) {
+        return false;
+      }
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
       final titleMatch = e.title.toLowerCase().contains(q);

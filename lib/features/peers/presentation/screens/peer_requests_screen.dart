@@ -36,10 +36,7 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<PeerRequestsBloc, PeerRequestsState>(
       builder: (context, state) {
-        final isReceivedTab = state.activeTab == 0;
-        final list = isReceivedTab
-            ? state.receivedRequests
-            : state.sentRequests;
+        final list = state.receivedRequests;
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -52,17 +49,6 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                   showNotifications: false,
                   showProfile: false,
                   onBackTap: () => Navigator.pop(context),
-                  bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(48),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildTabBar(
-                        state.activeTab,
-                        receivedCount: state.receivedRequests.length,
-                        sentCount: state.sentRequests.length,
-                      ),
-                    ),
-                  ),
                 ),
           body: AppGradientBackground(
             child: ResponsiveContainer(
@@ -76,21 +62,7 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
-                    if (widget.isTab)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 12, bottom: 6),
-                          child: _buildTabBar(
-                            state.activeTab,
-                            receivedCount: state.receivedRequests.length,
-                            sentCount: state.sentRequests.length,
-                          ),
-                        ),
-                      )
-                    else
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 8),
-                      ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
                     if (state.status == PeerRequestsStatus.loading &&
                         list.isEmpty)
                       const SliverToBoxAdapter(
@@ -111,7 +83,7 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                       )
                     else if (list.isEmpty)
                       SliverToBoxAdapter(
-                        child: _buildEmptyState(isReceivedTab),
+                        child: _buildEmptyState(),
                       )
                     else
                       SliverList.builder(
@@ -120,7 +92,7 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                           final request = list[index];
                           return RequestPeerCard(
                             request: request,
-                            isSent: !isReceivedTab,
+                            isSent: false,
                             onTap: () {
                               final targetId = request.peer.id.isNotEmpty
                                   ? request.peer.id
@@ -147,14 +119,7 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
                                     ),
                                   );
                             },
-                            onCancel: () {
-                              final addresseeId = request.peer.id.isNotEmpty
-                                  ? request.peer.id
-                                  : request.id;
-                              context.read<PeerRequestsBloc>().add(
-                                    PeerRequestCancelRequested(addresseeId),
-                                  );
-                            },
+                            onCancel: () {},
                             onBookmark: () {},
                           );
                         },
@@ -174,51 +139,9 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
     );
   }
 
-  Widget _buildTabBar(int activeTab, {required int receivedCount, required int sentCount}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: AppColor.lightSurfaceMuted,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _PillTabItem(
-                label: 'Received',
-                count: receivedCount,
-                isActive: activeTab == 0,
-                onTap: () {
-                  context
-                      .read<PeerRequestsBloc>()
-                      .add(const PeerRequestsTabChanged(0));
-                },
-              ),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: _PillTabItem(
-                label: 'Sent',
-                count: sentCount,
-                isActive: activeTab == 1,
-                onTap: () {
-                  context
-                      .read<PeerRequestsBloc>()
-                      .add(const PeerRequestsTabChanged(1));
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(bool isReceived) {
+  Widget _buildEmptyState() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 20),
       alignment: Alignment.center,
       child: Column(
         children: [
@@ -228,12 +151,21 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
             color: AppColor.lightTextDisabled,
           ),
           const SizedBox(height: 12),
-          Text(
-            isReceived ? 'No incoming requests' : 'No sent requests',
-            style: const TextStyle(
+          const Text(
+            'No incoming requests',
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColor.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'When someone sends you a connection request, it will appear here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColor.lightTextSecondary,
             ),
           ),
         ],
@@ -242,82 +174,3 @@ class _PeerRequestsScreenState extends State<PeerRequestsScreen> {
   }
 }
 
-class _PillTabItem extends StatelessWidget {
-  final String label;
-  final int count;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _PillTabItem({
-    required this.label,
-    required this.count,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? AppColor.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive
-                      ? AppColor.lightTextPrimary
-                      : AppColor.lightTextSecondary,
-                ),
-              ),
-              if (count > 0) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? AppColor.primaryBlue.withValues(alpha: 0.12)
-                        : AppColor.lightBorder,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '$count',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: isActive
-                          ? AppColor.primaryBlue
-                          : AppColor.lightTextSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

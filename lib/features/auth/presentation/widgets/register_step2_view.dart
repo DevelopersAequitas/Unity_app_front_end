@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/primary_pill_button.dart';
+import '../../domain/entities/referral_validation_entity.dart';
 import 'register_dropdown_field.dart';
+import 'register_geo_location_card.dart';
+import 'register_referral_section.dart';
 import 'register_step2_header.dart';
 import 'register_terms_notice.dart';
 
@@ -17,9 +20,13 @@ class RegisterStep2View extends StatelessWidget {
   final double? latitude;
   final double? longitude;
   final bool isLoading;
+  final bool isValidatingReferral;
+  final ReferralValidationEntity? referralValidation;
   final VoidCallback onSelectMainCategory;
   final VoidCallback onSelectCategory;
   final VoidCallback onPickLocation;
+  final VoidCallback onValidateReferral;
+  final VoidCallback onClearReferral;
   final VoidCallback onCreateAccount;
 
   const RegisterStep2View({
@@ -34,9 +41,13 @@ class RegisterStep2View extends StatelessWidget {
     this.latitude,
     this.longitude,
     required this.isLoading,
+    this.isValidatingReferral = false,
+    this.referralValidation,
     required this.onSelectMainCategory,
     required this.onSelectCategory,
     required this.onPickLocation,
+    required this.onValidateReferral,
+    required this.onClearReferral,
     required this.onCreateAccount,
   });
 
@@ -58,10 +69,7 @@ class RegisterStep2View extends StatelessWidget {
                   AppTextField(
                     controller: companyNameController,
                     hintText: 'Company name',
-                    prefixIcon: const Icon(
-                      Icons.business_center_outlined,
-                      size: 20,
-                    ),
+                    prefixIcon: const Icon(Icons.business_center_outlined, size: 20),
                   ),
                   const SizedBox(height: 14),
                   RegisterDropdownField(
@@ -74,10 +82,7 @@ class RegisterStep2View extends StatelessWidget {
                   RegisterDropdownField(
                     hintText: 'Business category',
                     value: isOtherCategory ? 'Other' : categoryName,
-                    prefixIcon: const Icon(
-                      Icons.local_offer_outlined,
-                      size: 20,
-                    ),
+                    prefixIcon: const Icon(Icons.local_offer_outlined, size: 20),
                     onTap: onSelectCategory,
                   ),
                   if (isOtherCategory) ...[
@@ -85,113 +90,32 @@ class RegisterStep2View extends StatelessWidget {
                     AppTextField(
                       controller: otherCategoryController,
                       hintText: 'Specify other category name',
-                      prefixIcon: const Icon(
-                        Icons.edit_note_outlined,
-                        size: 20,
-                      ),
+                      prefixIcon: const Icon(Icons.edit_note_outlined, size: 20),
                     ),
                   ],
                   const SizedBox(height: 14),
                   AppTextField(
                     controller: companyAddressController,
                     hintText: 'Company address',
-                    prefixIcon: const Icon(
-                      Icons.location_on_outlined,
-                      size: 20,
-                    ),
+                    prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
                     suffixIcon: IconButton(
-                      icon: const Icon(
-                        Icons.map_outlined,
-                        color: AppColor.primaryBlue,
-                        size: 22,
-                      ),
+                      icon: const Icon(Icons.map_outlined, color: AppColor.primaryBlue, size: 22),
                       tooltip: 'Pick location on Map',
                       onPressed: onPickLocation,
                     ),
                   ),
-                  if (latitude != null && longitude != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColor.primaryBlue.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColor.primaryBlue.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.my_location,
-                            size: 14,
-                            color: AppColor.primaryBlue,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Pin: ${latitude!.toStringAsFixed(4)}, ${longitude!.toStringAsFixed(4)} (Geo-Tagged)',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColor.primaryBlue,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: onPickLocation,
-                            child: const Text(
-                              'Change',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColor.primaryBlue,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 6),
-                    GestureDetector(
-                      onTap: onPickLocation,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.touch_app_outlined,
-                              size: 14,
-                              color: AppColor.primaryBlue,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Pick company pin on map for Near Me Peers',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColor.primaryBlue,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  RegisterGeoLocationCard(
+                    latitude: latitude,
+                    longitude: longitude,
+                    onPickLocation: onPickLocation,
+                  ),
                   const SizedBox(height: 14),
-                  AppTextField(
+                  RegisterReferralSection(
                     controller: referralController,
-                    hintText: 'Referral code (optional)',
-                    prefixIcon: const Icon(
-                      Icons.card_giftcard_outlined,
-                      size: 20,
-                    ),
+                    isValidating: isValidatingReferral,
+                    validation: referralValidation,
+                    onValidate: onValidateReferral,
+                    onClear: onClearReferral,
                   ),
                   const Spacer(),
                   const SizedBox(height: 20),

@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/verify_otp_screen.dart';
 import '../../features/home/presentation/screens/create_post_screen.dart';
+import '../../features/home/domain/entities/timeline_item_entity.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/peers/presentation/screens/bookmarked_peers_screen.dart';
 import '../../features/peers/presentation/screens/connections_screen.dart';
@@ -32,6 +33,7 @@ import '../../features/peers/presentation/bloc/peer_profile_bloc.dart';
 import '../../features/peers/presentation/screens/peer_profile_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/screens/followers_screen.dart';
 import '../../features/profile/domain/entities/profile_entity.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/circles/domain/entities/circle_closed_category_entity.dart';
@@ -128,6 +130,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String home = '/home';
   static const String profile = '/profile';
+  static const String followers = '/followers';
   static const String peers = '/peers';
   static const String peerProfile = '/peer-profile';
   static const String matches = '/matches';
@@ -250,8 +253,17 @@ class AppRouter {
           settings: settings,
         );
       case AppRoutes.register:
+        String? initialReferralCode;
+        if (settings.arguments is String) {
+          initialReferralCode = settings.arguments as String;
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          initialReferralCode =
+              (map['ref'] ?? map['referral_code'] ?? map['code']) as String?;
+        }
         return MaterialPageRoute(
-          builder: (_) => const RegisterScreen(),
+          builder: (_) =>
+              RegisterScreen(initialReferralCode: initialReferralCode),
           settings: settings,
         );
       case AppRoutes.verifyOtp:
@@ -344,9 +356,38 @@ class AppRouter {
           builder: (_) => const ProfileScreen(),
           settings: settings,
         );
+      case AppRoutes.followers:
+        String? userId;
+        String? userName;
+        if (settings.arguments is String) {
+          userId = settings.arguments as String;
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          userId = (map['userId'] ??
+                  map['memberId'] ??
+                  map['peerId'] ??
+                  map['id'])
+              ?.toString();
+          userName = (map['userName'] ??
+                  map['name'] ??
+                  map['displayName'])
+              ?.toString();
+        }
+        return MaterialPageRoute(
+          builder: (_) => FollowersScreen(
+            userId: userId,
+            userName: userName,
+          ),
+          settings: settings,
+        );
       case AppRoutes.createPost:
         return MaterialPageRoute(
-          builder: (_) => const CreatePostScreen(),
+          builder: (_) {
+            final arg = settings.arguments;
+            return CreatePostScreen(
+              editPost: arg is TimelineItemEntity ? arg : null,
+            );
+          },
           settings: settings,
         );
       case AppRoutes.notifications:
@@ -532,6 +573,7 @@ class AppRouter {
         PeerEntity? initialPeer;
         DateTime? initialDate;
         String? initialPlace;
+        String? initialMeetingRequestId;
         if (settings.arguments is PeerEntity) {
           initialPeer = settings.arguments as PeerEntity;
         } else if (settings.arguments is Map) {
@@ -539,12 +581,17 @@ class AppRouter {
           initialPeer = map['peer'] as PeerEntity?;
           initialDate = map['date'] as DateTime?;
           initialPlace = map['place'] as String?;
+          initialMeetingRequestId = (map['p2p_meeting_request_id'] ??
+                  map['meeting_request_id'] ??
+                  map['request_id'])
+              ?.toString();
         }
         return MaterialPageRoute(
           builder: (_) => AddP2pMeetingScreen(
             initialPeer: initialPeer,
             initialDate: initialDate,
             initialPlace: initialPlace,
+            initialMeetingRequestId: initialMeetingRequestId,
           ),
           settings: settings,
         );

@@ -4,7 +4,6 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_avatar.dart';
-import '../../../../core/widgets/app_gradient_text.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../domain/entities/geo_peer_entity.dart';
 
@@ -221,44 +220,31 @@ class NearMeDirectionsSheet extends StatelessWidget {
                       ],
                       if (peer.category != null &&
                           peer.category!.isNotEmpty) ...[
-                        const SizedBox(height: 5),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColor.badgeBlueBg,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color:
-                                  AppColor.primaryBlue.withValues(alpha: 0.15),
-                              width: 0.8,
-                            ),
+                        const SizedBox(height: 4),
+                        ShaderMask(
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) =>
+                              AppColor.brandGradient.createShader(
+                            Rect.fromLTWH(
+                                0, 0, bounds.width, bounds.height),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              ShaderMask(
-                                blendMode: BlendMode.srcIn,
-                                shaderCallback: (bounds) =>
-                                    AppColor.brandGradient.createShader(
-                                  Rect.fromLTWH(
-                                      0, 0, bounds.width, bounds.height),
-                                ),
-                                child: const Icon(
-                                  Icons.sell_outlined,
-                                  size: 10,
-                                  color: Colors.white,
-                                ),
+                              const Icon(
+                                Icons.sell_outlined,
+                                size: 10,
+                                color: Colors.white,
                               ),
                               const SizedBox(width: 4),
                               Flexible(
-                                child: AppGradientText(
-                                  peer.category!,
+                                child: Text(
+                                  peer.category!.trim(),
                                   style: const TextStyle(
                                     fontSize: 10.5,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                    letterSpacing: 0.1,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

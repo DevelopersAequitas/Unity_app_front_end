@@ -260,15 +260,22 @@ class _WelcomeCreativeDialogState extends State<WelcomeCreativeDialog> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: RepaintBoundary(
-                    key: _dialogCardKey,
-                    child: WelcomeCreativeCard(
-                      memberName: memberName,
-                      cityName: cityName,
-                      companyName: companyName,
-                      designation: designation,
-                      category: categoryText,
-                      avatarUrl: avatarUrl,
+                  clipBehavior: Clip.antiAlias,
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 2.5,
+                    boundaryMargin: EdgeInsets.zero,
+                    clipBehavior: Clip.hardEdge,
+                    child: RepaintBoundary(
+                      key: _dialogCardKey,
+                      child: WelcomeCreativeCard(
+                        memberName: memberName,
+                        cityName: cityName,
+                        companyName: companyName,
+                        designation: designation,
+                        category: categoryText,
+                        avatarUrl: avatarUrl,
+                      ),
                     ),
                   ),
                 ),

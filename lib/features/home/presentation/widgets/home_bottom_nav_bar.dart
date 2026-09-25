@@ -256,16 +256,27 @@ class _NavItem extends StatelessWidget {
       scale: isSelected ? 1.15 : 1.0,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutBack,
-      child: Icon(
-        isSelected ? (selectedIcon ?? Icons.circle) : (unselectedIcon ?? Icons.circle_outlined),
-        size: 22,
-        color: color,
-      ),
+      child: isSelected
+          ? ShaderMask(
+              shaderCallback: (bounds) =>
+                  AppColor.brandGradient.createShader(bounds),
+              blendMode: BlendMode.srcIn,
+              child: Icon(
+                selectedIcon ?? Icons.circle,
+                size: 22,
+                color: Colors.white,
+              ),
+            )
+          : Icon(
+              unselectedIcon ?? Icons.circle_outlined,
+              size: 22,
+              color: color,
+            ),
     );
   }
 
   Widget _buildLabel(Color color) {
-    if (isSelected && selectedSvg != null) {
+    if (isSelected) {
       return ShaderMask(
         shaderCallback: (bounds) =>
             AppColor.brandGradient.createShader(bounds),
@@ -276,7 +287,7 @@ class _NavItem extends StatelessWidget {
             color: Colors.white,
             fontSize: 10,
             height: 1.1,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
@@ -288,7 +299,7 @@ class _NavItem extends StatelessWidget {
         color: color,
         fontSize: 10,
         height: 1.1,
-        fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+        fontWeight: FontWeight.w400,
       ),
     );
   }

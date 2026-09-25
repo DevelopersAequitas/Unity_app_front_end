@@ -7,6 +7,7 @@ import '../../domain/usecases/get_brand_partners_usecase.dart';
 import '../../domain/usecases/get_cached_brand_partners_usecase.dart';
 import '../../domain/usecases/get_cached_timeline_feed_usecase.dart';
 import '../../domain/usecases/get_timeline_feed_usecase.dart';
+import '../../domain/usecases/report_post_usecase.dart';
 import '../../domain/usecases/toggle_post_like_usecase.dart';
 import '../../domain/usecases/toggle_post_save_usecase.dart';
 import '../../domain/usecases/update_post_usecase.dart';
@@ -20,6 +21,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final TogglePostSaveUseCase togglePostSaveUseCase;
   final DeletePostUseCase? deletePostUseCase;
   final UpdatePostUseCase? updatePostUseCase;
+  final ReportPostUseCase? reportPostUseCase;
   final GetCachedTimelineFeedUseCase? getCachedTimelineFeedUseCase;
   final GetCachedBrandPartnersUseCase? getCachedBrandPartnersUseCase;
 
@@ -30,6 +32,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     required this.togglePostSaveUseCase,
     this.deletePostUseCase,
     this.updatePostUseCase,
+    this.reportPostUseCase,
     this.getCachedTimelineFeedUseCase,
     this.getCachedBrandPartnersUseCase,
   }) : super(const HomeState()) {
@@ -41,6 +44,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomePostSaveToggled>(_onPostSaveToggled);
     on<HomePostCommentCountIncremented>(_onPostCommentCountIncremented);
     on<HomePostDeleted>(_onPostDeleted);
+    on<HomePostReported>(_onPostReported);
+    on<HomePostHidden>(_onPostHidden);
     on<HomePostEdited>(_onPostEdited);
     on<HomePostLikeSyncRequested>(_onPostLikeSyncRequested);
     on<HomePostSaveSyncRequested>(_onPostSaveSyncRequested);
@@ -187,6 +192,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         await deletePostUseCase!(event.postId);
       }
     } catch (_) {}
+  }
+
+  Future<void> _onPostReported(HomePostReported event, Emitter<HomeState> emit) async {
+    // Hide reported post immediately from the feed
+    final updated = state.allItems.where((item) => item.id != event.postId).toList();
+    emit(state.copyWith(allItems: updated));
+    try {
+      if (reportPostUseCase != null) {
+        await reportPostUseCase!(event.postId, event.reasonId);
+      }
+    } catch (_) {}
+  }
+
+  void _onPostHidden(HomePostHidden event, Emitter<HomeState> emit) {
+    final updated = state.allItems.where((item) => item.id != event.postId).toList();
+    emit(state.copyWith(allItems: updated));
   }
 
   Future<void> _onPostEdited(HomePostEdited event, Emitter<HomeState> emit) async {

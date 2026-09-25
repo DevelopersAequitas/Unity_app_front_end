@@ -2,6 +2,7 @@ import 'dart:io';
 import '../../domain/entities/brand_partner_entity.dart';
 import '../../domain/entities/post_comment_entity.dart';
 import '../../domain/entities/post_like_entity.dart';
+import '../../domain/entities/post_report_reason_entity.dart';
 import '../../domain/entities/timeline_item_entity.dart';
 import '../../domain/entities/timeline_pagination_entity.dart';
 import '../../domain/repositories/home_repository.dart';
@@ -152,5 +153,15 @@ class HomeRepositoryImpl implements HomeRepository {
   @override
   Future<void> updatePost(String postId, {required String contentText}) {
     return remoteDataSource.updatePost(postId, contentText: contentText);
+  }
+
+  @override
+  Future<List<PostReportReasonEntity>> getPostReportReasons() {
+    return remoteDataSource.getPostReportReasons();
+  }
+
+  @override
+  Future<void> reportPost(String postId, int reasonId) {
+    return remoteDataSource.reportPost(postId, reasonId);
   }
 }

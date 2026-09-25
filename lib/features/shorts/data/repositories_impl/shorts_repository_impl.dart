@@ -13,21 +13,24 @@ class ShortsRepositoryImpl implements ShortsRepository {
   });
 
   @override
-  Future<List<IntroVideoEntity>> getIntroVideos({
+  Future<ShortsPageResult> getIntroVideos({
     int page = 1,
     int perPage = 10,
   }) async {
-    final remoteVideos = await remoteDataSource.getIntroVideos(
+    final result = await remoteDataSource.getIntroVideos(
       page: page,
       perPage: perPage,
     );
 
-    if (page == 1 && remoteVideos.isNotEmpty && localDataSource != null) {
-      final rawList = remoteVideos.map((m) => m.toJson()).toList();
+    if (page == 1 && result.videos.isNotEmpty && localDataSource != null) {
+      final rawList = result.videos.map((m) => m.toJson()).toList();
       await localDataSource!.cacheShorts(rawList);
     }
 
-    return remoteVideos;
+    return ShortsPageResult(
+      videos: result.videos,
+      total: result.total,
+    );
   }
 
   @override

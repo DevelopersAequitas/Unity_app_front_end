@@ -631,39 +631,32 @@ class _CommonPeerSelectorSheetState extends State<CommonPeerSelectorSheet> {
                         ),
                       ],
 
-                      // Row 4: Category
+                      // Row 4: Category (Gradient Colored Text, No Background)
                       if (hasCategory) ...[
                         const SizedBox(height: 2.5),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColor.badgeBlueBg,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: AppColor.primaryBlue
-                                  .withValues(alpha: 0.15),
-                              width: 0.8,
-                            ),
+                        ShaderMask(
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) =>
+                              AppColor.brandGradient.createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.sell_outlined,
-                                size: 8.5,
-                                color: AppColor.primaryBlue,
+                                size: 9.0,
+                                color: Colors.white,
                               ),
-                              const SizedBox(width: 2.5),
+                              const SizedBox(width: 3.0),
                               Flexible(
                                 child: Text(
                                   peer.category!.trim(),
                                   style: const TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColor.primaryBlue,
+                                    color: Colors.white,
+                                    letterSpacing: 0.1,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -699,7 +692,7 @@ class _CommonPeerSelectorSheetState extends State<CommonPeerSelectorSheet> {
                         const Icon(
                           Icons.person_rounded,
                           size: 13,
-                          color: Color(0xFFD946EF),
+                          color: AppColor.primaryBlue,
                         ),
                         const SizedBox(width: 3),
                         Text(
@@ -707,7 +700,7 @@ class _CommonPeerSelectorSheetState extends State<CommonPeerSelectorSheet> {
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFFD946EF),
+                            color: AppColor.primaryBlue,
                           ),
                         ),
                       ],

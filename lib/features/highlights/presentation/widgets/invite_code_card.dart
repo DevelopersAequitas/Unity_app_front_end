@@ -18,15 +18,13 @@ class InviteCodeCard extends StatelessWidget {
   });
 
   String _resolveCode(BuildContext context) {
-    if (referralCode.isNotEmpty) return referralCode;
+    if (referralCode.trim().isNotEmpty) return referralCode.trim();
     final profile = context.read<ProfileBloc>().state.profile;
-    if (profile?.publicProfileSlug != null && profile!.publicProfileSlug!.isNotEmpty) {
-      return profile.publicProfileSlug!;
+    if (profile?.referralCode != null &&
+        profile!.referralCode!.trim().isNotEmpty) {
+      return profile.referralCode!.trim();
     }
-    if (profile != null && profile.id.isNotEmpty) {
-      return profile.id.substring(0, profile.id.length.clamp(0, 8)).toUpperCase();
-    }
-    return 'PEERS';
+    return '';
   }
 
   void _copyCode(BuildContext context, String code) {

@@ -13,7 +13,8 @@ class LifeImpactHeroCard extends StatelessWidget {
   });
 
   String _formatCompact(int number) {
-    if (number >= 1000000000) return '${(number / 1000000000).toStringAsFixed(1)}B';
+    if (number >= 1000000000)
+      return '${(number / 1000000000).toStringAsFixed(1)}B';
     if (number >= 1000000) return '${(number / 1000000).toStringAsFixed(1)}M';
     if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}K';
     return number.toString();
@@ -32,7 +33,9 @@ class LifeImpactHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final displayScore = totalScore > 99999 ? _formatCompact(totalScore) : _formatFull(totalScore);
+    final displayScore = totalScore > 99999
+        ? _formatCompact(totalScore)
+        : _formatFull(totalScore);
 
     return Container(
       width: double.infinity,
@@ -52,7 +55,10 @@ class LifeImpactHeroCard extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 0.5),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.12),
+          width: 0.5,
+        ),
       ),
       child: Stack(
         children: [
@@ -81,7 +87,10 @@ class LifeImpactHeroCard extends StatelessWidget {
                     children: [
                       // Pill label
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(999),
@@ -89,7 +98,11 @@ class LifeImpactHeroCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.bolt_rounded, color: Colors.white, size: 11),
+                            const Icon(
+                              Icons.bolt_rounded,
+                              color: Colors.white,
+                              size: 11,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'LIFE IMPACT SCORE',
@@ -126,29 +139,29 @@ class LifeImpactHeroCard extends StatelessWidget {
                   ),
                 ),
                 // Vertical divider
-                Container(
-                  width: 0.5,
-                  height: 56,
-                  color: Colors.white.withValues(alpha: 0.2),
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                ),
+                // Container(
+                //   width: 0.5,
+                //   height: 56,
+                //   color: Colors.white.withValues(alpha: 0.2),
+                //   margin: const EdgeInsets.symmetric(horizontal: 16),
+                // ),
                 // RIGHT: stat column
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _buildStatCol(
-                      icon: Icons.history_rounded,
-                      value: '$activitiesCount',
-                      label: 'Activities',
-                    ),
-                    const SizedBox(height: 10),
-                    _buildStatCol(
-                      icon: Icons.people_alt_rounded,
-                      value: displayScore,
-                      label: 'Total Lives',
-                    ),
-                  ],
-                ),
+                // Column(
+                //   crossAxisAlignment: CrossAxisAlignment.center,
+                //   children: [
+                //     _buildStatCol(
+                //       icon: Icons.history_rounded,
+                //       value: '$activitiesCount',
+                //       label: 'Activities',
+                //     ),
+                //     const SizedBox(height: 10),
+                //     _buildStatCol(
+                //       icon: Icons.people_alt_rounded,
+                //       value: displayScore,
+                //       label: 'Total Lives',
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           ),
@@ -157,7 +170,11 @@ class LifeImpactHeroCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCol({required IconData icon, required String value, required String label}) {
+  Widget _buildStatCol({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -194,5 +211,3 @@ class LifeImpactHeroCard extends StatelessWidget {
     );
   }
 }
-
-

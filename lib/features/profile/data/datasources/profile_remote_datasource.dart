@@ -29,7 +29,28 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data;
         if (data is Map<String, dynamic>) {
-          return ProfileModel.fromJson(data);
+          final Map<String, dynamic> rawMap = Map<String, dynamic>.from(
+            data['data'] is Map<String, dynamic> ? data['data'] : data,
+          );
+
+          // If referral_code is missing in profile payload, fetch from validate endpoint
+          if (rawMap['referral_code'] == null ||
+              rawMap['referral_code'].toString().trim().isEmpty) {
+            try {
+              final refResp =
+                  await dioClient.dio.get(ApiEndpoints.referralsValidate);
+              final refData =
+                  refResp.data['data'] as Map<String, dynamic>? ?? {};
+              if (refData['referral_code'] != null) {
+                rawMap['referral_code'] = refData['referral_code'];
+              }
+              if (refData['referral_link'] != null) {
+                rawMap['referral_link'] = refData['referral_link'];
+              }
+            } catch (_) {}
+          }
+
+          return ProfileModel.fromJson(rawMap);
         }
         throw const ApiException(message: 'Invalid profile response format');
       }

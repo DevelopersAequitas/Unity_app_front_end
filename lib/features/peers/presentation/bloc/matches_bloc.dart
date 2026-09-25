@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/events/peers_event_bus.dart';
 import '../../domain/usecases/get_match_peers_usecase.dart';
@@ -8,6 +9,7 @@ import 'matches_state.dart';
 class MatchesBloc extends Bloc<MatchesEvent, MatchesState> {
   final GetMatchPeersUseCase getMatchPeersUseCase;
   final SendConnectionRequestUseCase sendConnectionRequestUseCase;
+  StreamSubscription<PeerBusEvent>? _busSubscription;
 
   MatchesBloc({
     required this.getMatchPeersUseCase,
@@ -16,6 +18,29 @@ class MatchesBloc extends Bloc<MatchesEvent, MatchesState> {
     on<MatchesFetchRequested>(_onFetch);
     on<MatchPassRequested>(_onPass);
     on<MatchConnectRequested>(_onConnect);
+    on<MatchRemoved>(_onMatchRemoved);
+
+    _busSubscription = PeersEventBus.instance.stream.listen((event) {
+      if (event is PeerConnectionRequestedEvent) {
+        add(MatchRemoved(event.peerId));
+      } else if (event is PeerConnectionAcceptedEvent) {
+        add(MatchRemoved(event.peerId));
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _busSubscription?.cancel();
+    return super.close();
+  }
+
+  void _onMatchRemoved(
+    MatchRemoved event,
+    Emitter<MatchesState> emit,
+  ) {
+    final updated = state.matches.where((m) => m.id != event.peerId).toList();
+    emit(state.copyWith(matches: updated));
   }
 
   Future<void> _onFetch(
@@ -68,9 +93,12 @@ class MatchesBloc extends Bloc<MatchesEvent, MatchesState> {
     MatchConnectRequested event,
     Emitter<MatchesState> emit,
   ) async {
-    if (state.currentIndex < state.matches.length) {
-      emit(state.copyWith(currentIndex: state.currentIndex + 1));
-    }
+    final updated = state.matches.where((m) => m.id != event.peerId).toList();
+    emit(state.copyWith(
+      matches: updated,
+      currentIndex: state.currentIndex < updated.length ? state.currentIndex : 0,
+    ));
+
     PeersEventBus.instance.emit(
       PeerConnectionRequestedEvent(peerId: event.peerId),
     );

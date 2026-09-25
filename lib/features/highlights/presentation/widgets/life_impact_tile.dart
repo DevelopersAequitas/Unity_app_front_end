@@ -126,7 +126,7 @@ class LifeImpactTile extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          gradient: AppColor.brandGradient,
+                          color: AppColor.primaryBlue,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(

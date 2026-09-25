@@ -38,9 +38,8 @@ class LifeImpactFilterBar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppColor.brandGradient : null,
                   color: isSelected
-                      ? null
+                      ? AppColor.primaryBlue
                       : (isDark ? AppColor.darkSurface : AppColor.lightSurface),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(

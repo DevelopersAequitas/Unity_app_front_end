@@ -57,10 +57,10 @@ class TimelineImpactCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColor.success.withValues(alpha: isDark ? 0.12 : 0.06),
+              color: AppColor.primaryBlue.withValues(alpha: isDark ? 0.12 : 0.06),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColor.success.withValues(alpha: 0.2),
+                color: AppColor.primaryBlue.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -73,7 +73,7 @@ class TimelineImpactCard extends StatelessWidget {
                     Text(
                       'Impact Created',
                       style: const TextStyle(
-                        color: AppColor.success,
+                        color: AppColor.primaryBlue,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -82,13 +82,13 @@ class TimelineImpactCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColor.success.withValues(alpha: 0.15),
+                          color: AppColor.primaryBlue.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${impact.lifeImpacted} Lives Impacted',
                           style: const TextStyle(
-                            color: AppColor.success,
+                            color: AppColor.primaryBlue,
                             fontSize: 9.5,
                             fontWeight: FontWeight.w500,
                           ),

@@ -24,15 +24,15 @@ class WelcomeContent extends StatelessWidget {
               color: primaryTextColor,
               fontSize: 22,
               fontWeight: FontWeight.w600,
-              height: 1.2,
+              height: 1.25,
               wordSpacing: 1.5,
             ),
-            children: const [
-              TextSpan(text: 'PEERS ARE PARTNERS\n'),
-              TextSpan(text: 'IN BUSINESS AND'),
+            children: [
+              const TextSpan(text: 'Welcome to '),
+              const TextSpan(text: "world's first\n"),
               TextSpan(
-                text: '\nFRIENDS IN LIFE.',
-                style: TextStyle(color: AppColor.primaryPink),
+                text: 'community of collaboration',
+                style: TextStyle(color: AppColor.primaryBlue),
               ),
             ],
           ),

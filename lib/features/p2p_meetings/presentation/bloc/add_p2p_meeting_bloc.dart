@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/events/peers_event_bus.dart';
 import '../../../profile/domain/usecases/upload_file_usecase.dart';
 import '../../domain/entities/create_p2p_meeting_params.dart';
 import '../../domain/usecases/log_p2p_meeting_usecase.dart';
@@ -24,6 +25,7 @@ class AddP2pMeetingBloc extends Bloc<AddP2pMeetingEvent, AddP2pMeetingState> {
     on<AddP2pMeetingRemarksChanged>((e, emit) => emit(state.copyWith(remarks: e.remarks)));
     on<AddP2pMeetingPhotoSelected>((e, emit) => emit(state.copyWith(photoFile: e.photo)));
     on<AddP2pMeetingCreativeSelected>((e, emit) => emit(state.copyWith(creativeImage: e.creativeImage)));
+    on<AddP2pMeetingRequestIdChanged>((e, emit) => emit(state.copyWith(meetingRequestId: e.requestId)));
     on<AddP2pMeetingSubmitted>(_onSubmitted);
   }
 
@@ -71,6 +73,7 @@ class AddP2pMeetingBloc extends Bloc<AddP2pMeetingEvent, AddP2pMeetingState> {
         meetingPlace: state.meetingPlace.trim(),
         remarks: state.remarks.trim(),
         mediaFileIds: mediaFileIds, // Now always populated with valid file_id
+        p2pMeetingRequestId: state.meetingRequestId,
       );
 
       final meeting = await logP2pMeetingUseCase(params);
@@ -94,6 +97,7 @@ class AddP2pMeetingBloc extends Bloc<AddP2pMeetingEvent, AddP2pMeetingState> {
         status: AddP2pMeetingStatus.success,
         createdMeeting: meeting,
       ));
+      PeersEventBus.instance.emit(const PeersSyncNeededEvent());
     } catch (e) {
       String msg = e.toString();
       if (msg.startsWith('Exception: ')) {

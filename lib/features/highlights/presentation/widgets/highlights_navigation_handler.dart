@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:unity_app/features/business_deal/presentation/bloc/business_deals_event.dart';
+import 'package:unity_app/features/leaderboard/presentation/bloc/leaderboard_event.dart';
+import 'package:unity_app/features/referrals/presentation/bloc/referrals_event.dart';
+import 'package:unity_app/features/testimonials/presentation/bloc/testimonials_event.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../business_deal/presentation/screens/business_deals_screen.dart';
 import '../../../collaborations/presentation/screens/add_collaboration_screen.dart';
 import '../../../collaborations/presentation/screens/collaborations_hub_screen.dart';
+import '../../../leaderboard/presentation/screens/leaderboard_screen.dart';
+import '../../../p2p_meetings/presentation/screens/p2p_meetings_screen.dart';
+import '../../../referrals/presentation/screens/referrals_screen.dart';
 import '../../../requirements/presentation/screens/open_asks_screen.dart';
 import '../../../requirements/presentation/screens/post_ask_form_screen.dart';
+import '../../../testimonials/presentation/screens/testimonials_screen.dart';
 import '../../../menu/presentation/screens/circulars_screen.dart';
 import '../../../menu/presentation/screens/event_gallery_screen.dart';
 import '../../../menu/presentation/screens/event_videos_screen.dart';
@@ -37,6 +46,81 @@ class HighlightsNavigationHandler {
     final id = item.id.toLowerCase().trim();
 
     switch (id) {
+      case 'bookmarks':
+      case 'bookmarked_peers':
+      case 'bookmark':
+        Navigator.pushNamed(context, AppRoutes.bookmarkedPeers);
+        break;
+      case 'intro_videos':
+      case 'intro_video':
+      case 'shorts':
+      case 'peer_videos':
+        Navigator.pushNamed(context, AppRoutes.shorts);
+        break;
+      case 'business_deals_leaderboard':
+      case 'business_deal_leaderboard':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const BusinessDealsScreen(
+              initialTab: BusinessDealTab.leaderboard,
+            ),
+          ),
+        );
+        break;
+      case 'p2p_meetings_leaderboard':
+      case 'p2p_meeting_leaderboard':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const P2pMeetingsScreen(initialTabIndex: 0),
+          ),
+        );
+        break;
+      case 'testimonials_leaderboard':
+      case 'testimonial_leaderboard':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const TestimonialsScreen(
+              initialTab: TestimonialTab.leaderboard,
+            ),
+          ),
+        );
+        break;
+      case 'referrals_leaderboard':
+      case 'referral_leaderboard':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ReferralsScreen(
+              initialTab: ReferralTab.leaderboard,
+            ),
+          ),
+        );
+        break;
+      case 'impact_leaderboard':
+      case 'life_impact_leaderboard':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const LeaderboardScreen(
+              type: LeaderboardType.impact,
+            ),
+          ),
+        );
+        break;
+      case 'coins_leaderboard':
+      case 'coin_leaderboard':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const LeaderboardScreen(
+              type: LeaderboardType.coins,
+            ),
+          ),
+        );
+        break;
       case 'referral':
       case 'referrals':
         Navigator.pushNamed(context, AppRoutes.referrals);

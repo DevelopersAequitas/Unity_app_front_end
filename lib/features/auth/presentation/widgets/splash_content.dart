@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../../../../app/app_config.dart';
 // import '../../../../core/widgets/globe_background.dart';
 
 class SplashContent extends StatelessWidget {
@@ -10,6 +11,10 @@ class SplashContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final logoPath = AppConfig.isInitialized
+        ? AppConfig.current.logoPath
+        : 'assets/logo/peers_global_logo.png';
+
     return Stack(
       children: [
         // Earth background commented out to focus solely on the centered logo animation:
@@ -28,7 +33,7 @@ class SplashContent extends StatelessWidget {
                 if (composition == null) {
                   return Center(
                     child: Image.asset(
-                      'assets/images/icon.png',
+                      logoPath,
                       width: 160,
                       height: 160,
                       fit: BoxFit.contain,

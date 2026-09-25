@@ -48,6 +48,21 @@ android {
         }
     }
 
+    sourceSets {
+        getByName("main") {
+            res.srcDirs("src/main/res")
+        }
+        getByName("peersGlobal") {
+            res.srcDirs("src/peersGlobal/res", "src/peers_global/res")
+        }
+        getByName("greenpreneur") {
+            res.srcDirs("src/greenpreneur/res")
+        }
+        getByName("fempreneur") {
+            res.srcDirs("src/fempreneur/res")
+        }
+    }
+
     buildTypes {
         release {
             // Signing with the debug keys for now, so `flutter run --release` works.

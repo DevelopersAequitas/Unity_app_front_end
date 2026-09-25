@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sms_autofill/sms_autofill.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_phone_field.dart';
 import 'country_code_sheet.dart';
 
 class RegisterPhoneField extends StatefulWidget {
@@ -152,7 +153,11 @@ class _RegisterPhoneFieldState extends State<RegisterPhoneField> {
               focusNode: _focusNode,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.done,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                const NoLeadingZeroFormatter(),
+                LengthLimitingTextInputFormatter(10),
+              ],
               onTap: _triggerPhoneHintOnce,
               autofillHints: const [
                 AutofillHints.telephoneNumber,

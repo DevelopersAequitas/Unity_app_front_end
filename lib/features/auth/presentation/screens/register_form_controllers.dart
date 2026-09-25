@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/datasources/location_remote_datasource.dart';
 import '../../../../core/models/city_entity.dart';
+import '../../../../core/widgets/app_date_picker_dialog.dart';
 import '../../../../core/widgets/city_picker_sheet.dart';
 import '../../domain/entities/category_item_entity.dart';
 import '../../domain/entities/register_params.dart';
@@ -84,11 +85,15 @@ class RegisterFormControllers {
     );
   }
 
-  static Future<String?> pickDateOfBirth(BuildContext context) async {
+  static Future<String?> pickDateOfBirth(
+    BuildContext context, {
+    DateTime? initialDate,
+  }) async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(now.year - 25, 1, 1),
+    final picked = await AppDatePickerDialog.show(
+      context,
+      title: 'Select Date of Birth',
+      initialDate: initialDate ?? DateTime(now.year - 25, 1, 1),
       firstDate: DateTime(1940),
       lastDate: DateTime(now.year - 16, 12, 31),
     );

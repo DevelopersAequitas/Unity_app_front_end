@@ -50,7 +50,15 @@ class TimelineItemModel {
     final mediaList = (json['media'] ?? json['creative_media'] ?? json['creatives']) as List?;
     final tagsList = json['tags'] as List?;
     final rawMentions = (json['mentions'] ?? json['tagged_peers'] ?? json['tagged_users'] ?? json['mentioned_peers'] ?? json['peers']) as List?;
-    final authorMap = (json['author'] ?? json['user'] ?? json['member'] ?? json['creator']) as Map<String, dynamic>?;
+    final authorMap = (json['author'] ??
+            json['user'] ??
+            json['member'] ??
+            json['creator'] ??
+            json['peer'] ??
+            json['owner'] ??
+            (json['user_id'] != null || json['display_name'] != null || json['user_name'] != null
+                ? json
+                : null)) as Map<String, dynamic>?;
     final acceptedMap = json['accepted_by'] as Map<String, dynamic>?;
     final impactMap = json['impact'] as Map<String, dynamic>?;
 

@@ -3,10 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../peers/presentation/bloc/peers_bloc.dart';
-import '../../../peers/presentation/bloc/peers_event.dart';
 import '../../../peers/presentation/widgets/peer_card.dart';
 import '../../../profile/presentation/bloc/profile_bloc.dart';
 import '../../domain/entities/referral_leaderboard_entity.dart';
@@ -87,24 +84,12 @@ class ReferralLeaderboardTile extends StatelessWidget {
             isCurrentUser: isCurrentUser,
             margin: EdgeInsets.zero,
             showBorder: false,
-            onConnect: isCurrentUser ? null : () {
-              context.read<PeersBloc>().add(PeerConnectRequested(item.id));
-              AppSnackBar.showSuccess(context, 'Connection request sent to ${item.displayName}');
-            },
-            onFollow: isCurrentUser ? null : () => context.read<PeersBloc>().add(
-              PeerFollowToggled(peerId: item.id, isCurrentlyFollowing: item.isFollowing),
-            ),
-            onScheduleP2P: (!isCurrentUser && peer.isConnected)
-                ? () => AppSnackBar.showInfo(context, 'Scheduling P2P with ${item.displayName}')
-                : null,
-            onMessage: isCurrentUser ? () {} : () => AppSnackBar.showInfo(context, 'Messaging ${item.displayName}'),
+            showActions: false,
+            onBookmark: () {},
             onTap: () => Navigator.pushNamed(
               context,
               isCurrentUser ? AppRoutes.profile : AppRoutes.peerProfile,
               arguments: item.id,
-            ),
-            onBookmark: isCurrentUser ? () {} : () => context.read<PeersBloc>().add(
-              PeerBookmarkToggled(peerId: item.id, isCurrentlyBookmarked: item.isBookmark),
             ),
           ),
         ],

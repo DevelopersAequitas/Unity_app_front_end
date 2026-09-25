@@ -44,7 +44,7 @@ class VyapaarJagatStoryModel extends VyapaarJagatStoryEntity {
   Map<String, dynamic> toJson() {
     return {
       'full_name': fullName,
-      'designation': designation,
+      'title': designation,
       'company_name': companyName,
       'website': website,
       'entrepreneurial_journey': entrepreneurialJourney,
@@ -58,7 +58,7 @@ class VyapaarJagatStoryModel extends VyapaarJagatStoryEntity {
       'facebook_url': facebookUrl,
       'instagram_url': instagramUrl,
       'twitter_url': twitterUrl,
-      'consent': consent,
+      'consent': consent ? 1 : 0,
     };
   }
 }

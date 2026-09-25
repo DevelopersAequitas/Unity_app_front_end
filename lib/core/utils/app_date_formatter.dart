@@ -55,6 +55,39 @@ class AppDateFormatter {
     }
   }
 
+  /// Parses various date formats (UTC ISO strings, DD-MM-YYYY, DD/MM/YYYY, YYYY-MM-DD, etc.)
+  static DateTime? parseFlexible(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is DateTime) return raw;
+    final str = raw.toString().trim();
+    if (str.isEmpty) return null;
+
+    final fromUtc = parseUtc(str);
+    if (fromUtc != null) return fromUtc;
+
+    final dmy = RegExp(r'^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$').firstMatch(str);
+    if (dmy != null) {
+      final d = int.tryParse(dmy.group(1)!);
+      final m = int.tryParse(dmy.group(2)!);
+      final y = int.tryParse(dmy.group(3)!);
+      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return DateTime(y, m, d);
+      }
+    }
+
+    final ymd = RegExp(r'^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$').firstMatch(str);
+    if (ymd != null) {
+      final y = int.tryParse(ymd.group(1)!);
+      final m = int.tryParse(ymd.group(2)!);
+      final d = int.tryParse(ymd.group(3)!);
+      if (d != null && m != null && y != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return DateTime(y, m, d);
+      }
+    }
+
+    return null;
+  }
+
   /// Converts a local DateTime to a UTC string in "YYYY-MM-DD HH:mm:ss" format for API submission.
   static String toUtcString(DateTime local) {
     final utc = local.toUtc();

@@ -29,12 +29,14 @@ class AddP2pMeetingScreen extends StatelessWidget {
   final PeerEntity? initialPeer;
   final DateTime? initialDate;
   final String? initialPlace;
+  final String? initialMeetingRequestId;
 
   const AddP2pMeetingScreen({
     super.key,
     this.initialPeer,
     this.initialDate,
     this.initialPlace,
+    this.initialMeetingRequestId,
   });
 
   @override
@@ -50,6 +52,7 @@ class AddP2pMeetingScreen extends StatelessWidget {
         initialPeer: initialPeer,
         initialDate: initialDate,
         initialPlace: initialPlace,
+        initialMeetingRequestId: initialMeetingRequestId,
       ),
     );
   }
@@ -59,11 +62,13 @@ class _AddP2pMeetingView extends StatefulWidget {
   final PeerEntity? initialPeer;
   final DateTime? initialDate;
   final String? initialPlace;
+  final String? initialMeetingRequestId;
 
   const _AddP2pMeetingView({
     this.initialPeer,
     this.initialDate,
     this.initialPlace,
+    this.initialMeetingRequestId,
   });
 
   @override
@@ -86,6 +91,12 @@ class _AddP2pMeetingViewState extends State<_AddP2pMeetingView> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        if (widget.initialMeetingRequestId != null &&
+            widget.initialMeetingRequestId!.isNotEmpty) {
+          context.read<AddP2pMeetingBloc>().add(
+                AddP2pMeetingRequestIdChanged(widget.initialMeetingRequestId),
+              );
+        }
         if (widget.initialPeer != null) {
           context.read<AddP2pMeetingBloc>().add(
             AddP2pMeetingPeerSelected(widget.initialPeer),

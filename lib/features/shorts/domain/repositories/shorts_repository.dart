@@ -1,7 +1,15 @@
 import '../entities/intro_video_entity.dart';
 
+/// Domain-level result for paginated intro videos.
+class ShortsPageResult {
+  final List<IntroVideoEntity> videos;
+  final int? total;
+
+  const ShortsPageResult({required this.videos, this.total});
+}
+
 abstract class ShortsRepository {
-  Future<List<IntroVideoEntity>> getIntroVideos({
+  Future<ShortsPageResult> getIntroVideos({
     int page = 1,
     int perPage = 10,
   });

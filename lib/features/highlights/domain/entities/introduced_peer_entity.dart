@@ -64,6 +64,48 @@ class IntroducedPeerEntity extends Equatable {
     );
   }
 
+  IntroducedPeerEntity copyWith({
+    String? id,
+    String? name,
+    String? firstName,
+    String? lastName,
+    String? businessName,
+    String? designation,
+    String? city,
+    String? category,
+    String? avatarUrl,
+    String? status,
+    String? introducedDate,
+    bool? isVerified,
+    bool? isPro,
+    bool? isBookmarked,
+    bool? isFollowing,
+    bool? isConnected,
+    String? connectionStatus,
+    int? lifeImpactedCount,
+  }) {
+    return IntroducedPeerEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      businessName: businessName ?? this.businessName,
+      designation: designation ?? this.designation,
+      city: city ?? this.city,
+      category: category ?? this.category,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      status: status ?? this.status,
+      introducedDate: introducedDate ?? this.introducedDate,
+      isVerified: isVerified ?? this.isVerified,
+      isPro: isPro ?? this.isPro,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+      isFollowing: isFollowing ?? this.isFollowing,
+      isConnected: isConnected ?? this.isConnected,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      lifeImpactedCount: lifeImpactedCount ?? this.lifeImpactedCount,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

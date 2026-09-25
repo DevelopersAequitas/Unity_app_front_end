@@ -26,6 +26,8 @@ class P2pMeetingRequestEntity extends Equatable {
   final String? inviteeCategory;
   final bool isInviteePro;
   final List<P2pRescheduleRequestEntity> rescheduleRequests;
+  final bool? canLogMeeting;
+  final bool? isLogged;
 
   const P2pMeetingRequestEntity({
     required this.id,
@@ -52,6 +54,8 @@ class P2pMeetingRequestEntity extends Equatable {
     this.inviteeCategory,
     this.isInviteePro = false,
     this.rescheduleRequests = const [],
+    this.canLogMeeting,
+    this.isLogged,
   });
 
   bool get isPending => status.toLowerCase() == 'pending';
@@ -61,6 +65,9 @@ class P2pMeetingRequestEntity extends Equatable {
       status.toLowerCase() == 'scheduled' || status.toLowerCase() == 'confirmed';
   bool get isCompleted =>
       status.toLowerCase() == 'completed' || status.toLowerCase() == 'done';
+  bool get shouldShowLogMeeting =>
+      canLogMeeting == true ||
+      (isLogged != true && (isAccepted || isScheduled));
 
   @override
   List<Object?> get props => [
@@ -88,5 +95,7 @@ class P2pMeetingRequestEntity extends Equatable {
         inviteeCategory,
         isInviteePro,
         rescheduleRequests,
+        canLogMeeting,
+        isLogged,
       ];
 }

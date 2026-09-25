@@ -9,6 +9,7 @@ import '../widgets/settings_app_updates_card.dart';
 import '../widgets/settings_categories_card.dart';
 import '../widgets/settings_channels_card.dart';
 import '../widgets/settings_quiet_hours_card.dart';
+import '../../../profile/presentation/widgets/profile_app_version_tile.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -87,6 +88,8 @@ class SettingsScreen extends StatelessWidget {
                   onAllowAnyNetworkChanged: (v) => _update(context, prefs.copyWith(allowAnyNetwork: v)),
                   onNotifyUpdateChanged: (v) => _update(context, prefs.copyWith(notifyUpdateAvailable: v)),
                 ),
+                const SizedBox(height: 16),
+                const ProfileAppVersionTile(),
                 const SizedBox(height: 32),
               ],
             ),

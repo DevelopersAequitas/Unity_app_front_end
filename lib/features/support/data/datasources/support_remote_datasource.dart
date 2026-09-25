@@ -14,18 +14,24 @@ class SupportRemoteDataSourceImpl implements SupportRemoteDataSource {
 
   @override
   Future<List<SupportTicketModel>> getSupportTickets() async {
-    try {
-      final res = await dioClient.dio.get(ApiEndpoints.adminSupportTickets);
-      return _parseTickets(res.data);
-    } catch (_) {
+    final endpoints = [
+      ApiEndpoints.supportTickets,
+      ApiEndpoints.support,
+      '/me/support-tickets',
+      '/support-tickets',
+      ApiEndpoints.adminSupportTickets,
+    ];
+
+    for (final ep in endpoints) {
       try {
-        final res = await dioClient.dio.get(ApiEndpoints.supportTickets);
-        return _parseTickets(res.data);
-      } catch (_) {
-        final res = await dioClient.dio.get(ApiEndpoints.support);
-        return _parseTickets(res.data);
-      }
+        final res = await dioClient.dio.get(ep);
+        final list = _parseTickets(res.data);
+        if (list.isNotEmpty || res.statusCode == 200) {
+          return list;
+        }
+      } catch (_) {}
     }
+    return [];
   }
 
   List<SupportTicketModel> _parseTickets(dynamic data) {
@@ -37,9 +43,15 @@ class SupportRemoteDataSourceImpl implements SupportRemoteDataSource {
       if (inner is List) {
         raw = inner;
       } else if (inner is Map<String, dynamic>) {
-        raw = inner['items'] as List? ?? inner['tickets'] as List?;
+        raw = inner['data'] as List? ??
+            inner['items'] as List? ??
+            inner['tickets'] as List? ??
+            inner['support_tickets'] as List?;
       } else {
-        raw = data['items'] as List? ?? data['tickets'] as List?;
+        raw = data['items'] as List? ??
+            data['tickets'] as List? ??
+            data['support_tickets'] as List? ??
+            data['result'] as List?;
       }
     }
     if (raw == null) return [];

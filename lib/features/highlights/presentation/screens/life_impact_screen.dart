@@ -34,7 +34,7 @@ class _LifeImpactScreenState extends State<LifeImpactScreen>
       initialIndex: widget.initialTabIndex,
     );
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging && mounted) {
+      if (mounted && _currentIndex != _tabController.index) {
         setState(() => _currentIndex = _tabController.index);
       }
     });
@@ -82,6 +82,7 @@ class _LifeImpactScreenState extends State<LifeImpactScreen>
           builder: (context, state) {
             return TabBarView(
               controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
               children: [
                 LifeImpactScoreTab(state: state),
                 AddImpactTab(

@@ -6,6 +6,7 @@ import '../../domain/usecases/get_registration_draft_usecase.dart';
 import '../../domain/usecases/get_subcategories_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/save_registration_draft_usecase.dart';
+import '../../domain/usecases/validate_referral_code_usecase.dart';
 import 'register_event.dart';
 import 'register_state.dart';
 
@@ -16,6 +17,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   final SaveRegistrationDraftUseCase saveRegistrationDraftUseCase;
   final GetRegistrationDraftUseCase getRegistrationDraftUseCase;
   final ClearRegistrationDraftUseCase? clearRegistrationDraftUseCase;
+  final ValidateReferralCodeUseCase? validateReferralCodeUseCase;
 
   RegisterBloc({
     required this.registerUseCase,
@@ -24,11 +26,14 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     required this.saveRegistrationDraftUseCase,
     required this.getRegistrationDraftUseCase,
     this.clearRegistrationDraftUseCase,
+    this.validateReferralCodeUseCase,
   }) : super(const RegisterState()) {
     on<RegisterDraftLoadRequested>(_onDraftLoadRequested);
     on<RegisterDraftSaveRequested>(_onDraftSaveRequested);
     on<RegisterMainCategoriesRequested>(_onMainCategoriesRequested);
     on<RegisterSubcategoriesRequested>(_onSubcategoriesRequested);
+    on<RegisterReferralCodeValidationRequested>(_onReferralValidationRequested);
+    on<RegisterReferralCodeCleared>(_onReferralCodeCleared);
     on<RegisterStep1Submitted>(_onStep1Submitted);
     on<RegisterStep2Submitted>(_onStep2Submitted);
     on<RegisterPreviousStepRequested>(_onPreviousStepRequested);
@@ -43,6 +48,9 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       final draft = await getRegistrationDraftUseCase();
       if (draft != null) {
         emit(state.copyWith(params: draft, status: RegisterStatus.draftLoaded));
+        if (draft.referralCode != null && draft.referralCode!.trim().isNotEmpty) {
+          add(RegisterReferralCodeValidationRequested(draft.referralCode!));
+        }
       }
     } catch (_) {}
   }
@@ -82,6 +90,67 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     } catch (_) {
       emit(state.copyWith(isCategoriesLoading: false));
     }
+  }
+
+  Future<void> _onReferralValidationRequested(
+    RegisterReferralCodeValidationRequested event,
+    Emitter<RegisterState> emit,
+  ) async {
+    final code = event.code.trim().toUpperCase();
+    if (code.isEmpty) {
+      emit(
+        state.copyWith(
+          isReferralValidating: false,
+          clearReferralValidation: true,
+          clearReferralValidationMessage: true,
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        isReferralValidating: true,
+        clearReferralValidation: true,
+        referralValidationMessage: null,
+      ),
+    );
+
+    try {
+      if (validateReferralCodeUseCase != null) {
+        final result = await validateReferralCodeUseCase!(code);
+        emit(
+          state.copyWith(
+            isReferralValidating: false,
+            referralValidation: result,
+            referralValidationMessage: result.valid
+                ? 'Referral code verified: ${result.displayName}'
+                : 'Invalid referral code',
+          ),
+        );
+      } else {
+        emit(state.copyWith(isReferralValidating: false));
+      }
+    } catch (_) {
+      emit(
+        state.copyWith(
+          isReferralValidating: false,
+          referralValidationMessage: 'Could not verify referral code',
+        ),
+      );
+    }
+  }
+
+  void _onReferralCodeCleared(
+    RegisterReferralCodeCleared event,
+    Emitter<RegisterState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        clearReferralValidation: true,
+        clearReferralValidationMessage: true,
+      ),
+    );
   }
 
   void _onStep1Submitted(

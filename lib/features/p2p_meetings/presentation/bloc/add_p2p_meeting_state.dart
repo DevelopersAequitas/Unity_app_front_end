@@ -15,6 +15,7 @@ class AddP2pMeetingState extends Equatable {
   final File? creativeImage;
   final String? templateBackgroundUrl;
   final P2pMeetingEntity? createdMeeting;
+  final String? meetingRequestId;
   final String? errorMessage;
 
   const AddP2pMeetingState({
@@ -27,6 +28,7 @@ class AddP2pMeetingState extends Equatable {
     this.creativeImage,
     this.templateBackgroundUrl,
     this.createdMeeting,
+    this.meetingRequestId,
     this.errorMessage,
   });
 
@@ -46,6 +48,7 @@ class AddP2pMeetingState extends Equatable {
     File? creativeImage,
     String? templateBackgroundUrl,
     P2pMeetingEntity? createdMeeting,
+    String? meetingRequestId,
     String? errorMessage,
   }) {
     return AddP2pMeetingState(
@@ -58,6 +61,7 @@ class AddP2pMeetingState extends Equatable {
       creativeImage: creativeImage ?? this.creativeImage,
       templateBackgroundUrl: templateBackgroundUrl ?? this.templateBackgroundUrl,
       createdMeeting: createdMeeting ?? this.createdMeeting,
+      meetingRequestId: meetingRequestId ?? this.meetingRequestId,
       errorMessage: errorMessage,
     );
   }
@@ -73,6 +77,7 @@ class AddP2pMeetingState extends Equatable {
         creativeImage,
         templateBackgroundUrl,
         createdMeeting,
+        meetingRequestId,
         errorMessage,
       ];
 }

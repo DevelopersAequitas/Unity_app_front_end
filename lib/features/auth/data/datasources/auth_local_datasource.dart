@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../../core/cache/app_cache_keys.dart';
 import '../../../../core/cache/cache_store.dart';
 import '../models/user_model.dart';
@@ -37,6 +38,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       AppCacheKeys.lastActiveEmail,
       user.email,
     );
+    debugPrint('====================================================');
+    debugPrint('🔑 [AUTH] BEARER TOKEN SAVED: Bearer $token');
+    debugPrint('====================================================');
   }
 
   @override

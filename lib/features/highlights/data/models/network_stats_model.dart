@@ -20,21 +20,62 @@ class NetworkStatsModel {
   });
 
   factory NetworkStatsModel.fromJson(Map<String, dynamic> json) {
-    final counts = json['counts'] is Map<String, dynamic> ? json['counts'] as Map<String, dynamic> : json;
-    final total = (counts['total_referrals'] ?? counts['total_invited'] ?? counts['total_invites'] ?? 0) as int;
-    final given = (counts['referrals_given'] ?? counts['given_referrals'] ?? 0) as int;
-    final received = (counts['referrals_received'] ?? counts['received_referrals'] ?? 0) as int;
-    final active = (counts['active_referrals'] ?? counts['active_members'] ?? given) as int;
-    final rewards = (counts['total_referral_coins'] ?? counts['rewards_earned'] ?? counts['total_coins'] ?? 0) as int;
+    final root = json['data'] is Map<String, dynamic>
+        ? json['data'] as Map<String, dynamic>
+        : json;
+    final counts = root['counts'] is Map<String, dynamic>
+        ? root['counts'] as Map<String, dynamic>
+        : root;
+
+    int parseNum(dynamic val) {
+      if (val is num) return val.toInt();
+      if (val != null) return int.tryParse(val.toString()) ?? 0;
+      return 0;
+    }
+
+    final total = parseNum(
+      counts['total_invited'] ??
+          counts['total_referrals'] ??
+          counts['total_members'] ??
+          counts['total_joined'] ??
+          counts['total_invites'] ??
+          root['total_members'] ??
+          root['total_invited'] ??
+          root['total'],
+    );
+    final given =
+        parseNum(counts['referrals_given'] ?? counts['given_referrals']);
+    final received =
+        parseNum(counts['referrals_received'] ?? counts['received_referrals']);
+    final active = parseNum(
+        counts['active_referrals'] ?? counts['active_members'] ?? total);
+    final rewards = parseNum(
+      counts['total_referral_coins'] ??
+          counts['rewards_earned'] ??
+          counts['total_coins'] ??
+          counts['coins_earned'] ??
+          root['total_referral_coins'] ??
+          root['rewards_earned'] ??
+          root['total_coins'],
+    );
+
+    final refCode = root['referral_code']?.toString() ??
+        counts['referral_code']?.toString() ??
+        json['referral_code']?.toString() ??
+        '';
+    final refLink = root['referral_link']?.toString() ??
+        counts['referral_link']?.toString() ??
+        json['referral_link']?.toString() ??
+        '';
 
     return NetworkStatsModel(
-      totalInvited: total > 0 ? total : (given + received),
+      totalInvited: total,
       activeMembers: active,
       rewardsEarned: rewards,
       referralsGiven: given,
       referralsReceived: received,
-      referralCode: json['referral_code']?.toString() ?? counts['referral_code']?.toString() ?? '',
-      referralLink: json['referral_link']?.toString() ?? counts['referral_link']?.toString() ?? '',
+      referralCode: refCode,
+      referralLink: refLink,
     );
   }
 

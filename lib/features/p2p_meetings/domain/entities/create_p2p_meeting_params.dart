@@ -7,6 +7,7 @@ class CreateP2pMeetingParams extends Equatable {
   final String meetingPlace;
   final String remarks;
   final List<String> mediaFileIds;
+  final String? p2pMeetingRequestId;
 
   const CreateP2pMeetingParams({
     required this.peerUserId,
@@ -15,6 +16,7 @@ class CreateP2pMeetingParams extends Equatable {
     required this.meetingPlace,
     required this.remarks,
     this.mediaFileIds = const [],
+    this.p2pMeetingRequestId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +29,10 @@ class CreateP2pMeetingParams extends Equatable {
         'place': meetingPlace,
         'remarks': remarks,
         'notes': remarks,
+        if (p2pMeetingRequestId != null && p2pMeetingRequestId!.isNotEmpty) ...{
+          'p2p_meeting_request_id': p2pMeetingRequestId,
+          'meeting_request_id': p2pMeetingRequestId,
+        },
         if (mediaFileIds.isNotEmpty) ...{
           'media': mediaFileIds.map((id) => {'file_id': id}).toList(),
           'media_file_ids': mediaFileIds,
@@ -43,5 +49,6 @@ class CreateP2pMeetingParams extends Equatable {
         meetingPlace,
         remarks,
         mediaFileIds,
+        p2pMeetingRequestId,
       ];
 }

@@ -70,6 +70,54 @@ class NetworkMemberEntity extends Equatable {
     );
   }
 
+  NetworkMemberEntity copyWith({
+    String? id,
+    String? name,
+    String? firstName,
+    String? lastName,
+    String? businessName,
+    String? designation,
+    String? city,
+    String? category,
+    String? avatarUrl,
+    String? joinedDate,
+    String? status,
+    String? referralType,
+    String? referralTitle,
+    int? coinsEarned,
+    bool? isVerified,
+    bool? isPro,
+    bool? isBookmarked,
+    bool? isFollowing,
+    bool? isConnected,
+    String? connectionStatus,
+    int? lifeImpactedCount,
+  }) {
+    return NetworkMemberEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      businessName: businessName ?? this.businessName,
+      designation: designation ?? this.designation,
+      city: city ?? this.city,
+      category: category ?? this.category,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      joinedDate: joinedDate ?? this.joinedDate,
+      status: status ?? this.status,
+      referralType: referralType ?? this.referralType,
+      referralTitle: referralTitle ?? this.referralTitle,
+      coinsEarned: coinsEarned ?? this.coinsEarned,
+      isVerified: isVerified ?? this.isVerified,
+      isPro: isPro ?? this.isPro,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+      isFollowing: isFollowing ?? this.isFollowing,
+      isConnected: isConnected ?? this.isConnected,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      lifeImpactedCount: lifeImpactedCount ?? this.lifeImpactedCount,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

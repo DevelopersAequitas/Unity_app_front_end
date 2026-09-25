@@ -28,6 +28,7 @@ import 'invoice_list_screen.dart';
 import 'settings_screen.dart';
 import 'submit_ticket_screen.dart';
 import 'tutorials_screen.dart';
+import '../../../profile/presentation/widgets/profile_app_version_tile.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -124,6 +125,8 @@ class _MenuScreenState extends State<MenuScreen> {
                     MenuItemTile(icon: Icons.logout_rounded, title: 'Logout', iconColor: AppColor.error, textColor: AppColor.error, onTap: _handleLogout),
                   ],
                 ),
+                const SizedBox(height: 24),
+                const ProfileAppVersionTile(),
                 const SizedBox(height: 32),
                 const MenuSocialSection(),
                 const SizedBox(height: 16),

@@ -3,8 +3,16 @@ import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
 import '../models/intro_video_model.dart';
 
+/// Holds paginated results from the intro-videos API.
+class ShortsVideosResult {
+  final List<IntroVideoModel> videos;
+  final int? total;
+
+  const ShortsVideosResult({required this.videos, this.total});
+}
+
 abstract class ShortsRemoteDataSource {
-  Future<List<IntroVideoModel>> getIntroVideos({
+  Future<ShortsVideosResult> getIntroVideos({
     int page = 1,
     int perPage = 10,
   });
@@ -21,7 +29,7 @@ class ShortsRemoteDataSourceImpl implements ShortsRemoteDataSource {
   Dio get _dio => dioClient.dio;
 
   @override
-  Future<List<IntroVideoModel>> getIntroVideos({
+  Future<ShortsVideosResult> getIntroVideos({
     int page = 1,
     int perPage = 10,
   }) async {
@@ -32,24 +40,34 @@ class ShortsRemoteDataSourceImpl implements ShortsRemoteDataSource {
 
     final data = response.data;
     List? rawList;
+    int? totalCount;
+
     if (data is Map<String, dynamic>) {
       final inner = data['data'];
+      final meta = data['meta'] as Map<String, dynamic>?;
+      totalCount = (meta?['total'] as num?)?.toInt();
+
       if (inner is List) {
         rawList = inner;
       } else if (inner is Map<String, dynamic>) {
         rawList = (inner['data'] ?? inner['items']) as List?;
+        final innerMeta = inner['meta'] ?? inner['pagination'];
+        if (innerMeta is Map<String, dynamic>) {
+          totalCount ??= (innerMeta['total'] as num?)?.toInt();
+        }
       }
     } else if (data is List) {
       rawList = data;
     }
 
-    if (rawList != null) {
-      return rawList
-          .whereType<Map<String, dynamic>>()
-          .map((json) => IntroVideoModel.fromJson(json))
-          .toList();
-    }
-    return [];
+    final videos = rawList == null
+        ? <IntroVideoModel>[]
+        : rawList
+            .whereType<Map<String, dynamic>>()
+            .map((json) => IntroVideoModel.fromJson(json))
+            .toList();
+
+    return ShortsVideosResult(videos: videos, total: totalCount);
   }
 
   @override

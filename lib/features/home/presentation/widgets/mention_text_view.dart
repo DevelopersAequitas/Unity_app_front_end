@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
@@ -96,10 +97,10 @@ class _MentionTextViewState extends State<MentionTextView> {
     final List<String> knownMentionPatterns = [];
     for (final m in sortedMentions) {
       if (m.name.trim().isNotEmpty) {
-        knownMentionPatterns.add('@${RegExp.escape(m.name.trim())}');
+        knownMentionPatterns.add('(?:@)?${RegExp.escape(m.name.trim())}');
       }
       if (m.username != null && m.username!.trim().isNotEmpty) {
-        knownMentionPatterns.add('@${RegExp.escape(m.username!.trim())}');
+        knownMentionPatterns.add('(?:@)?${RegExp.escape(m.username!.trim())}');
       }
     }
 
@@ -161,30 +162,18 @@ class _MentionTextViewState extends State<MentionTextView> {
       }
 
       if (mentionName.isNotEmpty) {
-        // Format in UPPERCASE
-        final upperName = mentionName.toUpperCase();
-        final displayText = upperName.startsWith('@') ? upperName : '@$upperName';
+        // Display in UPPERCASE, no @ prefix
+        final displayText = mentionName.toUpperCase();
 
         spans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: GestureDetector(
-              onTap: () => _handlePeerTap(peerId),
-              behavior: HitTestBehavior.opaque,
-              child: ShaderMask(
-                blendMode: BlendMode.srcIn,
-                shaderCallback: (bounds) => AppColor.brandGradient.createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                ),
-                child: Text(
-                  displayText,
-                  style: baseStyle.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white, // Required for ShaderMask
-                  ),
-                ),
-              ),
+          TextSpan(
+            text: displayText,
+            style: baseStyle.copyWith(
+              fontWeight: FontWeight.w500,
+              color: AppColor.primaryBlue,
             ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () => _handlePeerTap(peerId),
           ),
         );
       }

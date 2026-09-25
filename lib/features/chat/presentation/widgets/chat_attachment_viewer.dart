@@ -107,8 +107,10 @@ class ChatAttachmentViewer extends StatelessWidget {
   Widget _buildBody(BuildContext context) {
     if (attachment.isImage) {
       return InteractiveViewer(
-        minScale: 0.5,
+        minScale: 1.0,
         maxScale: 4.0,
+        boundaryMargin: EdgeInsets.zero,
+        clipBehavior: Clip.hardEdge,
         child: attachment.url.startsWith('http')
             ? CachedNetworkImage(
                 imageUrl: attachment.url,

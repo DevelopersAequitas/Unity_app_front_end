@@ -40,8 +40,6 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
   String _priority = 'Medium';
   bool _isSubmitting = false;
   File? _attachment;
-  bool _isUploadingAttachment = false;
-  String? _uploadedMediaId;
 
   final List<String> _departments = [
     'Technical Issue',
@@ -95,30 +93,6 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
     } catch (_) {}
   }
 
-  Future<String?> _uploadAttachment() async {
-    if (_attachment == null) return null;
-    setState(() => _isUploadingAttachment = true);
-    try {
-      final fileName = _attachment!.path.split('/').last.split('\\').last;
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          _attachment!.path,
-          filename: fileName,
-        ),
-      });
-      final res = await _dio.dio.post(ApiEndpoints.fileUpload, data: formData);
-      final d = res.data;
-      if (d is Map<String, dynamic>) {
-        final inner = d['data'] is Map<String, dynamic>
-            ? d['data'] as Map<String, dynamic>
-            : d;
-        _uploadedMediaId = (inner['id'] ?? inner['file_id'] ?? '').toString();
-      }
-    } catch (_) {}
-    if (mounted) setState(() => _isUploadingAttachment = false);
-    return _uploadedMediaId;
-  }
-
   Future<void> _submitTicket() async {
     if (!OfflineGuard.check(context, actionName: 'submit support tickets')) return;
     final subject = _subjectController.text.trim();
@@ -133,35 +107,40 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
 
     setState(() => _isSubmitting = true);
 
-    String? mediaId;
-    if (_attachment != null) {
-      mediaId = await _uploadAttachment();
-    }
-
-    final payload = {
-      'subject': subject,
-      'description': description,
-      'department': _department,
-      'category': _department,
-      'priority': _priority,
-      'message': description,
-      'screen_name': widget.screenName ?? 'Support Screen',
-      if (mediaId != null && mediaId.isNotEmpty) ...{
-        'media_file_id': mediaId,
-        'media_type': 'image',
-      },
-    };
-
     try {
-      try {
-        await _dio.dio.post(ApiEndpoints.support, data: payload);
-      } catch (_) {
-        try {
-          await _dio.dio.post(ApiEndpoints.supportTickets, data: payload);
-        } catch (_) {
-          await _dio.dio.post(ApiEndpoints.feedback, data: payload);
-        }
+      if (_attachment != null) {
+        final fileName = _attachment!.path.split('/').last.split('\\').last;
+        final formData = FormData.fromMap({
+          'subject': subject,
+          'description': description,
+          'department': _department,
+          'category': _department,
+          'priority': _priority.toLowerCase(),
+          'message': description,
+          'screen_name': widget.screenName ?? 'Support Screen',
+          'media': await MultipartFile.fromFile(
+            _attachment!.path,
+            filename: fileName,
+          ),
+          'attachment': await MultipartFile.fromFile(
+            _attachment!.path,
+            filename: fileName,
+          ),
+        });
+        await _dio.dio.post(ApiEndpoints.supportTickets, data: formData);
+      } else {
+        final jsonPayload = {
+          'subject': subject,
+          'description': description,
+          'department': _department,
+          'category': _department,
+          'priority': _priority.toLowerCase(),
+          'message': description,
+          'screen_name': widget.screenName ?? 'Support Screen',
+        };
+        await _dio.dio.post(ApiEndpoints.supportTickets, data: jsonPayload);
       }
+
       if (mounted) {
         setState(() => _isSubmitting = false);
         _showSuccessDialog();
@@ -413,14 +392,14 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: (_isSubmitting || _isUploadingAttachment) ? null : _submitTicket,
+                onPressed: _isSubmitting ? null : _submitTicket,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColor.primaryBlue,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
-                child: (_isSubmitting || _isUploadingAttachment)
+                child: _isSubmitting
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : Text('Submit Ticket', style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.w500, color: Colors.white)),
               ),

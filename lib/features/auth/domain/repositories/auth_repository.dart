@@ -1,5 +1,6 @@
 import '../entities/auth_token_entity.dart';
 import '../entities/category_item_entity.dart';
+import '../entities/referral_validation_entity.dart';
 import '../entities/register_params.dart';
 import '../entities/user_entity.dart';
 
@@ -27,6 +28,8 @@ abstract class AuthRepository {
   Future<List<CategoryItemEntity>> getMainCategories();
 
   Future<List<CategoryItemEntity>> getSubcategories(dynamic parentId);
+
+  Future<ReferralValidationEntity> validateReferralCode(String code);
 
   Future<void> saveRegistrationDraft(RegisterParams params);
 

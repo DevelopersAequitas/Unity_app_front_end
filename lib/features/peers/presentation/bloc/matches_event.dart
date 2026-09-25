@@ -26,3 +26,11 @@ class MatchConnectRequested extends MatchesEvent {
   @override
   List<Object?> get props => [peerId];
 }
+
+class MatchRemoved extends MatchesEvent {
+  final String peerId;
+  const MatchRemoved(this.peerId);
+
+  @override
+  List<Object?> get props => [peerId];
+}

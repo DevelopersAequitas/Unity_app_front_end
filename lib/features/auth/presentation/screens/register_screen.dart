@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/datasources/location_remote_datasource.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/auth_ambient_background.dart';
 import '../../../../core/widgets/image_source_picker_sheet.dart';
@@ -17,7 +18,12 @@ import '../widgets/register_step_switcher.dart';
 import 'register_form_controllers.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final String? initialReferralCode;
+
+  const RegisterScreen({
+    super.key,
+    this.initialReferralCode,
+  });
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -48,9 +54,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
     _pageController = PageController();
     _setupDraftAutoSave();
+
+    if (widget.initialReferralCode != null &&
+        widget.initialReferralCode!.trim().isNotEmpty) {
+      _form.referral.text = widget.initialReferralCode!.trim().toUpperCase();
+    }
+
     final bloc = context.read<RegisterBloc>();
     bloc.add(const RegisterDraftLoadRequested());
     bloc.add(const RegisterMainCategoriesRequested());
+
+    if (widget.initialReferralCode != null &&
+        widget.initialReferralCode!.trim().isNotEmpty) {
+      bloc.add(
+        RegisterReferralCodeValidationRequested(
+          widget.initialReferralCode!.trim(),
+        ),
+      );
+    }
   }
 
   void _setupDraftAutoSave() {
@@ -417,6 +438,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             final sel =
                                 await RegisterFormControllers.pickDateOfBirth(
                                   context,
+                                  initialDate: AppDateFormatter.parseFlexible(
+                                    _selectedDob,
+                                  ),
                                 );
                             if (sel != null) {
                               setState(() => _selectedDob = sel);
@@ -439,6 +463,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             }
                           },
                           onPickLocation: () => _pickLocation(context),
+                          onValidateReferral: () {
+                            final code = _form.referral.text.trim();
+                            if (code.isNotEmpty) {
+                              context.read<RegisterBloc>().add(
+                                RegisterReferralCodeValidationRequested(code),
+                              );
+                            }
+                          },
+                          onClearReferral: () {
+                            _form.referral.clear();
+                            context.read<RegisterBloc>().add(
+                              const RegisterReferralCodeCleared(),
+                            );
+                            _autoSaveDraft();
+                          },
                           onContinueStep1: () => _submitStep1(context),
                           onCreateAccount: () => _submitStep2(context),
                         ),

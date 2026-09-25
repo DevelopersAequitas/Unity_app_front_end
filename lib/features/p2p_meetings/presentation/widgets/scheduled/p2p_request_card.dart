@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/core/theme/app_typography.dart';
@@ -6,6 +7,8 @@ import 'package:unity_app/core/utils/app_date_formatter.dart';
 import 'package:unity_app/core/widgets/app_avatar.dart';
 import 'package:unity_app/core/widgets/app_gradient_text.dart';
 import 'package:unity_app/features/p2p_meetings/domain/entities/p2p_meeting_request_entity.dart';
+import 'package:unity_app/features/p2p_meetings/presentation/bloc/p2p_meetings_bloc.dart';
+import 'package:unity_app/features/p2p_meetings/presentation/bloc/p2p_meetings_event.dart';
 import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 
 class P2pRequestCard extends StatelessWidget {
@@ -37,7 +40,7 @@ class P2pRequestCard extends StatelessWidget {
     }
   }
 
-  void _onLogMeeting(BuildContext context) {
+  Future<void> _onLogMeeting(BuildContext context) async {
     final peerId = isInbox ? request.requesterId : request.inviteeId;
     final peerName = isInbox ? request.requesterName : request.inviteeName;
     final peerPhoto = isInbox ? request.requesterPhotoUrl : request.inviteePhotoUrl;
@@ -61,15 +64,24 @@ class P2pRequestCard extends StatelessWidget {
 
     DateTime? parsedDate = AppDateFormatter.parseUtc(request.scheduledAt);
 
-    Navigator.pushNamed(
+    final result = await Navigator.pushNamed(
       context,
       AppRoutes.addP2pMeeting,
       arguments: {
         'peer': peer,
         'date': parsedDate,
         'place': request.place,
+        'p2p_meeting_request_id': request.id,
       },
     );
+
+    if (result == true && context.mounted) {
+      try {
+        context.read<P2pMeetingsBloc>().add(
+          const P2pMeetingsRefreshRequested(),
+        );
+      } catch (_) {}
+    }
   }
 
   @override
@@ -224,7 +236,11 @@ class P2pRequestCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _StatusBadge(status: request.status),
+              _StatusBadge(
+                status: (request.isLogged == true || request.isCompleted)
+                    ? 'completed'
+                    : request.status,
+              ),
             ],
           ),
           if (request.scheduledAt != null && request.scheduledAt!.isNotEmpty) ...[
@@ -292,11 +308,14 @@ class P2pRequestCard extends StatelessWidget {
           if (request.isPending ||
               request.isAccepted ||
               request.isScheduled ||
-              request.isCompleted) ...[
+              request.isCompleted ||
+              request.isLogged == true) ...[
             const SizedBox(height: 10),
             _ActionButtonsRow(
               isInbox: isInbox,
               status: request.status.toLowerCase(),
+              canLogMeeting: request.shouldShowLogMeeting,
+              isLogged: request.isLogged == true || request.isCompleted,
               onAccept: onAccept,
               onReject: onReject,
               onReschedule: onReschedule,
@@ -354,6 +373,8 @@ class _StatusBadge extends StatelessWidget {
 class _ActionButtonsRow extends StatelessWidget {
   final bool isInbox;
   final String status;
+  final bool canLogMeeting;
+  final bool isLogged;
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onReschedule;
@@ -363,6 +384,8 @@ class _ActionButtonsRow extends StatelessWidget {
   const _ActionButtonsRow({
     required this.isInbox,
     required this.status,
+    this.canLogMeeting = true,
+    this.isLogged = false,
     this.onAccept,
     this.onReject,
     this.onReschedule,
@@ -460,30 +483,66 @@ class _ActionButtonsRow extends StatelessWidget {
 
     if (status == 'accepted' ||
         status == 'scheduled' ||
-        status == 'completed' ||
         status == 'approved' ||
-        status == 'confirmed') {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: onLogMeeting,
-          icon: const Icon(Icons.check_circle_outline, size: 15, color: Colors.white),
-          label: const Text(
-            'Log Completed Meeting',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+        status == 'confirmed' ||
+        status == 'completed' ||
+        isLogged) {
+      if (canLogMeeting) {
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onLogMeeting,
+            icon: const Icon(Icons.check_circle_outline,
+                size: 15, color: Colors.white),
+            label: const Text(
+              'Log Completed Meeting',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.primaryBlue,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              elevation: 0,
             ),
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColor.primaryBlue,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            elevation: 0,
+        );
+      } else if (isLogged || status == 'completed') {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFF059669).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFF059669).withValues(alpha: 0.2),
+              width: 0.8,
+            ),
           ),
-        ),
-      );
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle_rounded,
+                  size: 14, color: Color(0xFF059669)),
+              SizedBox(width: 5),
+              Text(
+                'COMPLETED',
+                style: TextStyle(
+                  color: Color(0xFF059669),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
     }
 
     return const SizedBox.shrink();

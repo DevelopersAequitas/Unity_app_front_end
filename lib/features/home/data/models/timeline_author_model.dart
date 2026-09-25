@@ -24,24 +24,38 @@ class TimelineAuthorModel {
   });
 
   factory TimelineAuthorModel.fromJson(Map<String, dynamic> json) {
-    final first = json['first_name'] as String?;
-    final last = json['last_name'] as String?;
-    final rawDisplay = json['display_name'] as String?;
-    final computedName = rawDisplay ??
-        ('${first ?? ''} ${last ?? ''}'.trim().isNotEmpty
+    final first = (json['first_name'] ?? json['firstname']) as String?;
+    final last = (json['last_name'] ?? json['lastname']) as String?;
+    final rawDisplay = (json['display_name'] ??
+            json['name'] ??
+            json['full_name'] ??
+            json['username'] ??
+            json['user_name'] ??
+            json['contact_name'])
+        ?.toString();
+    final computedName = (rawDisplay != null && rawDisplay.trim().isNotEmpty)
+        ? rawDisplay.trim()
+        : ('${first ?? ''} ${last ?? ''}'.trim().isNotEmpty
             ? '${first ?? ''} ${last ?? ''}'.trim()
-            : 'Peer Member');
+            : 'Peers Member');
 
     return TimelineAuthorModel(
-      id: (json['id'] ?? '').toString(),
+      id: (json['id'] ?? json['user_id'] ?? json['member_id'] ?? '').toString(),
       displayName: computedName,
       firstName: first,
       lastName: last,
-      profilePhotoUrl: (json['profile_photo_url'] ?? json['avatar_url']) as String?,
+      profilePhotoUrl: (json['profile_photo_url'] ??
+              json['avatar_url'] ??
+              json['avatar'] ??
+              json['photo_url'] ??
+              json['user_avatar'] ??
+              json['profile_photo'] ??
+              json['photo'])
+          ?.toString(),
       isVerified: json['is_verified'] as bool? ?? false,
-      designation: json['designation'] as String?,
-      companyName: json['company_name'] as String?,
-      level4Category: (json['level4_category'] ?? json['business_sub_category']) as String?,
+      designation: (json['designation'] ?? json['headline'] ?? json['role'] ?? json['profession'])?.toString(),
+      companyName: (json['company_name'] ?? json['company'] ?? json['business_name'])?.toString(),
+      level4Category: (json['level4_category'] ?? json['business_sub_category'])?.toString(),
     );
   }
 

@@ -71,6 +71,9 @@ class PeerProfileEventBusUpdateReceived extends PeerProfileEvent {
   final String? connectionStatus;
   final bool? isConnected;
   final bool? isRequested;
+  final bool? isBlocked;
+  final bool? isBlockedByMe;
+  final bool? isBlockedByPeer;
 
   const PeerProfileEventBusUpdateReceived({
     required this.peerId,
@@ -79,6 +82,9 @@ class PeerProfileEventBusUpdateReceived extends PeerProfileEvent {
     this.connectionStatus,
     this.isConnected,
     this.isRequested,
+    this.isBlocked,
+    this.isBlockedByMe,
+    this.isBlockedByPeer,
   });
 
   @override
@@ -89,19 +95,27 @@ class PeerProfileEventBusUpdateReceived extends PeerProfileEvent {
         connectionStatus,
         isConnected,
         isRequested,
+        isBlocked,
+        isBlockedByMe,
+        isBlockedByPeer,
       ];
 }
 
 class PeerProfileBlockRequested extends PeerProfileEvent {
+  final String? peerId;
   final String? reason;
-  const PeerProfileBlockRequested({this.reason});
+  const PeerProfileBlockRequested({this.peerId, this.reason});
 
   @override
-  List<Object?> get props => [reason];
+  List<Object?> get props => [peerId, reason];
 }
 
 class PeerProfileUnblockRequested extends PeerProfileEvent {
-  const PeerProfileUnblockRequested();
+  final String? peerId;
+  const PeerProfileUnblockRequested({this.peerId});
+
+  @override
+  List<Object?> get props => [peerId];
 }
 
 

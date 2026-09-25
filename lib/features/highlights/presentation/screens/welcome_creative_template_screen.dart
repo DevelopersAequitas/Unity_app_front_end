@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,14 +41,16 @@ class _WelcomeCreativeTemplateScreenState
 
   Future<Uint8List?> _captureHighResImageBytes() async {
     try {
+      // Flush pending frames so CachedNetworkImage / RepaintBoundary is fully painted
+      await SchedulerBinding.instance.endOfFrame;
+      await Future.delayed(const Duration(milliseconds: 150));
+
       final RenderRepaintBoundary? boundary =
           _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return null;
 
       if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 150));
-      } else {
-        await Future.delayed(const Duration(milliseconds: 80));
+        await Future.delayed(const Duration(milliseconds: 200));
       }
 
       // 3.0x ultra-crisp resolution for printing & sharing
@@ -285,15 +288,22 @@ class _WelcomeCreativeTemplateScreenState
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: RepaintBoundary(
-                      key: _cardKey,
-                      child: WelcomeCreativeCard(
-                        memberName: memberName,
-                        cityName: cityName,
-                        companyName: companyName,
-                        designation: designation,
-                        category: categoryText,
-                        avatarUrl: avatarUrl,
+                    clipBehavior: Clip.antiAlias,
+                    child: InteractiveViewer(
+                      minScale: 1.0,
+                      maxScale: 3.5,
+                      boundaryMargin: EdgeInsets.zero,
+                      clipBehavior: Clip.hardEdge,
+                      child: RepaintBoundary(
+                        key: _cardKey,
+                        child: WelcomeCreativeCard(
+                          memberName: memberName,
+                          cityName: cityName,
+                          companyName: companyName,
+                          designation: designation,
+                          category: categoryText,
+                          avatarUrl: avatarUrl,
+                        ),
                       ),
                     ),
                   ),

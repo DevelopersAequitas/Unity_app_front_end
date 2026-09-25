@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_common_bar.dart';
@@ -121,14 +120,10 @@ class _BookmarkedPeersScreenState extends State<BookmarkedPeersScreen> {
                             final isMe = peer.id == authUserId;
 
                             return PeerCard(
+                              key: ValueKey('${peer.id}_${peer.isFollowing}_${peer.isBookmarked}_${peer.connectionStatus}'),
                               peer: peer,
                               isCurrentUser: isMe,
-                              onTap: () {
-                                Navigator.of(context).pushNamed(
-                                  AppRoutes.peerProfile,
-                                  arguments: peer.id,
-                                );
-                              },
+                              onTap: null,
                               onBookmark: () {
                                 context.read<PeersBloc>().add(
                                       PeerBookmarkToggled(

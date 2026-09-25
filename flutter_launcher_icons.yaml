@@ -1,0 +1,8 @@
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/logo/peers_global_logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/logo/peers_global_logo.png"
+  remove_alpha_ios: true
+  min_sdk_android: 21

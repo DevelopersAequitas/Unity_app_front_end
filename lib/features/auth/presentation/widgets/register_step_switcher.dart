@@ -31,6 +31,8 @@ class RegisterStepSwitcher extends StatelessWidget {
   final VoidCallback onSelectDob;
   final VoidCallback onSelectPhoto;
   final VoidCallback onPickLocation;
+  final VoidCallback onValidateReferral;
+  final VoidCallback onClearReferral;
   final VoidCallback onContinueStep1;
   final VoidCallback onCreateAccount;
 
@@ -63,6 +65,8 @@ class RegisterStepSwitcher extends StatelessWidget {
     required this.onSelectDob,
     required this.onSelectPhoto,
     required this.onPickLocation,
+    required this.onValidateReferral,
+    required this.onClearReferral,
     required this.onContinueStep1,
     required this.onCreateAccount,
   });
@@ -99,9 +103,13 @@ class RegisterStepSwitcher extends StatelessWidget {
           latitude: latitude,
           longitude: longitude,
           isLoading: isLoading,
+          isValidatingReferral: state.isReferralValidating,
+          referralValidation: state.referralValidation,
           onSelectMainCategory: onSelectMainCategory,
           onSelectCategory: onSelectCategory,
           onPickLocation: onPickLocation,
+          onValidateReferral: onValidateReferral,
+          onClearReferral: onClearReferral,
           onCreateAccount: onCreateAccount,
         ),
       ],

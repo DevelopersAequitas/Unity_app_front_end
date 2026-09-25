@@ -6,6 +6,8 @@ class ProfileModel extends ProfileEntity {
     super.userId,
     super.peerId,
     super.publicProfileSlug,
+    super.referralCode,
+    super.referralLink,
     super.profilePhotoId,
     super.profilePhotoUrl,
     super.coverPhotoId,
@@ -46,6 +48,7 @@ class ProfileModel extends ProfileEntity {
     super.connectionCount = 0,
     super.followersCount = 0,
     super.followingCount = 0,
+    super.bookmarkCount = 0,
     super.postsCount = 0,
     super.coinsBalance = 0,
     super.lifeImpactedCount = 0,
@@ -116,6 +119,8 @@ class ProfileModel extends ProfileEntity {
     super.connectionStatus = 'none',
     super.isOnline = false,
     super.isBlocked = false,
+    super.isBlockedByMe = false,
+    super.isBlockedByPeer = false,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -301,6 +306,31 @@ class ProfileModel extends ProfileEntity {
       userId: root['user_id']?.toString() ?? root['userId']?.toString(),
       peerId: root['peer_id']?.toString(),
       publicProfileSlug: root['public_profile_slug']?.toString(),
+      referralCode: root['referral_code']?.toString() ??
+          root['invite_code']?.toString() ??
+          root['referralCode']?.toString() ??
+          root['my_referral_code']?.toString() ??
+          root['user_referral_code']?.toString() ??
+          (root['referral'] is Map
+              ? (root['referral']['code'] ?? root['referral']['referral_code'])?.toString()
+              : null) ??
+          (root['user'] is Map
+              ? (root['user']['referral_code'] ?? root['user']['invite_code'])?.toString()
+              : null) ??
+          (root['profile'] is Map
+              ? root['profile']['referral_code']?.toString()
+              : null) ??
+          root['counts']?['referral_code']?.toString(),
+      referralLink: root['referral_link']?.toString() ??
+          root['referralLink']?.toString() ??
+          root['invite_link']?.toString() ??
+          (root['referral'] is Map
+              ? (root['referral']['link'] ?? root['referral']['referral_link'])?.toString()
+              : null) ??
+          (root['user'] is Map
+              ? root['user']['referral_link']?.toString()
+              : null) ??
+          root['counts']?['referral_link']?.toString(),
       profilePhotoId: root['profile_photo_id']?.toString(),
       profilePhotoUrl: root['profile_photo_url']?.toString(),
       coverPhotoId: root['cover_photo_id']?.toString(),
@@ -332,8 +362,15 @@ class ProfileModel extends ProfileEntity {
       phone: root['phone']?.toString(),
       secondaryMobile: root['secondary_mobile']?.toString(),
       gender: root['gender']?.toString(),
-      dob: root['dob']?.toString(),
-      anniversaryDate: root['anniversary_date']?.toString(),
+      dob: (root['dob'] ??
+              root['date_of_birth'] ??
+              root['birth_date'] ??
+              root['birthdate'])
+          ?.toString(),
+      anniversaryDate: (root['anniversary_date'] ??
+              root['anniversary'] ??
+              root['wedding_anniversary'])
+          ?.toString(),
       preferredLanguage: root['preferred_language']?.toString(),
       city: cityEntity,
       state: root['state']?.toString(),
@@ -360,6 +397,16 @@ class ProfileModel extends ProfileEntity {
           int.tryParse(root['followers_count']?.toString() ?? '0') ?? 0,
       followingCount:
           int.tryParse(root['following_count']?.toString() ?? '0') ?? 0,
+      bookmarkCount: int.tryParse(
+            root['bookmark_count']?.toString() ??
+                root['bookmarks_count']?.toString() ??
+                root['bookmarksCount']?.toString() ??
+                root['bookmarkCount']?.toString() ??
+                (root['bookmarks'] is List
+                    ? (root['bookmarks'] as List).length.toString()
+                    : '0'),
+          ) ??
+          0,
       postsCount: int.tryParse(root['posts_count']?.toString() ?? '0') ?? 0,
       coinsBalance: int.tryParse(root['coins_balance']?.toString() ?? '0') ?? 0,
       lifeImpactedCount:
@@ -487,8 +534,13 @@ class ProfileModel extends ProfileEntity {
           root['online_status'] == 'online',
       isBlocked: root['is_blocked'] == true ||
           root['is_blocked_by_me'] == true ||
+          root['is_blocked_by_peer'] == true ||
+          root['is_blocked_by_them'] == true ||
           root['blocked'] == true ||
           root['block_status'] == 'blocked',
+      isBlockedByMe: root['is_blocked_by_me'] == true,
+      isBlockedByPeer: root['is_blocked_by_peer'] == true ||
+          root['is_blocked_by_them'] == true,
     );
   }
 
@@ -497,6 +549,8 @@ class ProfileModel extends ProfileEntity {
       'id': id,
       'peer_id': peerId,
       'public_profile_slug': publicProfileSlug,
+      'referral_code': referralCode,
+      'referral_link': referralLink,
       'profile_photo_id': profilePhotoId,
       'profile_photo_url': profilePhotoUrl,
       'cover_photo_id': coverPhotoId,

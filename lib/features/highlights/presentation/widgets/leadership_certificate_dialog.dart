@@ -85,8 +85,10 @@ class LeadershipCertificateDialog extends StatelessWidget {
                   child: certUrl.isNotEmpty
                       ? InteractiveViewer(
                           panEnabled: true,
-                          minScale: 0.5,
-                          maxScale: 4.0,
+                          minScale: 1.0,
+                          maxScale: 3.5,
+                          boundaryMargin: EdgeInsets.zero,
+                          clipBehavior: Clip.hardEdge,
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Image.network(

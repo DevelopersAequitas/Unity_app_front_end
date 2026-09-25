@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/datasources/location_remote_datasource.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/app_date_formatter.dart';
+import '../../../../core/utils/date_input_formatter.dart';
+import '../../../../core/widgets/app_date_picker_dialog.dart';
+import '../../../../core/widgets/app_phone_field.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/city_picker_sheet.dart';
 import '../../../../core/widgets/offline_prompt_dialog.dart';
+import '../../../auth/presentation/widgets/country_code_sheet.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../bloc/profile_edit_bloc.dart';
 import '../bloc/profile_edit_event.dart';
@@ -44,6 +50,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   late TextEditingController _addressController;
   late TextEditingController _bioController;
   late TextEditingController _superpowerController;
+  late TextEditingController _dobController;
+  late TextEditingController _anniversaryController;
 
   String? _gender;
   DateTime? _dob;
@@ -53,10 +61,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   final List<String> _genderOptions = ['male', 'female', 'other'];
   final List<String> _languageOptions = ['English', 'Hindi', 'Gujarati', 'Marathi', 'Other'];
 
-  static const _monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
   String _formatDisplayDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')} ${_monthNames[date.month - 1]} ${date.year}';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   String _formatIsoDate(DateTime date) {
@@ -86,12 +92,20 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     _superpowerController = TextEditingController(text: p.superpower ?? '');
 
     _gender = p.gender;
-    if (p.dob != null && p.dob!.isNotEmpty) {
-      _dob = DateTime.tryParse(p.dob!);
+    if (p.dob != null && p.dob!.trim().isNotEmpty) {
+      _dob = AppDateFormatter.parseFlexible(p.dob!);
     }
-    if (p.anniversaryDate != null && p.anniversaryDate!.isNotEmpty) {
-      _anniversaryDate = DateTime.tryParse(p.anniversaryDate!);
+    _dobController = TextEditingController(
+      text: _dob != null ? _formatDisplayDate(_dob!) : (p.dob ?? ''),
+    );
+
+    if (p.anniversaryDate != null && p.anniversaryDate!.trim().isNotEmpty) {
+      _anniversaryDate = AppDateFormatter.parseFlexible(p.anniversaryDate!);
     }
+    _anniversaryController = TextEditingController(
+      text: _anniversaryDate != null ? _formatDisplayDate(_anniversaryDate!) : (p.anniversaryDate ?? ''),
+    );
+
     _preferredLanguage = p.preferredLanguage ?? 'English';
   }
 
@@ -110,6 +124,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     _addressController.dispose();
     _bioController.dispose();
     _superpowerController.dispose();
+    _dobController.dispose();
+    _anniversaryController.dispose();
     super.dispose();
   }
 
@@ -138,27 +154,73 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   }
 
   Future<void> _pickDate({required bool isDob}) async {
-    final initialDate = isDob ? (_dob ?? DateTime(2000)) : (_anniversaryDate ?? DateTime(2020));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
+    final now = DateTime.now();
+    DateTime? currentParsed = isDob
+        ? (AppDateFormatter.parseFlexible(_dobController.text.trim()) ?? _dob)
+        : (AppDateFormatter.parseFlexible(_anniversaryController.text.trim()) ?? _anniversaryDate);
+
+    final initialDate = isDob
+        ? (currentParsed ?? DateTime(now.year - 25, 1, 1))
+        : (currentParsed ?? DateTime(now.year - 5, 1, 1));
+
+    final picked = await AppDatePickerDialog.show(
+      context,
+      title: isDob ? 'Select Date of Birth' : 'Select Anniversary Date',
+      initialDate: initialDate.isAfter(now) ? now : initialDate,
       firstDate: DateTime(1940),
-      lastDate: DateTime.now(),
+      lastDate: isDob ? now : DateTime(now.year + 1),
     );
     if (picked != null) {
       setState(() {
+        final formatted = _formatDisplayDate(picked);
         if (isDob) {
           _dob = picked;
+          _dobController.text = formatted;
         } else {
           _anniversaryDate = picked;
+          _anniversaryController.text = formatted;
         }
       });
     }
   }
 
+  String? _validateDob(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final parsed = AppDateFormatter.parseFlexible(value.trim());
+    if (parsed == null) {
+      return 'Format: DD/MM/YYYY';
+    }
+    if (parsed.isAfter(DateTime.now())) {
+      return 'DOB cannot be in future';
+    }
+    if (parsed.year < 1920) {
+      return 'Invalid year';
+    }
+    return null;
+  }
+
+  String? _validateAnniversary(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final parsed = AppDateFormatter.parseFlexible(value.trim());
+    if (parsed == null) {
+      return 'Format: DD/MM/YYYY';
+    }
+    if (parsed.year < 1940 || parsed.year > DateTime.now().year + 1) {
+      return 'Invalid year';
+    }
+    return null;
+  }
+
   void _saveChanges() {
     if (!OfflineGuard.check(context, actionName: 'save profile changes')) return;
     if (!_formKey.currentState!.validate()) return;
+
+    final parsedDob = _dobController.text.trim().isNotEmpty
+        ? AppDateFormatter.parseFlexible(_dobController.text.trim())
+        : null;
+    final parsedAnniversary = _anniversaryController.text.trim().isNotEmpty
+        ? AppDateFormatter.parseFlexible(_anniversaryController.text.trim())
+        : null;
 
     final payload = <String, dynamic>{
       'first_name': _firstNameController.text.trim(),
@@ -166,8 +228,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
       'display_name': _displayNameController.text.trim(),
       'secondary_mobile': _secondaryMobileController.text.trim(),
       'gender': _gender,
-      'dob': _dob != null ? _formatIsoDate(_dob!) : null,
-      'anniversary_date': _anniversaryDate != null ? _formatIsoDate(_anniversaryDate!) : null,
+      'dob': parsedDob != null ? _formatIsoDate(parsedDob) : null,
+      'anniversary_date': parsedAnniversary != null ? _formatIsoDate(parsedAnniversary) : null,
       if (_selectedCityId != null && _selectedCityId!.isNotEmpty) 'city_id': _selectedCityId,
       'city': _cityNameController.text.trim(),
       'city_of_residence': _cityNameController.text.trim(),
@@ -322,20 +384,23 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
 
                   // Dates Row
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _buildDatePickerField(
+                        child: _buildDateField(
+                          controller: _dobController,
                           label: 'Date of Birth',
-                          date: _dob,
-                          onTap: () => _pickDate(isDob: true),
+                          validator: _validateDob,
+                          onCalendarTap: () => _pickDate(isDob: true),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
-                        child: _buildDatePickerField(
+                        child: _buildDateField(
+                          controller: _anniversaryController,
                           label: 'Anniversary',
-                          date: _anniversaryDate,
-                          onTap: () => _pickDate(isDob: false),
+                          validator: _validateAnniversary,
+                          onCalendarTap: () => _pickDate(isDob: false),
                         ),
                       ),
                     ],
@@ -470,6 +535,9 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     );
   }
 
+  String _phoneCountryCode = '+91';
+  String _phoneCountryFlag = '🇮🇳';
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -479,6 +547,8 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     TextInputType? keyboardType,
     int maxLines = 1,
   }) {
+    final isPhone = keyboardType == TextInputType.phone;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -496,6 +566,13 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
           validator: validator,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          inputFormatters: isPhone
+              ? [
+                  FilteringTextInputFormatter.digitsOnly,
+                  const NoLeadingZeroFormatter(),
+                  LengthLimitingTextInputFormatter(10),
+                ]
+              : null,
           style: AppTypography.bodyMedium.copyWith(
             color: enabled ? AppColor.textPrimary : AppColor.textTertiary,
           ),
@@ -503,6 +580,43 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
             filled: true,
             fillColor: enabled ? AppColor.white : AppColor.backgroundSubtle,
             helperText: helperText,
+            prefixIcon: isPhone
+                ? GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: enabled
+                        ? () async {
+                            final picked = await CountryCodeSheet.show(context, _phoneCountryCode);
+                            if (picked != null) {
+                              setState(() {
+                                _phoneCountryCode = picked.dialCode;
+                                _phoneCountryFlag = picked.flag.isNotEmpty ? picked.flag : '🌐';
+                              });
+                            }
+                          }
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_phoneCountryFlag, style: const TextStyle(fontSize: 15)),
+                          const SizedBox(width: 4),
+                          Text(
+                            _phoneCountryCode,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColor.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(Icons.arrow_drop_down_rounded, size: 18, color: AppColor.textTertiary),
+                          const SizedBox(width: 4),
+                          Container(width: 1, height: 16, color: AppColor.borderSubtle),
+                        ],
+                      ),
+                    ),
+                  )
+                : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
@@ -616,10 +730,11 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     );
   }
 
-  Widget _buildDatePickerField({
+  Widget _buildDateField({
+    required TextEditingController controller,
     required String label,
-    required DateTime? date,
-    required VoidCallback onTap,
+    required VoidCallback onCalendarTap,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,27 +747,43 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
           ),
         ),
         const SizedBox(height: 4),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColor.white,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-              border: Border.all(color: AppColor.borderSubtle),
+        TextFormField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            DateAutoSlashInputFormatter(),
+          ],
+          validator: validator,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColor.textPrimary,
+          ),
+          decoration: InputDecoration(
+            hintText: 'DD/MM/YYYY',
+            hintStyle: AppTypography.bodySmall.copyWith(
+              color: AppColor.textTertiary,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  date != null ? _formatDisplayDate(date) : 'Select date',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: date != null ? AppColor.textPrimary : AppColor.textTertiary,
-                  ),
-                ),
-                const Icon(Icons.calendar_today_outlined, size: 14, color: AppColor.textTertiary),
-              ],
+            filled: true,
+            fillColor: AppColor.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            suffixIcon: IconButton(
+              icon: const Icon(
+                Icons.calendar_today_outlined,
+                size: 17,
+                color: AppColor.primaryBlue,
+              ),
+              onPressed: onCalendarTap,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              borderSide: const BorderSide(color: AppColor.borderSubtle),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              borderSide: const BorderSide(color: AppColor.borderSubtle),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              borderSide: const BorderSide(color: AppColor.primaryBlue, width: 1.2),
             ),
           ),
         ),

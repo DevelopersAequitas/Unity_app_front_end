@@ -1,0 +1,5 @@
+#include "Release.xcconfig"
+
+APP_DISPLAY_NAME = Fempreneur Unity
+PRODUCT_BUNDLE_IDENTIFIER = com.unity.fempreneur
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-fempreneur

@@ -5,6 +5,8 @@ class ProfileEntity extends Equatable {
   final String? userId;
   final String? peerId;
   final String? publicProfileSlug;
+  final String? referralCode;
+  final String? referralLink;
   final String? profilePhotoId;
   final String? profilePhotoUrl;
   final String? coverPhotoId;
@@ -45,6 +47,7 @@ class ProfileEntity extends Equatable {
   final int connectionCount;
   final int followersCount;
   final int followingCount;
+  final int bookmarkCount;
   final int postsCount;
   final int coinsBalance;
   final int lifeImpactedCount;
@@ -53,6 +56,8 @@ class ProfileEntity extends Equatable {
   final int referralsCount;
   final int businessDealsCount;
   final int testimonialsCount;
+
+  int get bookmarksCount => bookmarkCount;
   final String? businessType;
   final int? experienceYears;
   final String? experienceSummary;
@@ -115,12 +120,16 @@ class ProfileEntity extends Equatable {
   final String connectionStatus;
   final bool isOnline;
   final bool isBlocked;
+  final bool isBlockedByMe;
+  final bool isBlockedByPeer;
 
   const ProfileEntity({
     required this.id,
     this.userId,
     this.peerId,
     this.publicProfileSlug,
+    this.referralCode,
+    this.referralLink,
     this.profilePhotoId,
     this.profilePhotoUrl,
     this.coverPhotoId,
@@ -161,6 +170,7 @@ class ProfileEntity extends Equatable {
     this.connectionCount = 0,
     this.followersCount = 0,
     this.followingCount = 0,
+    this.bookmarkCount = 0,
     this.postsCount = 0,
     this.coinsBalance = 0,
     this.lifeImpactedCount = 0,
@@ -231,6 +241,8 @@ class ProfileEntity extends Equatable {
     this.connectionStatus = 'none',
     this.isOnline = false,
     this.isBlocked = false,
+    this.isBlockedByMe = false,
+    this.isBlockedByPeer = false,
   });
 
   ProfileEntity copyWith({
@@ -238,6 +250,8 @@ class ProfileEntity extends Equatable {
     String? userId,
     String? peerId,
     String? publicProfileSlug,
+    String? referralCode,
+    String? referralLink,
     String? profilePhotoId,
     String? profilePhotoUrl,
     String? coverPhotoId,
@@ -278,6 +292,7 @@ class ProfileEntity extends Equatable {
     int? connectionCount,
     int? followersCount,
     int? followingCount,
+    int? bookmarkCount,
     int? postsCount,
     int? coinsBalance,
     int? lifeImpactedCount,
@@ -348,12 +363,16 @@ class ProfileEntity extends Equatable {
     String? connectionStatus,
     bool? isOnline,
     bool? isBlocked,
+    bool? isBlockedByMe,
+    bool? isBlockedByPeer,
   }) {
     return ProfileEntity(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       peerId: peerId ?? this.peerId,
       publicProfileSlug: publicProfileSlug ?? this.publicProfileSlug,
+      referralCode: referralCode ?? this.referralCode,
+      referralLink: referralLink ?? this.referralLink,
       profilePhotoId: profilePhotoId ?? this.profilePhotoId,
       profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
       coverPhotoId: coverPhotoId ?? this.coverPhotoId,
@@ -394,6 +413,7 @@ class ProfileEntity extends Equatable {
       connectionCount: connectionCount ?? this.connectionCount,
       followersCount: followersCount ?? this.followersCount,
       followingCount: followingCount ?? this.followingCount,
+      bookmarkCount: bookmarkCount ?? this.bookmarkCount,
       postsCount: postsCount ?? this.postsCount,
       coinsBalance: coinsBalance ?? this.coinsBalance,
       lifeImpactedCount: lifeImpactedCount ?? this.lifeImpactedCount,
@@ -464,6 +484,8 @@ class ProfileEntity extends Equatable {
       connectionStatus: connectionStatus ?? this.connectionStatus,
       isOnline: isOnline ?? this.isOnline,
       isBlocked: isBlocked ?? this.isBlocked,
+      isBlockedByMe: isBlockedByMe ?? this.isBlockedByMe,
+      isBlockedByPeer: isBlockedByPeer ?? this.isBlockedByPeer,
     );
   }
 
@@ -480,6 +502,9 @@ class ProfileEntity extends Equatable {
   List<Object?> get props => [
         id,
         peerId,
+        publicProfileSlug,
+        referralCode,
+        referralLink,
         displayName,
         profilePhotoUrl,
         coverPhotoUrl,
@@ -495,6 +520,7 @@ class ProfileEntity extends Equatable {
         connectionCount,
         followersCount,
         followingCount,
+        bookmarkCount,
         postsCount,
         coinsBalance,
         lifeImpactedCount,
@@ -509,6 +535,8 @@ class ProfileEntity extends Equatable {
         isBookmark,
         connectionStatus,
         isBlocked,
+        isBlockedByMe,
+        isBlockedByPeer,
       ];
 }
 

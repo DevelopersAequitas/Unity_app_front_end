@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:unity_app/core/router/app_router.dart';
 import 'package:unity_app/core/theme/app_color.dart';
 import 'package:unity_app/features/profile/domain/entities/profile_entity.dart';
 
@@ -66,40 +65,15 @@ class PeerProfileStats extends StatelessWidget {
           ]),
           const SizedBox(height: 8),
           _buildStatsCard([
-            _buildCell(
-              _formatCount(profile.badgesCount),
-              'Badges',
-              onTap: () => Navigator.pushNamed(
-                context,
-                AppRoutes.badges,
-                arguments: profile.id,
-              ),
-            ),
+            _buildCell(_formatCount(profile.badgesCount), 'Badges'),
             _buildDivider(),
-            _buildCell(
-              _formatCount(profile.p2pMeetingsCount),
-              'P2P',
-              onTap: () => Navigator.pushNamed(context, AppRoutes.p2pMeetings),
-            ),
+            _buildCell(_formatCount(profile.p2pMeetingsCount), 'Meetings'),
             _buildDivider(),
-            _buildCell(
-              _formatCount(profile.referralsCount),
-              'Referrals',
-              onTap: () => Navigator.pushNamed(context, AppRoutes.referrals),
-            ),
+            _buildCell(_formatCount(profile.referralsCount), 'Referrals'),
             _buildDivider(),
-            _buildCell(
-              _formatCount(profile.businessDealsCount),
-              'Deals',
-              onTap: () =>
-                  Navigator.pushNamed(context, AppRoutes.businessDeals),
-            ),
+            _buildCell(_formatCount(profile.businessDealsCount), 'Deals'),
             _buildDivider(),
-            _buildCell(
-              _formatCount(profile.testimonialsCount),
-              'Testimonials',
-              onTap: () => Navigator.pushNamed(context, AppRoutes.testimonials),
-            ),
+            _buildCell(_formatCount(profile.testimonialsCount), 'Testimonials'),
           ]),
         ],
       ),

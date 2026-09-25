@@ -29,14 +29,18 @@ class BecomeMentorHistoryList extends StatelessWidget {
             Icon(
               Icons.school_outlined,
               size: 48,
-              color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+              color: isDark
+                  ? AppColor.darkTextSecondary
+                  : AppColor.lightTextSecondary,
             ),
             const SizedBox(height: 12),
             Text(
               'No Mentor Submissions Yet',
               style: AppTypography.titleMedium.copyWith(
                 fontWeight: FontWeight.w500,
-                color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
+                color: isDark
+                    ? AppColor.darkTextPrimary
+                    : AppColor.lightTextPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -44,7 +48,9 @@ class BecomeMentorHistoryList extends StatelessWidget {
               'Your submitted applications will appear here.',
               style: AppTypography.bodySmall.copyWith(
                 fontWeight: FontWeight.w500,
-                color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+                color: isDark
+                    ? AppColor.darkTextSecondary
+                    : AppColor.lightTextSecondary,
               ),
             ),
           ],
@@ -74,26 +80,30 @@ class BecomeMentorHistoryList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    item.fullName.isNotEmpty ? item.fullName : 'Mentor Application',
+                    item.fullName.isNotEmpty
+                        ? item.fullName
+                        : 'Mentor Application',
                     style: AppTypography.titleSmall.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: isDark ? AppColor.darkTextPrimary : AppColor.lightTextPrimary,
+                      color: isDark
+                          ? AppColor.darkTextPrimary
+                          : AppColor.lightTextPrimary,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColor.primaryBlue.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      item.status ?? 'Pending',
-                      style: AppTypography.labelSmall.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: AppColor.primaryBlue,
-                      ),
-                    ),
-                  ),
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  //   decoration: BoxDecoration(
+                  //     color: AppColor.primaryBlue.withValues(alpha: 0.12),
+                  //     borderRadius: BorderRadius.circular(6),
+                  //   ),
+                  //   child: Text(
+                  //     item.status ?? 'Pending',
+                  //     style: AppTypography.labelSmall.copyWith(
+                  //       fontWeight: FontWeight.w500,
+                  //       color: AppColor.primaryBlue,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -101,7 +111,9 @@ class BecomeMentorHistoryList extends StatelessWidget {
                 '${item.city} • ${item.email}',
                 style: AppTypography.bodySmall.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary,
+                  color: isDark
+                      ? AppColor.darkTextSecondary
+                      : AppColor.lightTextSecondary,
                 ),
               ),
             ],

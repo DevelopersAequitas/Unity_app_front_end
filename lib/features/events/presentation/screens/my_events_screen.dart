@@ -20,11 +20,27 @@ class MyEventsScreen extends StatefulWidget {
   State<MyEventsScreen> createState() => _MyEventsScreenState();
 }
 
-class _MyEventsScreenState extends State<MyEventsScreen> {
+class _MyEventsScreenState extends State<MyEventsScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     context.read<MyEventsBloc>().add(const FetchMyEventsEvent());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (mounted) {
+        context.read<MyEventsBloc>().add(const FetchMyEventsEvent(isRefresh: true));
+      }
+    }
   }
 
   Future<void> _handlePayment(String? url) async {
@@ -43,6 +59,11 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
             AppSnackBar.showError(context, 'Unable to open payment link: $e');
           }
         }
+      }
+
+      // Trigger a refresh after returning
+      if (mounted) {
+        context.read<MyEventsBloc>().add(const FetchMyEventsEvent(isRefresh: true));
       }
     }
   }

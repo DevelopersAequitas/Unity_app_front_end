@@ -90,7 +90,7 @@ class _LeaderboardView extends StatelessWidget {
                         const LeaderboardFetchRequested(forceRefresh: true),
                       );
                     },
-                    color: isImpact ? const Color(0xFFC026D3) : AppColor.primaryBlue,
+                    color: AppColor.primaryBlue,
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.only(

@@ -1,0 +1,13 @@
+﻿flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo/fempreneur.png"
+  adaptive_icon_background: "#FF4081"
+  adaptive_icon_foreground: "assets/logo/fempreneur.png"
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false

@@ -40,7 +40,14 @@ class EventRegistrationModel extends EventRegistrationEntity {
     final endAt = AppDateFormatter.parseUtc(json['end_at'] ?? json['end_date']);
     final location = json['location']?.toString() ?? json['location_text']?.toString();
 
-    final paymentStatus = json['payment_status']?.toString();
+    final isPaidFlag = json['is_paid'] == true ||
+        json['is_paid'] == 1 ||
+        json['paid'] == true ||
+        json['payment_status']?.toString().toLowerCase() == 'paid' ||
+        json['payment_status']?.toString().toLowerCase() == 'success' ||
+        json['status']?.toString().toLowerCase() == 'paid';
+
+    final effectivePaymentStatus = isPaidFlag ? 'paid' : json['payment_status']?.toString();
     final paymentGateway = json['payment_gateway']?.toString();
     final paymentUrl = json['payment_url']?.toString() ??
         json['checkout_url']?.toString() ??
@@ -52,21 +59,27 @@ class EventRegistrationModel extends EventRegistrationEntity {
         json['zoho_checkout_url']?.toString();
     final razorpayOrderId = json['razorpay_order_id']?.toString();
 
-    final paymentRequired = json['payment_required'] == true ||
-        json['requires_payment'] == true ||
-        paymentStatus == 'pending' ||
-        (checkoutUrl != null && checkoutUrl.isNotEmpty && paymentStatus != 'paid' && paymentStatus != 'not_required');
+    final paymentRequired = !isPaidFlag &&
+        (json['payment_required'] == true ||
+            json['requires_payment'] == true ||
+            effectivePaymentStatus == 'pending' ||
+            (checkoutUrl != null &&
+                checkoutUrl.isNotEmpty &&
+                effectivePaymentStatus != 'paid' &&
+                effectivePaymentStatus != 'not_required'));
 
     final rawStatus = json['status'];
     String status;
-    if (paymentRequired && (paymentStatus == 'pending' || paymentStatus != 'paid') && checkoutUrl != null && checkoutUrl.isNotEmpty) {
+    if (isPaidFlag) {
+      status = 'confirmed';
+    } else if (paymentRequired && (effectivePaymentStatus == 'pending' || effectivePaymentStatus != 'paid') && checkoutUrl != null && checkoutUrl.isNotEmpty) {
       status = 'pending_payment';
     } else if (rawStatus is bool) {
       status = rawStatus ? 'confirmed' : 'pending_approval';
     } else if (rawStatus is String) {
       final s = rawStatus.toLowerCase();
-      if (s == 'true' || s == 'confirmed' || s == 'registered' || s == 'attended' || s == 'completed') {
-        status = paymentRequired && paymentStatus != 'paid' ? 'pending_payment' : 'confirmed';
+      if (s == 'true' || s == 'confirmed' || s == 'registered' || s == 'attended' || s == 'completed' || s == 'paid') {
+        status = paymentRequired && effectivePaymentStatus != 'paid' ? 'pending_payment' : 'confirmed';
       } else if (s == 'false' || s == 'pending' || s == 'pending_approval' || s == 'requested') {
         status = 'pending_approval';
       } else {
@@ -107,7 +120,7 @@ class EventRegistrationModel extends EventRegistrationEntity {
       location: location,
       status: status,
       paymentRequired: paymentRequired,
-      paymentStatus: paymentStatus,
+      paymentStatus: effectivePaymentStatus,
       paymentGateway: paymentGateway,
       paymentUrl: paymentUrl,
       checkoutUrl: checkoutUrl,

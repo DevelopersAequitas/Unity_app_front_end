@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/events/peers_event_bus.dart';
 import '../../domain/usecases/accept_p2p_meeting_request_usecase.dart';
 import '../../domain/usecases/approve_reschedule_request_usecase.dart';
 import '../../domain/usecases/cancel_p2p_meeting_request_usecase.dart';
@@ -26,6 +28,7 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
   final ApproveRescheduleRequestUseCase approveRescheduleRequestUseCase;
   final RejectRescheduleRequestUseCase rejectRescheduleRequestUseCase;
   final RequestRescheduleP2pMeetingUseCase requestRescheduleP2pMeetingUseCase;
+  StreamSubscription<PeerBusEvent>? _busSubscription;
 
   P2pMeetingsBloc({
     required this.getP2pMeetingsHistoryUseCase,
@@ -53,6 +56,12 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
     on<P2pMeetingRescheduleRequested>(_onRescheduleRequested);
     on<P2pMeetingRescheduleApproved>(_onRescheduleApproved);
     on<P2pMeetingRescheduleRejected>(_onRescheduleRejected);
+
+    _busSubscription = PeersEventBus.instance.stream.listen((event) {
+      if (event is PeersSyncNeededEvent) {
+        add(const P2pMeetingsRefreshRequested());
+      }
+    });
   }
 
   void _onTopTabChanged(
@@ -273,5 +282,11 @@ class P2pMeetingsBloc extends Bloc<P2pMeetingsEvent, P2pMeetingsState> {
         errorMessage: 'Failed to decline reschedule: $e',
       ));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _busSubscription?.cancel();
+    return super.close();
   }
 }

@@ -6,6 +6,7 @@ import '../models/register_request_model.dart';
 import '../models/user_model.dart';
 
 import '../models/category_item_model.dart';
+import '../models/referral_validation_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<void> requestOtp(String email);
@@ -28,6 +29,7 @@ abstract class AuthRemoteDataSource {
   });
   Future<List<CategoryItemModel>> getMainBusinessCategories();
   Future<List<CategoryItemModel>> getSubcategories(dynamic parentId);
+  Future<ReferralValidationModel> validateReferralCode(String code);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -451,5 +453,41 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         parentId: parentId,
       ),
     ];
+  }
+
+  @override
+  Future<ReferralValidationModel> validateReferralCode(String code) async {
+    final cleanCode = code.trim().toUpperCase();
+    if (cleanCode.isEmpty) {
+      return const ReferralValidationModel(valid: false);
+    }
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.validateReferralCode(cleanCode),
+      );
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300 &&
+          response.data is Map<String, dynamic>) {
+        final resData = response.data as Map<String, dynamic>;
+        final data = resData['data'] is Map<String, dynamic>
+            ? resData['data'] as Map<String, dynamic>
+            : resData;
+        return ReferralValidationModel.fromJson(data);
+      }
+      return const ReferralValidationModel(valid: false);
+    } on DioException catch (e) {
+      if (e.response?.data is Map<String, dynamic>) {
+        final resData = e.response!.data as Map<String, dynamic>;
+        if (resData['data'] is Map<String, dynamic>) {
+          return ReferralValidationModel.fromJson(
+            resData['data'] as Map<String, dynamic>,
+          );
+        }
+      }
+      return const ReferralValidationModel(valid: false);
+    } catch (_) {
+      return const ReferralValidationModel(valid: false);
+    }
   }
 }

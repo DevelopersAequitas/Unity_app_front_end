@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Renders the dynamic Welcome Creative card for onboarding / member celebrations.
@@ -45,10 +46,11 @@ class WelcomeCreativeCard extends StatelessWidget {
     if (isCompletedCreative) {
       return AspectRatio(
         aspectRatio: 1122 / 1402,
-        child: Image.network(
-          backgroundUrl,
+        child: CachedNetworkImage(
+          imageUrl: backgroundUrl,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
+          fadeInDuration: const Duration(milliseconds: 200),
+          errorWidget: (context, url, error) => Container(
             color: const Color(0xFF002F6C),
             alignment: Alignment.center,
             child: const Text(
@@ -79,15 +81,23 @@ class WelcomeCreativeCard extends StatelessWidget {
               (subCategory != null && subCategory!.trim().isNotEmpty);
 
           return Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: Clip.hardEdge,
             children: [
               // ─── Layer 1: Base Template ──────────────────────────────────
               Positioned.fill(
-                child: Image.network(
-                  backgroundUrl,
+                child: CachedNetworkImage(
+                  imageUrl: backgroundUrl,
                   fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  errorBuilder: (context, error, stackTrace) => Container(
+                  fadeInDuration: const Duration(milliseconds: 300),
+                  placeholder: (context, url) => Container(
+                    color: Colors.white,
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(
+                      color: Color(0xFF002F6C),
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
                     color: const Color(0xFF002F6C),
                     alignment: Alignment.center,
                     child: const Text(
@@ -95,17 +105,6 @@ class WelcomeCreativeCard extends StatelessWidget {
                       style: TextStyle(color: Colors.white, fontSize: 13),
                     ),
                   ),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      color: Colors.white,
-                      alignment: Alignment.center,
-                      child: const CircularProgressIndicator(
-                        color: Color(0xFF002F6C),
-                        strokeWidth: 2,
-                      ),
-                    );
-                  },
                 ),
               ),
 

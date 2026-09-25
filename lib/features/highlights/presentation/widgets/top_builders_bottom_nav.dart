@@ -90,14 +90,28 @@ class TopBuildersBottomNav extends StatelessWidget {
               child: Icon(icon, size: 22),
             ),
             const SizedBox(height: 3),
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                color: isSelected ? AppColor.primaryBlue : AppColor.lightTextTertiary,
-              ),
-            ),
+            isSelected
+                ? ShaderMask(
+                    blendMode: BlendMode.srcIn,
+                    shaderCallback: (bounds) =>
+                        AppColor.brandGradient.createShader(bounds),
+                    child: Text(
+                      label,
+                      style: AppTypography.labelSmall.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: AppTypography.labelSmall.copyWith(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                      color: AppColor.lightTextTertiary,
+                    ),
+                  ),
           ],
         ),
       ),

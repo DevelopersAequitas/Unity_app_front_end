@@ -249,10 +249,10 @@ class LeaderboardRankingRow extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFDF4FF),
+                          color: const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: const Color(0xFFF0ABFC),
+                            color: const Color(0xFFBFDBFE),
                             width: 0.8,
                           ),
                         ),
@@ -262,7 +262,7 @@ class LeaderboardRankingRow extends StatelessWidget {
                             const Icon(
                               Icons.person_rounded,
                               size: 12,
-                              color: Color(0xFFC026D3),
+                              color: AppColor.primaryBlue,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -270,7 +270,7 @@ class LeaderboardRankingRow extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
-                                color: Color(0xFFC026D3),
+                                color: AppColor.primaryBlue,
                               ),
                             ),
                           ],
@@ -367,7 +367,7 @@ class LeaderboardRankingRow extends StatelessWidget {
                               const Icon(
                                 Icons.person_rounded,
                                 size: 10,
-                                color: Color(0xFFD946EF),
+                                color: AppColor.primaryBlue,
                               ),
                               const SizedBox(width: 3),
                               Text(
@@ -375,7 +375,7 @@ class LeaderboardRankingRow extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFFD946EF),
+                                  color: AppColor.primaryBlue,
                                 ),
                               ),
                             ],

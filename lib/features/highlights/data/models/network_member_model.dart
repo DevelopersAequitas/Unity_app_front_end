@@ -48,6 +48,12 @@ class NetworkMemberModel {
   });
 
   factory NetworkMemberModel.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
+    // The new API wraps social status inside a "peer" sub-object
+    final peerObj = json['peer'] is Map<String, dynamic>
+        ? json['peer'] as Map<String, dynamic>
+        : null;
+
+    // Legacy fields — referral activity style (given_by_user / received_by_user)
     Map<String, dynamic>? userObj;
     final givenBy = json['given_by_user'] is Map<String, dynamic>
         ? json['given_by_user'] as Map<String, dynamic>
@@ -67,70 +73,101 @@ class NetworkMemberModel {
         userObj = givenBy ?? receivedBy;
       }
     }
-    userObj ??= receivedBy ?? givenBy ?? (json['user'] is Map<String, dynamic> ? json['user'] as Map<String, dynamic> : json);
+    // peerObj takes priority for social data; userObj is the metadata fallback
+    userObj ??= peerObj ?? receivedBy ?? givenBy ?? (json['user'] is Map<String, dynamic> ? json['user'] as Map<String, dynamic> : null) ?? json;
 
-    final rawName = userObj['name']?.toString() ??
+    final socialSrc = peerObj ?? userObj; // always prefer peer obj for booleans
+
+    final rawName = json['name']?.toString() ??
+        peerObj?['display_name']?.toString() ??
+        peerObj?['name']?.toString() ??
+        userObj['name']?.toString() ??
         userObj['display_name']?.toString() ??
-        json['name']?.toString() ??
         json['title']?.toString() ??
         '';
-    final fName = userObj['first_name']?.toString();
-    final lName = userObj['last_name']?.toString();
+    final fName = peerObj?['first_name']?.toString() ?? userObj['first_name']?.toString();
+    final lName = peerObj?['last_name']?.toString() ?? userObj['last_name']?.toString();
     final computedName = rawName.isNotEmpty
         ? rawName
         : '${fName ?? ''} ${lName ?? ''}'.trim();
 
-    final status = json['status']?.toString() ??
-        json['reward_status']?.toString() ??
-        userObj['membership_status']?.toString() ??
-        'Active';
+    final status = json['reward_status']?.toString() ??
+        json['status']?.toString() ??
+        socialSrc['membership_status']?.toString() ??
+        'Granted';
+
+    final referralCode = json['referral_code']?.toString() ?? '';
+    final refTitle = referralCode.isNotEmpty
+        ? 'Referral Code: $referralCode'
+        : (json['title']?.toString() ?? 'Joined via Referral');
+
+    final int coins = json['coins'] is num
+        ? (json['coins'] as num).toInt()
+        : (json['coins_earned'] is num
+            ? (json['coins_earned'] as num).toInt()
+            : int.tryParse(json['coins']?.toString() ?? '') ?? 0);
+
+    bool parseBool(dynamic val) =>
+        val == true || val == 1 || val?.toString() == 'true';
 
     return NetworkMemberModel(
-      id: userObj['id']?.toString() ??
-          userObj['user_id']?.toString() ??
+      id: peerObj?['id']?.toString() ??
+          peerObj?['user_id']?.toString() ??
+          json['user_id']?.toString() ??
           json['id']?.toString() ??
+          userObj['id']?.toString() ??
+          userObj['user_id']?.toString() ??
           '',
       name: computedName.isNotEmpty ? computedName : 'Peer',
       firstName: fName,
       lastName: lName,
-      businessName: userObj['company_name']?.toString() ??
-          userObj['business_name']?.toString() ??
+      businessName: json['business_name']?.toString() ??
           json['company_name']?.toString() ??
-          json['business_name']?.toString() ??
+          peerObj?['company_name']?.toString() ??
+          userObj['company_name']?.toString() ??
+          userObj['business_name']?.toString() ??
           '',
-      designation: userObj['designation']?.toString() ??
+      designation: json['position']?.toString() ??
           json['designation']?.toString() ??
+          peerObj?['designation']?.toString() ??
+          userObj['designation']?.toString() ??
           '',
-      city: userObj['city']?.toString() ?? json['city']?.toString() ?? '',
-      category: userObj['level4_category']?.toString() ??
+      city: peerObj?['city']?.toString() ??
+          userObj['city']?.toString() ??
+          json['city']?.toString() ??
+          '',
+      category: peerObj?['level4_category']?.toString() ??
+          userObj['level4_category']?.toString() ??
           userObj['category']?.toString() ??
           json['category']?.toString() ??
           '',
-      avatarUrl: userObj['profile_photo_url']?.toString() ??
+      avatarUrl: peerObj?['profile_photo_image']?.toString() ??
+          peerObj?['profile_photo_url']?.toString() ??
+          json['profile_photo_url']?.toString() ??
+          userObj['profile_photo_url']?.toString() ??
           userObj['profile_photo_image']?.toString() ??
           userObj['profile_image']?.toString() ??
           userObj['avatar_url']?.toString() ??
           userObj['avatar']?.toString() ??
           '',
-      joinedDate: json['referral_date']?.toString() ??
+      joinedDate: json['registered_at']?.toString() ??
           json['created_at']?.toString() ??
           json['joined_at']?.toString() ??
+          json['referral_date']?.toString() ??
           '',
       status: status,
-      referralType: json['referral_type']?.toString() ??
-          json['source_module']?.toString() ??
-          '',
-      referralTitle: json['title']?.toString() ?? json['referral_of']?.toString() ?? '',
-      coinsEarned: (json['coins'] ?? json['coins_earned'] ?? 0) as int,
-      isVerified: userObj['is_verified'] == true || userObj['is_verified'] == 1,
-      isPro: userObj['is_pro'] == true || userObj['is_pro'] == 1,
-      isBookmarked: userObj['is_bookmark'] == true || userObj['is_bookmark'] == 1,
-      isFollowing: userObj['is_following'] == true || userObj['is_following'] == 1,
-      isConnected: userObj['is_connected'] == true || userObj['is_connected'] == 1,
-      connectionStatus: userObj['connection_status']?.toString() ?? 'none',
-      lifeImpactedCount: userObj['life_impacted_count'] is int
-          ? userObj['life_impacted_count'] as int
-          : int.tryParse(userObj['life_impacted_count']?.toString() ?? ''),
+      referralType: json['referral_type']?.toString() ?? 'referral',
+      referralTitle: refTitle,
+      coinsEarned: coins,
+      isVerified: parseBool(socialSrc['is_verified']),
+      isPro: parseBool(socialSrc['is_pro']),
+      isBookmarked: parseBool(socialSrc['is_bookmark']) || parseBool(socialSrc['is_bookmarked']),
+      isFollowing: parseBool(socialSrc['is_following']),
+      isConnected: parseBool(socialSrc['is_connected']),
+      connectionStatus: socialSrc['connection_status']?.toString() ?? 'none',
+      lifeImpactedCount: socialSrc['life_impacted_count'] is int
+          ? socialSrc['life_impacted_count'] as int
+          : int.tryParse(socialSrc['life_impacted_count']?.toString() ?? ''),
     );
   }
 

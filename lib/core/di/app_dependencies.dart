@@ -1,4 +1,5 @@
 import 'package:lottie/lottie.dart';
+import '../services/app_update_service.dart';
 import '../services/local_notification_service.dart';
 import 'package:unity_app/features/circles/domain/usecases/cancel_circle_join_request_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_category_subcategories_usecase.dart';
@@ -214,6 +215,7 @@ import '../../features/auth/domain/usecases/register_usecase.dart';
 import '../../features/auth/domain/usecases/request_otp_usecase.dart';
 import '../../features/auth/domain/usecases/request_whatsapp_otp_usecase.dart';
 import '../../features/auth/domain/usecases/save_registration_draft_usecase.dart';
+import '../../features/auth/domain/usecases/validate_referral_code_usecase.dart';
 import '../../features/auth/domain/usecases/verify_otp_usecase.dart';
 import '../../features/auth/domain/usecases/verify_whatsapp_otp_usecase.dart';
 import '../../features/home/data/datasources/home_local_datasource.dart';
@@ -232,6 +234,8 @@ import '../../features/home/domain/usecases/get_timeline_feed_usecase.dart';
 import '../../features/home/domain/usecases/toggle_post_like_usecase.dart';
 import '../../features/home/domain/usecases/toggle_post_save_usecase.dart';
 import '../../features/home/domain/usecases/update_post_usecase.dart';
+import '../../features/home/domain/usecases/report_post_usecase.dart';
+import '../../features/home/domain/usecases/get_post_report_reasons_usecase.dart';
 import '../../features/peers/data/datasources/peers_local_datasource.dart';
 import '../../features/peers/data/datasources/peers_remote_datasource.dart';
 import '../../features/peers/data/repositories_impl/peers_repository_impl.dart';
@@ -461,6 +465,7 @@ class AppDependencies {
   final SaveRegistrationDraftUseCase saveRegistrationDraftUseCase;
   final GetRegistrationDraftUseCase getRegistrationDraftUseCase;
   final ClearRegistrationDraftUseCase clearRegistrationDraftUseCase;
+  final ValidateReferralCodeUseCase validateReferralCodeUseCase;
 
   // Home UseCases
   final GetTimelineFeedUseCase getTimelineFeedUseCase;
@@ -475,6 +480,8 @@ class AppDependencies {
   final CreatePostUseCase createPostUseCase;
   final DeletePostUseCase deletePostUseCase;
   final UpdatePostUseCase updatePostUseCase;
+  final ReportPostUseCase reportPostUseCase;
+  final GetPostReportReasonsUseCase getPostReportReasonsUseCase;
 
   // Peers UseCases
   final GetAllPeersUseCase getAllPeersUseCase;
@@ -676,6 +683,7 @@ class AppDependencies {
     required this.saveRegistrationDraftUseCase,
     required this.getRegistrationDraftUseCase,
     required this.clearRegistrationDraftUseCase,
+    required this.validateReferralCodeUseCase,
     required this.getTimelineFeedUseCase,
     required this.getBrandPartnersUseCase,
     required this.getCachedTimelineFeedUseCase,
@@ -688,6 +696,8 @@ class AppDependencies {
     required this.createPostUseCase,
     required this.deletePostUseCase,
     required this.updatePostUseCase,
+    required this.reportPostUseCase,
+    required this.getPostReportReasonsUseCase,
     required this.getAllPeersUseCase,
     required this.getMyConnectionsUseCase,
     required this.getConnectionRequestsUseCase,
@@ -1177,6 +1187,9 @@ class AppDependencies {
     final clearRegistrationDraftUseCase = ClearRegistrationDraftUseCase(
       authRepository,
     );
+    final validateReferralCodeUseCase = ValidateReferralCodeUseCase(
+      authRepository,
+    );
 
     // Home UseCases
     final getTimelineFeedUseCase = GetTimelineFeedUseCase(homeRepository);
@@ -1195,6 +1208,8 @@ class AppDependencies {
     final createPostUseCase = CreatePostUseCase(homeRepository);
     final deletePostUseCase = DeletePostUseCase(homeRepository);
     final updatePostUseCase = UpdatePostUseCase(homeRepository);
+    final reportPostUseCase = ReportPostUseCase(homeRepository);
+    final getPostReportReasonsUseCase = GetPostReportReasonsUseCase(homeRepository);
 
     // Peers UseCases
     final getAllPeersUseCase = GetAllPeersUseCase(peersRepository);
@@ -1250,7 +1265,7 @@ class AppDependencies {
       getMyConnectionsUseCase: getMyConnectionsUseCase,
     );
 
-    // Location & Presence Sync Services
+    // Location, Presence & App Update Services
     LocationSyncService.instance.init(
       dioClient: dioClient,
       authLocalDataSource: authLocalDataSource,
@@ -1259,8 +1274,14 @@ class AppDependencies {
       dioClient: dioClient,
       authLocalDataSource: authLocalDataSource,
     );
+    AppUpdateService.instance.init(
+      dioClient: dioClient,
+      cacheStore: cacheStore,
+    );
     // Non-blocking location check on startup if permission is active
     LocationSyncService.instance.syncLocationIfPermitted();
+    // Non-blocking mobile version sync if active session
+    AppUpdateService.instance.syncMobileVersion();
 
     // Testimonials
     final testimonialsRemoteDataSource = TestimonialsRemoteDataSourceImpl(
@@ -1502,6 +1523,7 @@ class AppDependencies {
       saveRegistrationDraftUseCase: saveRegistrationDraftUseCase,
       getRegistrationDraftUseCase: getRegistrationDraftUseCase,
       clearRegistrationDraftUseCase: clearRegistrationDraftUseCase,
+      validateReferralCodeUseCase: validateReferralCodeUseCase,
       getTimelineFeedUseCase: getTimelineFeedUseCase,
       getBrandPartnersUseCase: getBrandPartnersUseCase,
       getCachedTimelineFeedUseCase: getCachedTimelineFeedUseCase,
@@ -1514,6 +1536,8 @@ class AppDependencies {
       createPostUseCase: createPostUseCase,
       deletePostUseCase: deletePostUseCase,
       updatePostUseCase: updatePostUseCase,
+      reportPostUseCase: reportPostUseCase,
+      getPostReportReasonsUseCase: getPostReportReasonsUseCase,
       getAllPeersUseCase: getAllPeersUseCase,
       getMyConnectionsUseCase: getMyConnectionsUseCase,
       getConnectionRequestsUseCase: getConnectionRequestsUseCase,

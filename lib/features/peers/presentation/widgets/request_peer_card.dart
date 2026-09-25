@@ -177,22 +177,35 @@ class RequestPeerCard extends StatelessWidget {
               ],
               if (peer.category != null && peer.category!.isNotEmpty) ...[
                 const SizedBox(height: 2),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: AppColor.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(8),
+                ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) =>
+                      AppColor.brandGradient.createShader(
+                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                   ),
-                  child: Text(
-                    peer.category!,
-                    style: const TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColor.primaryBlue,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.sell_outlined,
+                        size: 9,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          peer.category!.trim(),
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            letterSpacing: 0.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

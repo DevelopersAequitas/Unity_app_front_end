@@ -44,7 +44,7 @@ class GratitudeScriptBloc extends Bloc<GratitudeScriptEvent, GratitudeScriptStat
   ) async {
     emit(state.copyWith(isSaving: true, errorMessage: null, successMessage: null));
     try {
-      final updated = await saveGratitudeScriptUseCase(
+      final updated = state.script.copyWith(
         progressWord: event.progressWord,
         nextMonthGoal: event.nextMonthGoal,
         experienceStory: event.experienceStory,

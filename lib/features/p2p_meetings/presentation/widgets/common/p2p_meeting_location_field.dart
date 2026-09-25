@@ -21,6 +21,7 @@ class P2pMeetingLocationField extends StatefulWidget {
 
 class _P2pMeetingLocationFieldState extends State<P2pMeetingLocationField> {
   late String _meetingType;
+  String? _selectedPlatform;
 
   @override
   void initState() {
@@ -82,6 +83,7 @@ class _P2pMeetingLocationFieldState extends State<P2pMeetingLocationField> {
                     if (_meetingType != 'In-Person') {
                       setState(() {
                         _meetingType = 'In-Person';
+                        _selectedPlatform = null;
                         widget.controller.clear();
                       });
                       widget.onTypeChanged?.call('In-Person');
@@ -128,12 +130,14 @@ class _P2pMeetingLocationFieldState extends State<P2pMeetingLocationField> {
                     if (_meetingType != 'Virtual') {
                       setState(() {
                         _meetingType = 'Virtual';
-                        if (widget.controller.text.isEmpty) {
-                          widget.controller.text = 'Google Meet';
+                        _selectedPlatform = 'Google Meet';
+                        // Keep controller empty or clear if it was an in-person place
+                        if (!widget.controller.text.startsWith('http')) {
+                          widget.controller.clear();
                         }
                       });
                       widget.onTypeChanged?.call('Virtual');
-                    }
+                    } 
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -207,7 +211,9 @@ class _P2pMeetingLocationFieldState extends State<P2pMeetingLocationField> {
               color: AppColor.lightTextPrimary,
             ),
             decoration: InputDecoration(
-              hintText: 'Select platform above or paste meeting link...',
+              hintText: _selectedPlatform != null
+                  ? 'Enter ${_selectedPlatform!} link (e.g. https://...)'
+                  : 'Select platform above or paste meeting link...',
               hintStyle: AppTypography.bodySmall.copyWith(
                 fontSize: 12.5,
                 color: AppColor.lightTextTertiary,
@@ -233,8 +239,15 @@ class _P2pMeetingLocationFieldState extends State<P2pMeetingLocationField> {
                 borderSide: const BorderSide(color: AppColor.primaryBlue),
               ),
             ),
-            validator: (v) =>
-                v == null || v.trim().isEmpty ? 'Please enter meeting platform or link' : null,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                if (_selectedPlatform != null) {
+                  return 'Please enter ${_selectedPlatform!} meeting link';
+                }
+                return 'Please enter meeting platform or link';
+              }
+              return null;
+            },
           ),
         ],
 
@@ -318,11 +331,19 @@ class _P2pMeetingLocationFieldState extends State<P2pMeetingLocationField> {
   }
 
   Widget _buildVirtualChip(String label, IconData icon) {
-    final isSelected = widget.controller.text.trim().startsWith(label);
+    final isSelected = _selectedPlatform == label ||
+        (widget.controller.text.toLowerCase().contains(label.toLowerCase().split(' ').first));
     return InkWell(
       onTap: () {
         setState(() {
-          widget.controller.text = label;
+          _selectedPlatform = label;
+          // If controller previously had just a chip name, clear it
+          if (widget.controller.text == 'Google Meet' ||
+              widget.controller.text == 'Zoom Meeting' ||
+              widget.controller.text == 'MS Teams' ||
+              widget.controller.text == 'WhatsApp Call') {
+            widget.controller.clear();
+          }
         });
       },
       borderRadius: BorderRadius.circular(8),

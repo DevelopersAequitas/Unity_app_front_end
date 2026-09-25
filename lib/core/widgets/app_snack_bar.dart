@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import '../theme/app_color.dart';
 import '../theme/app_typography.dart';
 
+import '../utils/app_error_handler.dart';
+
 class AppSnackBar {
   AppSnackBar._();
 
-  static void showError(BuildContext context, String message) {
+  static void showError(BuildContext context, dynamic messageOrError) {
+    final cleanMessage = AppErrorHandler.toUserFriendlyMessage(messageOrError);
+    if (cleanMessage.isEmpty) return;
+
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          message,
+          cleanMessage,
           style: AppTypography.bodyLarge.copyWith(color: Colors.white),
         ),
         backgroundColor: AppColor.error,

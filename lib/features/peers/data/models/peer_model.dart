@@ -50,25 +50,40 @@ class PeerModel {
     if (name.isEmpty) name = 'Peer';
 
     String? categoryStr;
+    final rawCat = userMap['category'] ?? json['category'];
+    if (rawCat is String && rawCat.trim().isNotEmpty && rawCat.trim().toLowerCase() != 'null') {
+      categoryStr = rawCat.trim();
+    } else if (rawCat is Map) {
+      categoryStr = rawCat['name']?.toString() ??
+          rawCat['category_name']?.toString() ??
+          rawCat['title']?.toString();
+    }
+
     final cats = userMap['categories'] ?? json['categories'];
-    if (cats is List && cats.isNotEmpty) {
+    if ((categoryStr == null || categoryStr.isEmpty) && cats is List && cats.isNotEmpty) {
       final first = cats.first;
       if (first is Map) {
         categoryStr = first['level2_category']?['name']?.toString() ??
-            first['level1_category']?['name']?.toString();
+            first['level1_category']?['name']?.toString() ??
+            first['name']?.toString() ??
+            first['category_name']?.toString();
+      } else if (first is String && first.trim().isNotEmpty && first.trim().toLowerCase() != 'null') {
+        categoryStr = first.trim();
       }
     }
     categoryStr ??= userMap['level4_category']?.toString() ??
-        userMap['category']?.toString() ??
         userMap['business_sub_category']?.toString() ??
         userMap['business_type']?.toString();
+    if (categoryStr != null && (categoryStr.trim().isEmpty || categoryStr.trim().toLowerCase() == 'null')) {
+      categoryStr = null;
+    }
 
     final rawCity = userMap['city'] ?? json['city'];
     String? cityName;
     if (rawCity is Map) {
       cityName = rawCity['name']?.toString() ?? rawCity['city_name']?.toString();
-    } else if (rawCity != null) {
-      cityName = rawCity.toString();
+    } else if (rawCity != null && rawCity.toString().trim().isNotEmpty && rawCity.toString().trim().toLowerCase() != 'null') {
+      cityName = rawCity.toString().trim();
     }
 
     final rawImpact = userMap['life_impacted_count'] ??
@@ -95,13 +110,23 @@ class PeerModel {
         userMap['is_followed'] == true ||
         userMap['is_followed'] == 1 ||
         userMap['is_follow'] == true ||
+        userMap['is_follow'] == 1 ||
+        userMap['is_follow'] == '1' ||
+        userMap['is_follow'] == 'true' ||
+        userMap['following'] == true ||
+        userMap['following'] == 1 ||
         json['is_following'] == true ||
         json['is_following'] == 1 ||
         json['is_following'] == '1' ||
         json['is_following'] == 'true' ||
         json['is_followed'] == true ||
         json['is_followed'] == 1 ||
-        json['is_follow'] == true;
+        json['is_follow'] == true ||
+        json['is_follow'] == 1 ||
+        json['is_follow'] == '1' ||
+        json['is_follow'] == 'true' ||
+        json['following'] == true ||
+        json['following'] == 1;
 
     final bool pro = userMap['is_pro'] == true ||
         userMap['is_pro'] == 1 ||

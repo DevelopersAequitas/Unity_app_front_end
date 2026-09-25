@@ -64,7 +64,11 @@ class RegisterVisitorFormFields extends StatelessWidget {
         HighlightTextField(
           controller: eventNameController,
           label: 'Event Name *',
-          hint: 'Select or enter event name',
+          hint: 'Tap to select upcoming event',
+          readOnly: true,
+          onTap: onPickEvent,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'Please select an event' : null,
           suffixIcon: IconButton(
             icon: const Icon(Icons.event_available_outlined, color: AppColor.primaryBlue, size: 20),
             tooltip: 'Choose from upcoming events',

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/features/peers/presentation/widgets/peer_profile/peer_introduced_peers_card.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/widgets/app_common_bar.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/app_error_view.dart';
 import '../bloc/peer_profile_bloc.dart';
 import '../bloc/peer_profile_event.dart';
@@ -15,7 +14,9 @@ import '../widgets/peer_profile/peer_profile_contact_card.dart';
 import '../widgets/peer_profile/peer_profile_header.dart';
 import '../widgets/peer_profile/peer_profile_posts_section.dart';
 import '../widgets/peer_profile/peer_profile_skeleton_loader.dart';
+import '../widgets/peer_profile/peer_profile_social_links_card.dart';
 import '../widgets/peer_profile/peer_profile_stats.dart';
+import '../widgets/report_peer_bottom_sheet.dart';
 import '../../../home/presentation/bloc/home_bloc.dart';
 import '../../../home/presentation/bloc/home_event.dart';
 import '../../../profile/presentation/bloc/profile_posts_bloc.dart';
@@ -106,6 +107,8 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
     if (state.isBlocked) {
       final name = state.profile?.displayName ?? 'Peer';
       final avatar = state.profile?.profilePhotoUrl;
+      final isBlockedByPeer =
+          state.isBlockedByPeer || (state.profile?.isBlockedByPeer ?? false);
 
       return Center(
         child: Padding(
@@ -143,55 +146,61 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'You have blocked this peer.',
-                style: TextStyle(
+              Text(
+                isBlockedByPeer
+                    ? 'This peer has blocked you.'
+                    : 'You have blocked this peer.',
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColor.error,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'You cannot view their profile details, activity, or contact them.',
+              Text(
+                isBlockedByPeer
+                    ? 'You cannot view their profile details or interact with them.'
+                    : 'You cannot view their profile details, activity, or contact them.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   color: AppColor.lightTextSecondary,
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: state.isBlockLoading
-                    ? null
-                    : () => _confirmUnblock(context, bloc),
-                icon: state.isBlockLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.lock_open_rounded, size: 18),
-                label: const Text(
-                  'Unblock Peer',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+              if (!isBlockedByPeer) ...[
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: state.isBlockLoading
+                      ? null
+                      : () => _confirmUnblock(context, bloc),
+                  icon: state.isBlockLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.lock_open_rounded, size: 18),
+                  label: const Text(
+                    'Unblock Peer',
+                    style: TextStyle(fontWeight: FontWeight.w500),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
                   ),
-                  elevation: 0,
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -243,6 +252,8 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
             PeerProfileStats(profile: profile),
             const SizedBox(height: 10),
             PeerProfileContactCard(profile: profile),
+            const SizedBox(height: 10),
+            PeerProfileSocialLinksCard(profile: profile),
             const SizedBox(height: 10),
             PeerProfileBusinessCard(profile: profile),
             if (profile.circleMemberships.isNotEmpty ||
@@ -371,6 +382,8 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
     final bloc = context.read<PeerProfileBloc>();
     final profile = bloc.state.profile;
     final isBlocked = bloc.state.isBlocked || (profile?.isBlocked ?? false);
+    final isBlockedByPeer =
+        bloc.state.isBlockedByPeer || (profile?.isBlockedByPeer ?? false);
     final isConnected =
         profile != null &&
         (profile.isConnected ||
@@ -420,7 +433,7 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
                   _confirmRemoveConnection(context, bloc);
                 },
               ),
-            if (isBlocked)
+            if (isBlocked && !isBlockedByPeer)
               ListTile(
                 leading: const Icon(
                   Icons.lock_open_rounded,
@@ -438,7 +451,7 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
                   _confirmUnblock(context, bloc);
                 },
               )
-            else
+            else if (!isBlocked)
               ListTile(
                 leading: const Icon(
                   Icons.block_flipped,
@@ -467,7 +480,8 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
               ),
               onTap: () {
                 Navigator.pop(ctx);
-                AppSnackBar.showInfo(context, 'Report submitted');
+                final peerName = bloc.state.profile?.displayName ?? 'this user';
+                ReportPeerBottomSheet.show(context, peerName: peerName);
               },
             ),
           ],
@@ -551,7 +565,7 @@ class _PeerProfileViewState extends State<_PeerProfileView> {
           TextButton(
             onPressed: () {
               Navigator.pop(dCtx);
-              bloc.add(const PeerProfileUnblockRequested());
+              bloc.add(PeerProfileUnblockRequested(peerId: widget.peerId));
             },
             child: const Text(
               'Unblock',

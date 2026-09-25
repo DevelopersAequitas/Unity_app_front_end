@@ -1,4 +1,3 @@
-import '../../domain/entities/network_member_entity.dart';
 import '../../domain/entities/network_stats_entity.dart';
 import '../../domain/repositories/my_network_repository.dart';
 import '../datasources/my_network_remote_datasource.dart';
@@ -15,9 +14,12 @@ class MyNetworkRepositoryImpl implements MyNetworkRepository {
   }
 
   @override
-  Future<List<NetworkMemberEntity>> getNetworkMembers({int page = 1}) async {
-    final models = await remoteDataSource.getNetworkMembers(page: page);
-    return models.map((m) => m.toEntity()).toList();
+  Future<NetworkMembersPageResult> getNetworkMembers({int page = 1}) async {
+    final result = await remoteDataSource.getNetworkMembers(page: page);
+    return NetworkMembersPageResult(
+      members: result.members.map((m) => m.toEntity()).toList(),
+      total: result.total,
+    );
   }
 
   @override

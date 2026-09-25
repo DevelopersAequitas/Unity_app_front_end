@@ -3,7 +3,6 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/utils/paywall_gate_helper.dart';
 import '../../../../core/widgets/app_avatar.dart';
-import '../../../../core/widgets/app_gradient_text.dart';
 import '../../domain/entities/geo_peer_entity.dart';
 
 class NearMePeerCard extends StatelessWidget {
@@ -178,39 +177,29 @@ class NearMePeerCard extends StatelessWidget {
               ],
               if (peer.category != null && peer.category!.isNotEmpty) ...[
                 const SizedBox(height: 2),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                  decoration: BoxDecoration(
-                    color: AppColor.badgeBlueBg,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppColor.primaryBlue.withValues(alpha: 0.15),
-                      width: 0.8,
-                    ),
+                ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) =>
+                      AppColor.brandGradient.createShader(
+                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ShaderMask(
-                        blendMode: BlendMode.srcIn,
-                        shaderCallback: (bounds) =>
-                            AppColor.brandGradient.createShader(
-                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                        ),
-                        child: const Icon(
-                          Icons.sell_outlined,
-                          size: 9,
-                          color: Colors.white,
-                        ),
+                      const Icon(
+                        Icons.sell_outlined,
+                        size: 9,
+                        color: Colors.white,
                       ),
                       const SizedBox(width: 3),
                       Flexible(
-                        child: AppGradientText(
-                          peer.category!,
+                        child: Text(
+                          peer.category!.trim(),
                           style: const TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            letterSpacing: 0.1,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -245,26 +234,18 @@ class NearMePeerCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ShaderMask(
-            shaderCallback: (bounds) =>
-                AppColor.brandGradient.createShader(bounds),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 13,
-              color: AppColor.white,
-            ),
+          const Icon(
+            Icons.person_rounded,
+            size: 13,
+            color: AppColor.primaryBlue,
           ),
           const SizedBox(width: 3),
-          ShaderMask(
-            shaderCallback: (bounds) =>
-                AppColor.brandGradient.createShader(bounds),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                color: AppColor.white,
-              ),
+          Text(
+            '$count',
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: AppColor.primaryBlue,
             ),
           ),
         ],

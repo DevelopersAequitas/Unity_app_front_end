@@ -64,9 +64,33 @@ class ProfileStatsRow extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, AppRoutes.connections),
           ),
           _buildDivider(),
-          _buildCell(context, _formatCount(profile.followersCount), 'Followers'),
+          _buildCell(
+            context,
+            _formatCount(profile.followersCount),
+            'Followers',
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.followers,
+              arguments: {
+                'userId': profile.id,
+                'userName': profile.displayName,
+              },
+            ),
+          ),
           _buildDivider(),
-          _buildCell(context, _formatCount(profile.followingCount), 'Following'),
+           _buildCell(
+            context,
+            _formatCount(profile.bookmarkCount),
+            'Bookmarks',
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.bookmarkedPeers,
+              arguments: {
+                'userId': profile.id,
+                'userName': profile.displayName,
+              },
+            ),
+          ),
           _buildDivider(),
           _buildCell(
             context,

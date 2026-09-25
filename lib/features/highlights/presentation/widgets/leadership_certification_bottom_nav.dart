@@ -87,7 +87,6 @@ class LeadershipCertificationBottomNav extends StatelessWidget {
   }) {
     final isSelected = selectedIndex == index;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = AppColor.primaryBlue;
     final inactiveColor =
         isDark ? AppColor.darkTextSecondary : AppColor.lightTextSecondary;
 
@@ -96,19 +95,43 @@ class LeadershipCertificationBottomNav extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            isSelected ? activeIcon : icon,
-            color: isSelected ? activeColor : inactiveColor,
-            size: 22,
-          ),
+          isSelected
+              ? ShaderMask(
+                  shaderCallback: (bounds) =>
+                      AppColor.brandGradient.createShader(bounds),
+                  blendMode: BlendMode.srcIn,
+                  child: Icon(
+                    activeIcon,
+                    size: 22,
+                    color: Colors.white,
+                  ),
+                )
+              : Icon(
+                  icon,
+                  color: inactiveColor,
+                  size: 22,
+                ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: AppTypography.labelSmall.copyWith(
-              color: isSelected ? activeColor : inactiveColor,
-              fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-            ),
-          ),
+          isSelected
+              ? ShaderMask(
+                  shaderCallback: (bounds) =>
+                      AppColor.brandGradient.createShader(bounds),
+                  blendMode: BlendMode.srcIn,
+                  child: Text(
+                    label,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              : Text(
+                  label,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: inactiveColor,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
         ],
       ),
     );

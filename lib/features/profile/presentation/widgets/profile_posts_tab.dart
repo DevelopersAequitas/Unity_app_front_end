@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_color.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_error_view.dart';
+import '../../../home/domain/entities/timeline_author_entity.dart';
 import '../../../home/presentation/bloc/home_bloc.dart';
 import '../../../home/presentation/bloc/home_event.dart';
 import '../../../home/presentation/widgets/post_comments_bottom_sheet.dart';
 import '../../../home/presentation/widgets/timeline_card.dart';
+import '../bloc/profile_bloc.dart';
 import '../bloc/profile_posts_bloc.dart';
 import '../bloc/profile_posts_event.dart';
 import '../bloc/profile_posts_state.dart';
@@ -81,7 +83,29 @@ class ProfilePostsTab extends StatelessWidget {
                 ),
               );
             }
-            final post = state.posts[index];
+            final rawPost = state.posts[index];
+            final myProfile = context.read<ProfileBloc>().state.profile;
+            final isPlaceholder = rawPost.author == null ||
+                rawPost.author!.displayName.trim().isEmpty ||
+                rawPost.author!.displayName.toLowerCase() == 'peer member';
+            final post = (isPlaceholder && myProfile != null)
+                ? rawPost.copyWith(
+                    author: TimelineAuthorEntity(
+                      id: myProfile.id,
+                      displayName: myProfile.displayName.isNotEmpty
+                          ? myProfile.displayName
+                          : (rawPost.author?.displayName ?? 'Peer Member'),
+                      firstName: myProfile.firstName,
+                      lastName: myProfile.lastName,
+                      profilePhotoUrl: myProfile.profilePhotoUrl ??
+                          myProfile.profilePhotoUrl ??
+                          rawPost.author?.profilePhotoUrl,
+                      isVerified: myProfile.isVerified,
+                      designation: myProfile.designation ?? rawPost.author?.designation,
+                      companyName: myProfile.companyName ?? rawPost.author?.companyName,
+                    ),
+                  )
+                : rawPost;
             return TimelineCard(
               item: post,
               autoPlay: false,

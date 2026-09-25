@@ -110,7 +110,7 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
       ),
       body: ResponsiveContainer(
         child: RefreshIndicator(
-          color: const Color(0xFFC026D3),
+          color: AppColor.primaryBlue,
           onRefresh: () async {
             await _loadGuidelines(isRefresh: true);
           },
@@ -128,7 +128,7 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
           height: 28,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: Color(0xFFC026D3),
+            color: AppColor.primaryBlue,
           ),
         ),
       );
@@ -160,9 +160,9 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFFAF5FF),
+            color: const Color(0xFFEFF6FF),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFF3E8FF), width: 1.0),
+            border: Border.all(color: const Color(0xFFDBEAFE), width: 1.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,17 +173,17 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDF4FF),
+                      color: const Color(0xFFDBEAFE),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: const Color(0xFFF0ABFC),
+                        color: const Color(0xFFBFDBFE),
                         width: 1.0,
                       ),
                     ),
                     child: const Center(
                       child: Icon(
                         Icons.person_rounded,
-                        color: Color(0xFFC026D3),
+                        color: AppColor.primaryBlue,
                         size: 20,
                       ),
                     ),
@@ -261,13 +261,13 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDF4FF),
+                      color: const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Icon(
                       _getActionIcon(item.action, item.category),
                       size: 18,
-                      color: const Color(0xFFC026D3),
+                      color: AppColor.primaryBlue,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -304,10 +304,10 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDF4FF),
+                      color: const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFFF0ABFC),
+                        color: const Color(0xFFBFDBFE),
                         width: 0.8,
                       ),
                     ),
@@ -317,7 +317,7 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
                         const Icon(
                           Icons.person_rounded,
                           size: 11.5,
-                          color: Color(0xFFC026D3),
+                          color: AppColor.primaryBlue,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -325,7 +325,7 @@ class _ImpactGuidelinesScreenState extends State<ImpactGuidelinesScreen> {
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFFC026D3),
+                            color: AppColor.primaryBlue,
                           ),
                         ),
                       ],

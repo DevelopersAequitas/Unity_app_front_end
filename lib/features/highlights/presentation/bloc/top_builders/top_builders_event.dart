@@ -22,3 +22,44 @@ class SearchIntroducedPeersEvent extends TopBuildersEvent {
   @override
   List<Object?> get props => [query];
 }
+
+class TopBuildersFollowStatusSynced extends TopBuildersEvent {
+  final String peerId;
+  final bool isFollowing;
+
+  const TopBuildersFollowStatusSynced({
+    required this.peerId,
+    required this.isFollowing,
+  });
+
+  @override
+  List<Object?> get props => [peerId, isFollowing];
+}
+
+class TopBuildersBookmarkStatusSynced extends TopBuildersEvent {
+  final String peerId;
+  final bool isBookmarked;
+
+  const TopBuildersBookmarkStatusSynced({
+    required this.peerId,
+    required this.isBookmarked,
+  });
+
+  @override
+  List<Object?> get props => [peerId, isBookmarked];
+}
+
+class TopBuildersConnectionStatusSynced extends TopBuildersEvent {
+  final String peerId;
+  final String connectionStatus;
+  final bool isConnected;
+
+  const TopBuildersConnectionStatusSynced({
+    required this.peerId,
+    required this.connectionStatus,
+    required this.isConnected,
+  });
+
+  @override
+  List<Object?> get props => [peerId, connectionStatus, isConnected];
+}

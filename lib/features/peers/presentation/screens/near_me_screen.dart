@@ -302,6 +302,7 @@ class _NearMeScreenState extends State<NearMeScreen> {
                               }
                               final peer = state.nearbyPeers[index];
                               return NearMePeerCard(
+                                key: ValueKey('${peer.id}_${peer.isFollowing}_${peer.isBookmarked}_${peer.connectionStatus}'),
                                 peer: peer,
                                 onConnect: () {
                                   context.read<NearMeBloc>().add(

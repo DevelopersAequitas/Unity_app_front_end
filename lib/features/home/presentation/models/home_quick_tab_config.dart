@@ -87,7 +87,7 @@ class HomeQuickTabConfig {
         HomeQuickTabItem(id: 'become_speaker', title: 'Become a Speaker', icon: Icons.mic_rounded, color: Color(0xFFEA580C), route: AppRoutes.becomeSpeaker),
         HomeQuickTabItem(id: 'recommend_peer', title: 'Recommend a Peer', icon: Icons.person_add_alt_1_rounded, color: Color(0xFFEC4899), route: AppRoutes.recommendPeer),
         HomeQuickTabItem(id: 'invite_friends', title: 'Invite Friends', icon: Icons.group_add_rounded, color: Color(0xFF2563EB), route: AppRoutes.myNetwork),
-        HomeQuickTabItem(id: 'partner_with_us', title: 'Partner with Us', icon: Icons.handshake_rounded, color: Color(0xFF2563EB), route: AppRoutes.partnerWithUs),
+        HomeQuickTabItem(id: 'vyapaar_jagat_story', title: 'Vyapaar Jagat Story', icon: Icons.auto_stories_rounded, color: Color(0xFF0284C7), route: AppRoutes.vyapaarJagatStory),
         HomeQuickTabItem(id: 'leadership_certificate', title: 'Leadership Certificate', icon: Icons.verified_rounded, color: Color(0xFF7C3AED), route: AppRoutes.leadershipCertificate),
         HomeQuickTabItem(id: 'entrepreneur_certificate', title: 'Entrepreneur Certificate', icon: Icons.emoji_events_rounded, color: Color(0xFFF59E0B), route: AppRoutes.leadershipCertificate),
       ],
@@ -106,7 +106,7 @@ class HomeQuickTabConfig {
         HomeQuickTabItem(id: 'gallery', title: 'Gallery', icon: Icons.photo_library_rounded, color: Color(0xFF3B82F6)),
         HomeQuickTabItem(id: 'videos', title: 'Videos', icon: Icons.video_library_rounded, color: Color(0xFFEA580C), route: AppRoutes.eventVideos),
         HomeQuickTabItem(id: 'tutorials', title: 'Tutorials', icon: Icons.school_rounded, color: Color(0xFF059669), route: AppRoutes.tutorials),
-        HomeQuickTabItem(id: 'vyapaar_jagat_story', title: 'Vyapaar Jagat Story', icon: Icons.auto_stories_rounded, color: Color(0xFF0284C7), route: AppRoutes.vyapaarJagatStory),
+        HomeQuickTabItem(id: 'partner_with_us', title: 'Partner with Us', icon: Icons.handshake_rounded, color: Color(0xFF2563EB), route: AppRoutes.partnerWithUs),
       ],
     ),
   ];

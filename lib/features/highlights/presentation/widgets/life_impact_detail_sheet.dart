@@ -83,7 +83,7 @@ class LifeImpactDetailSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    gradient: AppColor.brandGradient,
+                    color: AppColor.primaryBlue,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(

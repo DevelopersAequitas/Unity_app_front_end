@@ -24,17 +24,29 @@ import '../widgets/testimonials_bottom_nav.dart';
 
 class TestimonialsScreen extends StatelessWidget {
   final bool isModal;
-  const TestimonialsScreen({super.key, this.isModal = false});
+  final TestimonialTab initialTab;
+
+  const TestimonialsScreen({
+    super.key,
+    this.isModal = false,
+    this.initialTab = TestimonialTab.received,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (ctx) => TestimonialsBloc(
-        getReceivedTestimonialsUseCase: ctx.read<GetReceivedTestimonialsUseCase>(),
-        getGivenTestimonialsUseCase: ctx.read<GetGivenTestimonialsUseCase>(),
-        getUserTestimonialsUseCase: ctx.read<GetUserTestimonialsUseCase>(),
-        getTestimonialsLeaderboardUseCase: ctx.read<GetTestimonialsLeaderboardUseCase>(),
-      )..add(const TestimonialsFetchLeaderboardRequested()),
+      create: (ctx) {
+        final bloc = TestimonialsBloc(
+          getReceivedTestimonialsUseCase: ctx.read<GetReceivedTestimonialsUseCase>(),
+          getGivenTestimonialsUseCase: ctx.read<GetGivenTestimonialsUseCase>(),
+          getUserTestimonialsUseCase: ctx.read<GetUserTestimonialsUseCase>(),
+          getTestimonialsLeaderboardUseCase: ctx.read<GetTestimonialsLeaderboardUseCase>(),
+        )..add(const TestimonialsFetchLeaderboardRequested());
+        if (initialTab != TestimonialTab.received) {
+          bloc.add(TestimonialsTabChanged(initialTab));
+        }
+        return bloc;
+      },
       child: _TestimonialsView(isModal: isModal),
     );
   }
