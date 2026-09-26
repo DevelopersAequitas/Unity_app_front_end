@@ -6,13 +6,10 @@ import 'package:unity_app/features/testimonials/presentation/bloc/testimonials_e
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../business_deal/presentation/screens/business_deals_screen.dart';
-import '../../../collaborations/presentation/screens/add_collaboration_screen.dart';
-import '../../../collaborations/presentation/screens/collaborations_hub_screen.dart';
+
 import '../../../leaderboard/presentation/screens/leaderboard_screen.dart';
 import '../../../p2p_meetings/presentation/screens/p2p_meetings_screen.dart';
 import '../../../referrals/presentation/screens/referrals_screen.dart';
-import '../../../requirements/presentation/screens/open_asks_screen.dart';
-import '../../../requirements/presentation/screens/post_ask_form_screen.dart';
 import '../../../testimonials/presentation/screens/testimonials_screen.dart';
 import '../../../menu/presentation/screens/circulars_screen.dart';
 import '../../../menu/presentation/screens/event_gallery_screen.dart';
@@ -33,11 +30,13 @@ import '../screens/leadership_role_screen.dart';
 import '../screens/life_impact_screen.dart';
 import '../screens/my_network_screen.dart';
 import '../screens/recommend_peer_screen.dart';
+import '../screens/recommend_peer_history_screen.dart';
 import '../screens/register_visitor_screen.dart';
 import '../screens/top_community_builders_screen.dart';
 import '../screens/partner_with_us_screen.dart';
 import '../screens/vyapaar_jagat_story_screen.dart';
 import '../screens/welcome_creative_template_screen.dart';
+import '../../../asks/presentation/screens/peers_asks_hub_screen.dart';
 
 class HighlightsNavigationHandler {
   const HighlightsNavigationHandler._();
@@ -46,6 +45,44 @@ class HighlightsNavigationHandler {
     final id = item.id.toLowerCase().trim();
 
     switch (id) {
+      case 'asks_collaboration':
+      case 'collaboration_asks':
+      case 'collaborations':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const PeersAsksHubScreen(
+              flowCode: 'collaboration',
+              flowTitle: 'Collaboration Asks',
+            ),
+          ),
+        );
+        break;
+      case 'asks_referral':
+      case 'referral_asks':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const PeersAsksHubScreen(
+              flowCode: 'referral',
+              flowTitle: 'Referral Asks',
+            ),
+          ),
+        );
+        break;
+      case 'asks_help':
+      case 'help_asks':
+      case 'get_help':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const PeersAsksHubScreen(
+              flowCode: 'help',
+              flowTitle: 'Get Help Asks',
+            ),
+          ),
+        );
+        break;
       case 'bookmarks':
       case 'bookmarked_peers':
       case 'bookmark':
@@ -148,49 +185,28 @@ class HighlightsNavigationHandler {
       case 'post_ask':
       case 'post_requirement':
       case 'add_ask':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PostAskFormScreen()),
-        );
+        Navigator.pushNamed(context, AppRoutes.askBrief);
         break;
       case 'open_asks':
       case 'open_ask':
       case 'open_requirement':
       case 'open_requirements':
       case 'requirements':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const OpenAsksScreen(initialTabIndex: 0),
-          ),
-        );
+      case 'peers_feed':
+        Navigator.pushNamed(context, AppRoutes.peersFeed);
         break;
       case 'my_asks':
       case 'my_requirements':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const OpenAsksScreen(initialTabIndex: 1),
-          ),
-        );
+        Navigator.pushNamed(context, AppRoutes.myAsks);
         break;
       case 'apply_collaboration':
       case 'post_collaboration':
       case 'add_collaboration':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AddCollaborationScreen()),
-        );
+        Navigator.pushNamed(context, AppRoutes.postAsk);
         break;
-      case 'collaborations':
       case 'open_collaboration':
       case 'collaboration_opportunities':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const CollaborationsHubScreen(initialTabIndex: 0),
-          ),
-        );
+        Navigator.pushNamed(context, AppRoutes.peersFeed, arguments: 0);
         break;
       case 'register_visitor':
       case 'register_a_visitor':
@@ -205,6 +221,13 @@ class HighlightsNavigationHandler {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const RecommendPeerScreen()),
+        );
+        break;
+      case 'recommend_peer_history':
+      case 'recommend_history':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const RecommendPeerHistoryScreen()),
         );
         break;
       case 'add_impact':
@@ -337,12 +360,7 @@ class HighlightsNavigationHandler {
         );
         break;
       case 'collaboration_history':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const CollaborationsHubScreen(initialTabIndex: 1),
-          ),
-        );
+        Navigator.pushNamed(context, AppRoutes.myAsks, arguments: 1);
         break;
       case 'circulars':
         Navigator.push(

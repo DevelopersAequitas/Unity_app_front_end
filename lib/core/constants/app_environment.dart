@@ -245,5 +245,15 @@ class AppEnvironment {
     };
     return Uri.https(appDomain, '/share', queryParams).toString();
   }
+
+  /// 15. Ask / Open Asks Deep Link
+  static String getAskDeepLink(String askId, {String? tab}) {
+    final queryParams = <String, String>{
+      'type': 'ask',
+      'id': askId,
+      if (tab != null && tab.isNotEmpty) 'tab': tab,
+    };
+    return Uri.https(appDomain, '/share', queryParams).toString();
+  }
 }
 

@@ -90,6 +90,14 @@ class DeepLinkService {
           if (uri.pathSegments.length > 1) {
             id = uri.pathSegments[1];
           }
+        } else if (first == 'ask' ||
+            first == 'asks' ||
+            first == 'open_asks' ||
+            first == 'open_ask') {
+          type = 'ask';
+          if (uri.pathSegments.length > 1) {
+            id = uri.pathSegments[1];
+          }
         } else {
           type = first;
           if (uri.pathSegments.length > 1 && (id == null || id.isEmpty)) {
@@ -281,6 +289,8 @@ class DeepLinkService {
         safePush(AppRoutes.postAsk);
         break;
 
+      case 'ask':
+      case 'asks':
       case 'open_asks':
       case 'open_ask':
       case 'requirement':
@@ -290,12 +300,18 @@ class DeepLinkService {
       case 'give_first':
       case 'help_peer':
       case 'peer_needs_help':
-        safePush(AppRoutes.openAsks, arguments: 0);
+        safePush(AppRoutes.openAsks, arguments: {
+          'initialTab': (tab == 'my' || tab == '1') ? 1 : 0,
+          if (cleanId != null && cleanId.isNotEmpty) 'highlightAskId': cleanId,
+        });
         break;
 
       case 'my_asks':
       case 'my_requirements':
-        safePush(AppRoutes.openAsks, arguments: 1);
+        safePush(AppRoutes.openAsks, arguments: {
+          'initialTab': 1,
+          if (cleanId != null && cleanId.isNotEmpty) 'highlightAskId': cleanId,
+        });
         break;
 
       // 7. Collaborations / Sales / Opportunities

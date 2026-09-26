@@ -37,6 +37,11 @@ import '../widgets/home_quick_actions.dart';
 import '../widgets/home_skeleton_loader.dart';
 import '../widgets/home_timeline_header.dart';
 import '../widgets/timeline_card.dart';
+import '../../../asks/presentation/widgets/home_ask_flows_section.dart';
+import '../../../asks/presentation/widgets/ask_flow_selection_overlay.dart';
+import '../../../asks/presentation/bloc/ask_flows_bloc.dart';
+import '../../../asks/presentation/bloc/ask_flows_event.dart';
+import '../../../asks/presentation/bloc/ask_flows_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -61,11 +66,26 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
 
-    // Initial fetch for Home feed
+    // Initial fetch for Home feed & Ask flows
     final homeBloc = context.read<HomeBloc>();
     if (homeBloc.state.status == HomeFeedStatus.initial) {
       homeBloc.add(const HomeFeedFetchRequested());
     }
+    final askFlowsBloc = context.read<AskFlowsBloc>();
+    if (askFlowsBloc.state.status == AskFlowsStatus.initial ||
+        askFlowsBloc.state.flows.isEmpty) {
+      askFlowsBloc.add(const AskFlowsFetchRequested());
+    }
+
+    // Check and display Ask Flows overlay on restart / first launch
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!AskFlowSelectionOverlay.hasShownInSession) {
+        AskFlowSelectionOverlay.hasShownInSession = true;
+        await Future.delayed(const Duration(milliseconds: 600));
+        if (!mounted) return;
+        AskFlowSelectionOverlay.show(context);
+      }
+    });
 
     // Check and display active event popup from /events/all-with-live-status
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -286,6 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onRefresh: () async {
             context.read<HomeBloc>().add(const HomeFeedRefreshRequested());
             context.read<ProfileBloc>().add(const ProfileRefreshRequested());
+            context.read<AskFlowsBloc>().add(const AskFlowsRefreshRequested());
           },
           child: CustomScrollView(
             controller: _scrollController,
@@ -295,6 +316,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Padding(
                   padding: EdgeInsets.only(top: 12, bottom: 16),
                   child: HomeMetricCards(),
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: HomeAskFlowsSection(),
                 ),
               ),
               const SliverToBoxAdapter(

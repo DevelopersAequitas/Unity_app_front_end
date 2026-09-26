@@ -13,6 +13,8 @@ import '../../domain/usecases/create_testimonial_usecase.dart';
 import '../bloc/add_testimonial_bloc.dart';
 import '../bloc/add_testimonial_event.dart';
 import '../bloc/add_testimonial_state.dart';
+import '../../../referrals/domain/entities/referral_entity.dart';
+import '../../../peers/domain/entities/peer_entity.dart';
 import '../widgets/add_testimonial/peer_selector_sheet.dart';
 import '../widgets/add_testimonial/selected_peer_card.dart';
 import '../widgets/add_testimonial/testimonial_message_input.dart';
@@ -46,9 +48,41 @@ class _AddTestimonialViewState extends State<_AddTestimonialView> {
   @override
   void initState() {
     super.initState();
-    // Auto-open peer selector sheet upon navigating to this screen
+    // Auto-open peer selector sheet upon navigating to this screen if no peer passed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        if (args is ReferralEntity) {
+          final peer = PeerEntity(
+            id: args.fromUserId ?? args.toUserId ?? '',
+            displayName: args.peerName,
+            companyName: args.peerCompany,
+            profilePhotoUrl: args.peerPhotoUrl,
+            city: args.city ?? args.peerLocation,
+          );
+          context.read<AddTestimonialBloc>().add(AddTestimonialPeerSelected(peer));
+          return;
+        } else if (args is PeerEntity) {
+          context.read<AddTestimonialBloc>().add(AddTestimonialPeerSelected(args));
+          return;
+        } else if (args is Map) {
+          final peerId = (args['to_user_id'] ?? args['peer_id'] ?? args['toUserId'] ?? args['peerId'] ?? '').toString();
+          final peerName = (args['peer_name'] ?? args['to_user_name'] ?? args['toUserName'] ?? args['displayName'] ?? '').toString();
+          final companyName = (args['company_name'] ?? args['to_user_company'] ?? args['toUserCompany'] ?? '').toString();
+          final avatarUrl = args['avatar_url']?.toString() ?? args['profilePhotoUrl']?.toString();
+          final city = args['city']?.toString();
+          if (peerId.isNotEmpty || peerName.isNotEmpty) {
+            final peer = PeerEntity(
+              id: peerId,
+              displayName: peerName.isNotEmpty ? peerName : 'Peer',
+              companyName: companyName,
+              profilePhotoUrl: avatarUrl,
+              city: city,
+            );
+            context.read<AddTestimonialBloc>().add(AddTestimonialPeerSelected(peer));
+            return;
+          }
+        }
         final currentPeer = context.read<AddTestimonialBloc>().state.selectedPeer;
         if (currentPeer == null) {
           _openPeerSelector(context);

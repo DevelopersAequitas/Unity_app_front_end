@@ -21,6 +21,15 @@ class CircleJoinSubcategoryUpdated extends CircleJoinEvent {
   List<Object?> get props => [subcategory, isOther];
 }
 
+class CircleJoinPackageRequested extends CircleJoinEvent {
+  final String circleId;
+
+  const CircleJoinPackageRequested(this.circleId);
+
+  @override
+  List<Object?> get props => [circleId];
+}
+
 class CircleJoinSubmitted extends CircleJoinEvent {
   final String circleId;
   final String reason;

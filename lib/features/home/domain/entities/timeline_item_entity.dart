@@ -5,12 +5,12 @@ import 'timeline_impact_entity.dart';
 import 'timeline_media_entity.dart';
 import 'timeline_mention_entity.dart';
 
-enum TimelineItemType { standardPost, lifeImpactRecognition, impactActivity, collaborationPost }
+enum TimelineItemType { standardPost, lifeImpactRecognition, impactActivity, collaborationPost, askPost }
 
 class TimelineItemEntity extends Equatable {
   final String id;
   final String type; // 'post' or 'impact'
-  final String? postType; // 'standard', 'life_impact_recognition', etc.
+  final String? postType; // 'standard', 'life_impact_recognition', 'ask', etc.
   final String contentText;
   final bool isVerified;
   final List<TimelineMediaEntity> media;
@@ -25,6 +25,7 @@ class TimelineItemEntity extends Equatable {
   final String createdAt;
   final TimelineCollaborationEntity? acceptedBy;
   final TimelineImpactEntity? impact;
+  final Map<String, dynamic>? askData;
 
   const TimelineItemEntity({
     required this.id,
@@ -44,9 +45,13 @@ class TimelineItemEntity extends Equatable {
     required this.createdAt,
     this.acceptedBy,
     this.impact,
+    this.askData,
   });
 
   TimelineItemType get resolvedType {
+    if (postType == 'ask' || askData != null) {
+      return TimelineItemType.askPost;
+    }
     if (type == 'impact' || impact != null) {
       return TimelineItemType.impactActivity;
     }

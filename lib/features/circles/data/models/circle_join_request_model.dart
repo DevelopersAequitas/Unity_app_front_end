@@ -42,7 +42,13 @@ class CircleJoinRequestModel extends CircleJoinRequestEntity {
   });
 
   factory CircleJoinRequestModel.fromJson(Map<String, dynamic> json) {
-    final parsedDate = AppDateFormatter.parseUtc(json['requested_at'] ?? json['created_at']) ?? DateTime.now();
+    final parsedDate = AppDateFormatter.parseUtc(
+          json['requested_at'] ??
+              json['created_at'] ??
+              json['updated_at'] ??
+              json['date'],
+        ) ??
+        DateTime.now();
 
     String catId = '';
     String catName = '';
@@ -52,12 +58,25 @@ class CircleJoinRequestModel extends CircleJoinRequestEntity {
     } else if (json['category'] is Map<String, dynamic>) {
       catId = json['category']['id']?.toString() ?? '';
       catName = json['category']['name']?.toString() ?? '';
+    } else if (json['circle'] is Map<String, dynamic> &&
+        json['circle']['categories'] is List &&
+        (json['circle']['categories'] as List).isNotEmpty) {
+      final firstCat = (json['circle']['categories'] as List).first;
+      if (firstCat is Map<String, dynamic>) {
+        catId = firstCat['id']?.toString() ?? '';
+        catName = firstCat['name']?.toString() ?? '';
+      }
     }
+
     if (catId.isEmpty) {
-      catId = json['category_id']?.toString() ?? json['circle_id']?.toString() ?? '';
+      catId = json['category_id']?.toString() ??
+          json['circle_id']?.toString() ??
+          '';
     }
     if (catName.isEmpty) {
-      catName = json['category_name']?.toString() ?? json['circle_name']?.toString() ?? '';
+      catName = json['category_name']?.toString() ??
+          json['circle_name']?.toString() ??
+          '';
     }
 
     String? l4Id;
@@ -88,23 +107,45 @@ class CircleJoinRequestModel extends CircleJoinRequestEntity {
 
     DateTime? parseDate(dynamic val) => AppDateFormatter.parseUtc(val);
 
-    final cdApprBy = extractPersonName(json['cd_approved_by']);
-    final cdApprAt = parseDate(json['cd_approved_at']);
-    final cdRejBy = extractPersonName(json['cd_rejected_by']);
-    final cdRejAt = parseDate(json['cd_rejected_at']);
-    final cdRejection = json['cd_rejection_reason']?.toString();
+    String? cdApprStatus = json['cd_approval_status']?.toString();
+    String? cdApprBy = extractPersonName(json['cd_approved_by']);
+    DateTime? cdApprAt = parseDate(json['cd_approved_at']);
+    String? cdRejBy = extractPersonName(json['cd_rejected_by']);
+    DateTime? cdRejAt = parseDate(json['cd_rejected_at']);
+    String? cdRejection = json['cd_rejection_reason']?.toString();
 
-    final idApprBy = extractPersonName(json['id_approved_by']);
-    final idApprAt = parseDate(json['id_approved_at']);
-    final idRejBy = extractPersonName(json['id_rejected_by']);
-    final idRejAt = parseDate(json['id_rejected_at']);
-    final idRejection = json['id_rejection_reason']?.toString();
+    if (json['cd_approval'] is Map<String, dynamic>) {
+      final cdMap = json['cd_approval'] as Map<String, dynamic>;
+      cdApprStatus ??= cdMap['status']?.toString();
+      cdApprBy ??= extractPersonName(cdMap['approved_by']);
+      cdApprAt ??= parseDate(cdMap['approved_at']);
+      cdRejBy ??= extractPersonName(cdMap['rejected_by']);
+      cdRejAt ??= parseDate(cdMap['rejected_at']);
+      cdRejection ??= cdMap['rejection_reason']?.toString();
+    }
+
+    String? idApprStatus = json['id_approval_status']?.toString();
+    String? idApprBy = extractPersonName(json['id_approved_by']);
+    DateTime? idApprAt = parseDate(json['id_approved_at']);
+    String? idRejBy = extractPersonName(json['id_rejected_by']);
+    DateTime? idRejAt = parseDate(json['id_rejected_at']);
+    String? idRejection = json['id_rejection_reason']?.toString();
+
+    if (json['id_approval'] is Map<String, dynamic>) {
+      final idMap = json['id_approval'] as Map<String, dynamic>;
+      idApprStatus ??= idMap['status']?.toString();
+      idApprBy ??= extractPersonName(idMap['approved_by']);
+      idApprAt ??= parseDate(idMap['approved_at']);
+      idRejBy ??= extractPersonName(idMap['rejected_by']);
+      idRejAt ??= parseDate(idMap['rejected_at']);
+      idRejection ??= idMap['rejection_reason']?.toString();
+    }
 
     final dedApprBy = extractPersonName(json['ded_approved_by']);
     final dedApprAt = parseDate(json['ded_approved_at']);
 
     final feeMarkedAt = parseDate(json['fee_marked_at']);
-    final feePaidAt = parseDate(json['fee_paid_at']);
+    final feePaidAt = parseDate(json['fee_paid_at'] ?? (json['payment'] is Map ? json['payment']['paid_at'] : null));
 
     final generalRejection = cdRejection ??
         idRejection ??
@@ -148,13 +189,13 @@ class CircleJoinRequestModel extends CircleJoinRequestEntity {
       displayStatus: displayStatus,
       paymentStatus: json['payment_status']?.toString() ?? 'unpaid',
       requestedAt: parsedDate,
-      cdApprovalStatus: json['cd_approval_status']?.toString(),
+      cdApprovalStatus: cdApprStatus,
       cdApprovedBy: cdApprBy,
       cdApprovedAt: cdApprAt,
       cdRejectedBy: cdRejBy,
       cdRejectedAt: cdRejAt,
       cdRejectionReason: cdRejection,
-      idApprovalStatus: json['id_approval_status']?.toString(),
+      idApprovalStatus: idApprStatus,
       idApprovedBy: idApprBy,
       idApprovedAt: idApprAt,
       idRejectedBy: idRejBy,

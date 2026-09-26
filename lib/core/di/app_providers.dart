@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:unity_app/features/circles/domain/usecases/cancel_circle_join_request_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_join_request_status_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_package_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_checkout_url_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_joined_circles_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/leave_circle_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/mark_circle_join_request_paid_usecase.dart';
 import 'package:unity_app/features/profile/domain/usecases/upload_file_usecase.dart';
 import '../../features/events/domain/repositories/events_repository.dart';
 import '../../features/events/domain/usecases/check_payment_status_usecase.dart';
@@ -23,8 +28,21 @@ import '../../features/menu/presentation/bloc/menu_event.dart';
 import '../../features/membership/domain/usecases/get_subscription_history_usecase.dart';
 import '../../features/membership/domain/usecases/initiate_plan_checkout_usecase.dart';
 import '../../features/membership/domain/usecases/verify_checkout_status_usecase.dart';
-import '../../features/requirements/presentation/bloc/requirements_bloc.dart';
-import '../../features/requirements/presentation/bloc/requirements_event.dart';
+import '../../features/asks/data/datasources/asks_remote_datasource.dart';
+import '../../features/asks/presentation/bloc/ask_flows_bloc.dart';
+import '../../features/asks/presentation/bloc/ask_flows_event.dart';
+import '../../features/asks/presentation/bloc/ask_types/ask_types_bloc.dart';
+import '../../features/asks/presentation/bloc/ask_form_config/ask_form_config_bloc.dart';
+import '../../features/asks/presentation/bloc/ask_submission/ask_submission_bloc.dart';
+import '../../features/asks/presentation/bloc/ask_matches/ask_matches_bloc.dart';
+import '../../features/asks/presentation/bloc/ask_response/ask_response_bloc.dart';
+import '../../features/asks/presentation/bloc/ask_responses/ask_responses_bloc.dart';
+import '../../features/asks/presentation/bloc/my_asks/my_asks_bloc.dart';
+import '../../features/asks/presentation/bloc/my_asks/my_asks_event.dart';
+import '../../features/asks/presentation/bloc/peers_feed/peers_feed_bloc.dart';
+import '../../features/asks/presentation/bloc/peers_feed/peers_feed_event.dart';
+import '../../features/asks/domain/usecases/get_ask_history_usecase.dart';
+import '../../features/asks/domain/usecases/update_ask_status_usecase.dart';
 import '../../features/testimonials/domain/usecases/create_testimonial_usecase.dart';
 import '../../features/testimonials/domain/usecases/get_given_testimonials_usecase.dart';
 import '../../features/testimonials/domain/usecases/get_received_testimonials_usecase.dart';
@@ -142,6 +160,7 @@ import '../../features/highlights/presentation/bloc/entrepreneur_certification/e
 import '../../features/highlights/presentation/bloc/entrepreneur_certification/entrepreneur_certification_event.dart';
 import '../../features/highlights/presentation/bloc/leadership_role/leadership_role_bloc.dart';
 import '../../features/highlights/presentation/bloc/recommend_peer/recommend_peer_bloc.dart';
+import '../../features/highlights/presentation/bloc/recommend_peer/recommend_peer_event.dart';
 import '../../features/highlights/presentation/bloc/mentor/mentor_bloc.dart';
 import '../../features/highlights/presentation/bloc/mentor/mentor_event.dart';
 import '../../features/highlights/presentation/bloc/speaker/speaker_bloc.dart';
@@ -155,8 +174,6 @@ import '../../features/highlights/presentation/bloc/post_ask/post_ask_event.dart
 import '../../features/highlights/presentation/bloc/register_visitor/register_visitor_bloc.dart';
 import '../../features/highlights/presentation/bloc/register_visitor/register_visitor_event.dart';
 import '../../features/highlights/domain/usecases/upload_claim_proof_usecase.dart';
-import '../../features/collaborations/presentation/bloc/collaborations_bloc.dart';
-import '../../features/collaborations/presentation/bloc/collaborations_event.dart';
 import '../../features/menu/presentation/bloc/settings/settings_bloc.dart';
 import '../../features/menu/presentation/bloc/settings/settings_event.dart';
 
@@ -184,6 +201,18 @@ class AppProviders extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
+        RepositoryProvider<AppDependencies>.value(
+          value: dependencies,
+        ),
+        RepositoryProvider<AsksRemoteDataSource>.value(
+          value: dependencies.asksRemoteDataSource,
+        ),
+        RepositoryProvider<GetAskHistoryUseCase>.value(
+          value: dependencies.getAskHistoryUseCase,
+        ),
+        RepositoryProvider<UpdateAskStatusUseCase>.value(
+          value: dependencies.updateAskStatusUseCase,
+        ),
         RepositoryProvider<GetMemberProfileUseCase>.value(
           value: dependencies.getMemberProfileUseCase,
         ),
@@ -309,6 +338,21 @@ class AppProviders extends StatelessWidget {
         ),
         RepositoryProvider<CancelCircleJoinRequestUseCase>.value(
           value: dependencies.cancelCircleJoinRequestUseCase,
+        ),
+        RepositoryProvider<GetCirclePackageUseCase>.value(
+          value: dependencies.getCirclePackageUseCase,
+        ),
+        RepositoryProvider<GetCircleCheckoutUrlUseCase>.value(
+          value: dependencies.getCircleCheckoutUrlUseCase,
+        ),
+        RepositoryProvider<GetJoinedCirclesUseCase>.value(
+          value: dependencies.getJoinedCirclesUseCase,
+        ),
+        RepositoryProvider<MarkCircleJoinRequestPaidUseCase>.value(
+          value: dependencies.markCircleJoinRequestPaidUseCase,
+        ),
+        RepositoryProvider<LeaveCircleUseCase>.value(
+          value: dependencies.leaveCircleUseCase,
         ),
         RepositoryProvider<GetMembershipPlansUseCase>.value(
           value: dependencies.getMembershipPlansUseCase,
@@ -545,6 +589,21 @@ class AppProviders extends StatelessWidget {
                   dependencies.getCachedBrandPartnersUseCase,
             ),
           ),
+          BlocProvider<AskFlowsBloc>(
+            create: (_) => AskFlowsBloc(
+              getAskFlowsUseCase: dependencies.getAskFlowsUseCase,
+            )..add(const AskFlowsFetchRequested()),
+          ),
+          BlocProvider<AskTypesBloc>(
+            create: (_) => AskTypesBloc(
+              getAskTypesUseCase: dependencies.getAskTypesUseCase,
+            ),
+          ),
+          BlocProvider<AskFormConfigBloc>(
+            create: (_) => AskFormConfigBloc(
+              getAskFormConfigUseCase: dependencies.getAskFormConfigUseCase,
+            ),
+          ),
           BlocProvider<PeersBloc>(
             create: (_) => PeersBloc(
               getAllPeersUseCase: dependencies.getAllPeersUseCase,
@@ -727,7 +786,9 @@ class AppProviders extends StatelessWidget {
             create: (_) => RecommendPeerBloc(
               submitPeerRecommendationUseCase:
                   dependencies.submitPeerRecommendationUseCase,
-            ),
+              getPeerRecommendationsHistoryUseCase:
+                  dependencies.getPeerRecommendationsHistoryUseCase,
+            )..add(const FetchPeerRecommendationsHistoryEvent()),
           ),
           BlocProvider<MentorBloc>(
             create: (_) => MentorBloc(
@@ -776,26 +837,6 @@ class AppProviders extends StatelessWidget {
             )
               ..add(const FetchRegisterVisitorHistoryEvent())
               ..add(const FetchEventsEvent()),
-          ),
-          BlocProvider<CollaborationsBloc>(
-            create: (_) => CollaborationsBloc(
-              getIndustriesTree: dependencies.getIndustriesTreeUseCase,
-              getCollaborationTypes: dependencies.getCollaborationTypesUseCase,
-              submitCollaboration: dependencies.submitCollaborationUseCase,
-              getCollaborationHistory:
-                  dependencies.getCollaborationHistoryUseCase,
-              acceptCollaboration: dependencies.acceptCollaborationUseCase,
-            )..add(const LoadCollaborationsInitialData()),
-          ),
-          BlocProvider<RequirementsBloc>(
-            create: (_) => RequirementsBloc(
-              getOpenRequirements: dependencies.getOpenRequirementsUseCase,
-              getMyRequirements: dependencies.getMyRequirementsUseCase,
-              createRequirement: dependencies.createRequirementUseCase,
-              completeRequirement: dependencies.completeRequirementUseCase,
-              fulfillRequirement: dependencies.fulfillRequirementUseCase,
-              uploadProfileMediaUseCase: dependencies.uploadProfileMediaUseCase,
-            )..add(const FetchOpenRequirementsEvent()),
           ),
           BlocProvider<ChatListBloc>(
             create: (_) => ChatListBloc(
@@ -866,6 +907,39 @@ class AppProviders extends StatelessWidget {
               getIntroVideosUseCase: dependencies.getIntroVideosUseCase,
               repository: dependencies.shortsRepository,
             ),
+          ),
+          BlocProvider<AskSubmissionBloc>(
+            create: (_) => AskSubmissionBloc(
+              createAndPublishAskUseCase: dependencies.createAndPublishAskUseCase,
+            ),
+          ),
+          BlocProvider<AskMatchesBloc>(
+            create: (_) => AskMatchesBloc(
+              getAskMatchesUseCase: dependencies.getAskMatchesUseCase,
+            ),
+          ),
+          BlocProvider<AskResponseBloc>(
+            create: (_) => AskResponseBloc(
+              submitAskResponseUseCase: dependencies.submitAskResponseUseCase,
+            ),
+          ),
+          BlocProvider<AskResponsesBloc>(
+            create: (_) => AskResponsesBloc(
+              getAskResponsesUseCase: dependencies.getAskResponsesUseCase,
+            ),
+          ),
+          BlocProvider<MyAsksBloc>(
+            create: (_) => MyAsksBloc(
+              getMyAsksUseCase: dependencies.getMyAsksListUseCase,
+              updateAskStatusUseCase: dependencies.updateAskStatusUseCase,
+            )..add(const MyAsksFetchRequested()),
+          ),
+          BlocProvider<PeersFeedBloc>(
+            create: (_) => PeersFeedBloc(
+              getPeersFeedUseCase: dependencies.getPeersFeedUseCase,
+              congratulateAskUseCase: dependencies.congratulateAskUseCase,
+              toggleSaveAskUseCase: dependencies.toggleSaveAskUseCase,
+            )..add(const PeersFeedFetchRequested()),
           ),
         ],
         child: child,

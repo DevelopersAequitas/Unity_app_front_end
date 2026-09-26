@@ -67,20 +67,6 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         accentColor: Color(0xFFEC4899),
       ),
       HighlightSectionModel(
-        id: 'open_asks',
-        title: 'Open Asks',
-        category: 'Highlights',
-        icon: Icons.campaign_rounded,
-        accentColor: Color(0xFFF97316),
-      ),
-      HighlightSectionModel(
-        id: 'collaborations',
-        title: 'Collaborations',
-        category: 'Highlights',
-        icon: Icons.hub_rounded,
-        accentColor: Color(0xFF3B82F6),
-      ),
-      HighlightSectionModel(
         id: 'leadership_role',
         title: 'Leadership Role',
         category: 'Highlights',
@@ -181,6 +167,29 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         accentColor: Color(0xFFF59E0B),
       ),
 
+      // Category: Asks & Needs (3 Flows)
+      HighlightSectionModel(
+        id: 'asks_collaboration',
+        title: 'Collaborations',
+        category: 'Asks & Needs',
+        icon: Icons.handshake_rounded,
+        accentColor: Color(0xFF8B5CF6),
+      ),
+      HighlightSectionModel(
+        id: 'asks_referral',
+        title: 'Referral Asks',
+        category: 'Asks & Needs',
+        icon: Icons.share_location_rounded,
+        accentColor: Color(0xFF2563EB),
+      ),
+      HighlightSectionModel(
+        id: 'asks_help',
+        title: 'Get Help',
+        category: 'Asks & Needs',
+        icon: Icons.help_outline_rounded,
+        accentColor: Color(0xFF10B981),
+      ),
+
       // Category 3: Core Collaboration Actions
       HighlightSectionModel(
         id: 'referral',
@@ -210,27 +219,6 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         icon: Icons.thumb_up_rounded,
         accentColor: Color(0xFFD97706),
       ),
-      HighlightSectionModel(
-        id: 'post_ask',
-        title: 'Post an Ask',
-        category: 'Core Collaboration Actions',
-        icon: Icons.post_add_rounded,
-        accentColor: Color(0xFFE11D48),
-      ),
-      HighlightSectionModel(
-        id: 'apply_collaboration',
-        title: 'Apply Collaboration',
-        category: 'Core Collaboration Actions',
-        icon: Icons.sync_alt_rounded,
-        accentColor: Color(0xFF3B82F6),
-      ),
-      // HighlightSectionModel(
-      //   id: 'collaboration_ask',
-      //   title: 'Collaboration Ask',
-      //   category: 'Core Collaboration Actions',
-      //   icon: Icons.help_center_rounded,
-      //   accentColor: Color(0xFFEA580C),
-      // ),
       HighlightSectionModel(
         id: 'register_visitor',
         title: 'Register Visitor',
@@ -274,13 +262,6 @@ class HighlightsLocalDataSourceImpl implements HighlightsLocalDataSource {
         category: 'Impact Dashboard',
         icon: Icons.account_balance_wallet_rounded,
         accentColor: Color(0xFF10B981),
-      ),
-      HighlightSectionModel(
-        id: 'collaboration_history',
-        title: 'Collaboration History',
-        category: 'Impact Dashboard',
-        icon: Icons.history_rounded,
-        accentColor: Color(0xFF8B5CF6),
       ),
 
       // Category 4: Menu / More Options

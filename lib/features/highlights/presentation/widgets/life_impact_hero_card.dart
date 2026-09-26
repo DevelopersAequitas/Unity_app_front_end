@@ -13,8 +13,9 @@ class LifeImpactHeroCard extends StatelessWidget {
   });
 
   String _formatCompact(int number) {
-    if (number >= 1000000000)
+    if (number >= 1000000000) {
       return '${(number / 1000000000).toStringAsFixed(1)}B';
+    }
     if (number >= 1000000) return '${(number / 1000000).toStringAsFixed(1)}M';
     if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}K';
     return number.toString();
@@ -167,47 +168,6 @@ class LifeImpactHeroCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatCol({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: Icon(icon, color: Colors.white, size: 12),
-        ),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: AppTypography.titleSmall.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-              ),
-            ),
-            Text(
-              label,
-              style: AppTypography.bodySmall.copyWith(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 9,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

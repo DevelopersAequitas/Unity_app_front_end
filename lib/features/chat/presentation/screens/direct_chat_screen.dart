@@ -22,6 +22,7 @@ class DirectChatScreen extends StatefulWidget {
   final String? peerUserId;
   final String? peerName;
   final String? peerAvatar;
+  final String? initialMessage;
 
   const DirectChatScreen({
     super.key,
@@ -29,6 +30,7 @@ class DirectChatScreen extends StatefulWidget {
     this.peerUserId,
     this.peerName,
     this.peerAvatar,
+    this.initialMessage,
   });
 
   @override
@@ -45,6 +47,9 @@ class _DirectChatScreenState extends State<DirectChatScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialMessage != null && widget.initialMessage!.trim().isNotEmpty) {
+      _inputController.text = widget.initialMessage!.trim();
+    }
     _directChatBloc = context.read<DirectChatBloc>();
     _directChatBloc.add(InitDirectChatEvent(
           chatId: widget.chatId,

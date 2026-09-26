@@ -30,19 +30,27 @@ class CirclesState extends Equatable {
     if (myJoinRequests.isEmpty) return null;
     final catId = category.id.trim();
     final catName = category.name.trim().toLowerCase();
-    for (final req in myJoinRequests) {
-      if (req.categoryId.isNotEmpty && req.categoryId == catId) return req;
-      if (req.categoryName.trim().toLowerCase() == catName) return req;
-      if (req.circleId.isNotEmpty && req.circleId == catId) return req;
-      if (req.circleName.trim().toLowerCase() == catName) return req;
-      if (category.slug != null && category.slug!.isNotEmpty) {
-        if (req.categoryName.trim().toLowerCase() == category.slug!.trim().toLowerCase() ||
-            req.circleName.trim().toLowerCase() == category.slug!.trim().toLowerCase()) {
-          return req;
+    final catSlug = category.slug?.trim().toLowerCase() ?? '';
+
+    final matching = myJoinRequests.where((req) {
+      if (req.categoryId.isNotEmpty && req.categoryId == catId) return true;
+      if (req.categoryName.trim().toLowerCase() == catName) return true;
+      if (req.circleId.isNotEmpty && req.circleId == catId) return true;
+      if (req.circleName.trim().toLowerCase() == catName) return true;
+      if (catSlug.isNotEmpty) {
+        if (req.categoryName.trim().toLowerCase() == catSlug ||
+            req.circleName.trim().toLowerCase() == catSlug) {
+          return true;
         }
       }
-    }
-    return null;
+      return false;
+    }).toList();
+
+    if (matching.isEmpty) return null;
+
+    // Sort matching requests by requestedAt descending so the latest request always overrides older ones
+    matching.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+    return matching.first;
   }
 
   List<CircleEntity> get filteredMyCircles {
@@ -57,7 +65,25 @@ class CirclesState extends Equatable {
   }
 
   List<CircleJoinRequestEntity> get activeJoinRequests {
-    return myJoinRequests.where((r) => !r.isRejected).toList();
+    final active = myJoinRequests.where((r) => !r.isRejected).toList();
+    active.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+
+    // Deduplicate by category/circle so that newer requests override older requests for the same category
+    final seen = <String>{};
+    final result = <CircleJoinRequestEntity>[];
+    for (final req in active) {
+      final key = req.categoryId.isNotEmpty
+          ? req.categoryId
+          : (req.categoryName.isNotEmpty ? req.categoryName.toLowerCase() : req.circleId);
+      if (key.isNotEmpty) {
+        if (seen.add(key)) {
+          result.add(req);
+        }
+      } else {
+        result.add(req);
+      }
+    }
+    return result;
   }
 
   List<CircleJoinRequestEntity> get filteredMyJoinRequests {

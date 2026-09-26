@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../asks/presentation/widgets/ask_share_helper.dart';
 import '../../../../core/utils/post_share_helper.dart';
 import '../../../peers/presentation/bloc/peer_profile_bloc.dart';
 import '../../../peers/presentation/bloc/peer_profile_event.dart';
@@ -10,6 +11,7 @@ import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import 'post_comments_bottom_sheet.dart';
 import 'post_likes_bottom_sheet.dart';
+import 'timeline_ask_card.dart';
 import 'timeline_collaboration_card.dart';
 import 'timeline_impact_card.dart';
 import 'timeline_standard_card.dart';
@@ -64,7 +66,21 @@ class TimelineCard extends StatelessWidget {
   }
 
   void _handleDefaultShareTap() {
-    PostShareHelper.sharePost(item);
+    if (item.resolvedType == TimelineItemType.askPost) {
+      final ask = item.askData ?? {};
+      final askId = (ask['id'] ?? item.id).toString();
+      final title = (ask['title'] ?? item.contentText).toString();
+      final flowMap = ask['flow'] is Map ? ask['flow'] as Map : {};
+      final typeMap = ask['type'] is Map ? ask['type'] as Map : {};
+      AskShareHelper.shareTimelineAsk(
+        askId: askId,
+        title: title,
+        flowName: flowMap['name']?.toString(),
+        typeName: typeMap['name']?.toString(),
+      );
+    } else {
+      PostShareHelper.sharePost(item);
+    }
   }
 
   @override
@@ -77,6 +93,17 @@ class TimelineCard extends StatelessWidget {
     switch (item.resolvedType) {
       case TimelineItemType.impactActivity:
         cardWidget = TimelineImpactCard(
+          item: item,
+          onLikeTap: onLikeTap,
+          onLikesCountTap: likesHandler,
+          onCommentTap: commentHandler,
+          onSaveTap: onSaveTap,
+          onShareTap: shareHandler,
+          onAuthorTap: onAuthorTap,
+        );
+        break;
+      case TimelineItemType.askPost:
+        cardWidget = TimelineAskCard(
           item: item,
           onLikeTap: onLikeTap,
           onLikesCountTap: likesHandler,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unity_app/features/asks/domain/entities/ask_item_entity.dart';
 import 'package:unity_app/features/peers/domain/entities/peer_entity.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/auth/presentation/screens/welcome_screen.dart';
@@ -63,15 +64,32 @@ import '../../features/leaderboard/presentation/screens/leaderboard_screen.dart'
 
 import '../../features/p2p_meetings/presentation/screens/add_p2p_meeting_screen.dart';
 import '../../features/p2p_meetings/presentation/screens/p2p_meetings_screen.dart';
-import '../../features/requirements/presentation/screens/open_asks_screen.dart';
-import '../../features/requirements/presentation/screens/post_ask_form_screen.dart';
 import '../../features/highlights/presentation/screens/vyapaar_jagat_story_screen.dart';
 import '../../features/highlights/presentation/screens/leadership_certification_screen.dart';
 import '../../features/highlights/presentation/screens/entrepreneur_certification_screen.dart';
-import '../../features/highlights/presentation/screens/ask_form_screen.dart';
-import '../../features/collaborations/presentation/screens/add_collaboration_screen.dart';
-import '../../features/collaborations/presentation/screens/collaborations_hub_screen.dart';
+import '../../features/asks/domain/entities/ask_flow_entity.dart';
+import '../../features/asks/domain/entities/ask_match_peer_entity.dart';
+import '../../features/asks/domain/entities/ask_submission_entity.dart';
+import '../../features/asks/domain/entities/ask_type_entity.dart';
+import '../../features/asks/presentation/screens/ask_types_screen.dart';
+import '../../features/asks/presentation/screens/ask_step1_brief_screen.dart';
+import '../../features/asks/presentation/screens/ask_step2_filters_screen.dart';
+import '../../features/asks/presentation/screens/ask_step3_preview_screen.dart';
+import '../../features/asks/presentation/screens/ask_matches_screen.dart';
+import '../../features/asks/presentation/screens/ask_express_interest_screen.dart';
+import '../../features/asks/presentation/screens/ask_collaboration_room_screen.dart';
+import '../../features/asks/presentation/screens/ask_collaboration_outcome_screen.dart';
+import '../../features/asks/presentation/screens/ask_help_response_screen.dart';
+import '../../features/asks/presentation/screens/ask_help_outcome_screen.dart';
+import '../../features/asks/presentation/screens/ask_referral_outcome_screen.dart';
+import '../../features/asks/presentation/screens/ask_referral_reason_screen.dart';
+import '../../features/asks/presentation/screens/ask_referral_contact_screen.dart';
+import '../../features/asks/presentation/screens/ask_flow_selection_screen.dart';
+import '../../features/asks/presentation/screens/ask_responses_list_screen.dart';
+import '../../features/asks/presentation/screens/peers_asks_hub_screen.dart';
+
 import '../../features/highlights/presentation/screens/recommend_peer_screen.dart';
+import '../../features/highlights/presentation/screens/recommend_peer_history_screen.dart';
 import '../../features/highlights/presentation/screens/coins_screen.dart';
 import '../../features/highlights/presentation/screens/claim_your_coin_screen.dart';
 import '../../features/milestones/presentation/screens/coin_milestones_screen.dart';
@@ -160,11 +178,32 @@ class AppRoutes {
   static const String vyapaarJagatStory = '/vyapaar-jagat-story';
   static const String leadershipCertificate = '/leadership-certificate';
   static const String entrepreneurCertificate = '/entrepreneur-certificate';
+  static const String peersFeed = '/peers-feed';
+  static const String askTypes = '/ask-types';
+  static const String askBrief = '/ask-brief';
+  static const String askStep1Brief = '/ask-brief';
+  static const String askFilters = '/ask-filters';
+  static const String askReferralReason = '/ask-referral-reason';
+  static const String askPreview = '/ask-preview';
+  static const String askMatches = '/ask-matches';
+  static const String askResponses = '/ask-responses';
+  static const String askExpressInterest = '/ask-express-interest';
+  static const String askReferralContact = '/ask-referral-contact';
+  static const String askHelpResponse = '/ask-help-response';
+  static const String askCollaborationRoom = '/ask-collaboration-room';
+  static const String askCollaborationOutcome = '/ask-collaboration-outcome';
+  static const String askHelpOutcome = '/ask-help-outcome';
+  static const String askReferralOutcome = '/ask-referral-outcome';
+  static const String myAsks = '/my-asks';
   static const String postAsk = '/post-ask';
+  static const String asksCollaboration = '/asks-collaboration';
+  static const String asksReferral = '/asks-referral';
+  static const String asksHelp = '/asks-help';
   static const String collaborationAsk = '/collaboration-ask';
   static const String collaborations = '/collaborations';
   static const String addCollaboration = '/add-collaboration';
   static const String recommendPeer = '/recommend-peer';
+  static const String recommendPeerHistory = '/recommend-peer/history';
   static const String coins = '/coins';
   static const String claimCoins = '/claim-coins';
   static const String claimYourCoin = '/claim-your-coin';
@@ -322,7 +361,8 @@ class AppRouter {
           peerId = settings.arguments as String;
         } else if (settings.arguments is Map) {
           final map = settings.arguments as Map;
-          peerId = (map['memberId'] ?? map['peerId'] ?? map['id'] ?? '').toString();
+          peerId = (map['memberId'] ?? map['peerId'] ?? map['id'] ?? '')
+              .toString();
         } else if (settings.arguments != null) {
           peerId = settings.arguments.toString();
         }
@@ -331,8 +371,8 @@ class AppRouter {
             create: (ctx) => PeerProfileBloc(
               getMemberProfileUseCase: ctx.read<GetMemberProfileUseCase>(),
               getMemberPostsUseCase: ctx.read<GetMemberPostsUseCase>(),
-              getMemberIntroducedPeersUseCase:
-                  ctx.read<GetMemberIntroducedPeersUseCase>(),
+              getMemberIntroducedPeersUseCase: ctx
+                  .read<GetMemberIntroducedPeersUseCase>(),
               followUserUseCase: ctx.read<FollowUserUseCase>(),
               unfollowUserUseCase: ctx.read<UnfollowUserUseCase>(),
               sendConnectionRequestUseCase: ctx
@@ -363,21 +403,14 @@ class AppRouter {
           userId = settings.arguments as String;
         } else if (settings.arguments is Map) {
           final map = settings.arguments as Map;
-          userId = (map['userId'] ??
-                  map['memberId'] ??
-                  map['peerId'] ??
-                  map['id'])
-              ?.toString();
-          userName = (map['userName'] ??
-                  map['name'] ??
-                  map['displayName'])
+          userId =
+              (map['userId'] ?? map['memberId'] ?? map['peerId'] ?? map['id'])
+                  ?.toString();
+          userName = (map['userName'] ?? map['name'] ?? map['displayName'])
               ?.toString();
         }
         return MaterialPageRoute(
-          builder: (_) => FollowersScreen(
-            userId: userId,
-            userName: userName,
-          ),
+          builder: (_) => FollowersScreen(userId: userId, userName: userName),
           settings: settings,
         );
       case AppRoutes.createPost:
@@ -504,10 +537,8 @@ class AppRouter {
           peerName = args['peerName']?.toString() ?? 'Peer';
         }
         return MaterialPageRoute(
-          builder: (_) => PeerTestimonialsScreen(
-            peerId: peerId,
-            peerName: peerName,
-          ),
+          builder: (_) =>
+              PeerTestimonialsScreen(peerId: peerId, peerName: peerName),
           settings: settings,
         );
       case AppRoutes.addTestimonial:
@@ -531,10 +562,8 @@ class AppRouter {
           peerName = args['peerName']?.toString() ?? 'Peer';
         }
         return MaterialPageRoute(
-          builder: (_) => PeerBusinessDealsScreen(
-            peerId: peerId,
-            peerName: peerName,
-          ),
+          builder: (_) =>
+              PeerBusinessDealsScreen(peerId: peerId, peerName: peerName),
           settings: settings,
         );
       case AppRoutes.addBusinessDeal:
@@ -559,8 +588,15 @@ class AppRouter {
           initialTab = settings.arguments as int;
         } else if (settings.arguments is Map) {
           final map = settings.arguments as Map;
-          initialTab = (map['initialTabIndex'] ?? map['tabIndex'] ?? map['tab'] ?? 0) as int;
-          initialSubTab = (map['initialSubTabIndex'] ?? map['subTabIndex'] ?? map['subTab'] ?? 0) as int;
+          initialTab =
+              (map['initialTabIndex'] ?? map['tabIndex'] ?? map['tab'] ?? 0)
+                  as int;
+          initialSubTab =
+              (map['initialSubTabIndex'] ??
+                      map['subTabIndex'] ??
+                      map['subTab'] ??
+                      0)
+                  as int;
         }
         return MaterialPageRoute(
           builder: (_) => P2pMeetingsScreen(
@@ -581,10 +617,11 @@ class AppRouter {
           initialPeer = map['peer'] as PeerEntity?;
           initialDate = map['date'] as DateTime?;
           initialPlace = map['place'] as String?;
-          initialMeetingRequestId = (map['p2p_meeting_request_id'] ??
-                  map['meeting_request_id'] ??
-                  map['request_id'])
-              ?.toString();
+          initialMeetingRequestId =
+              (map['p2p_meeting_request_id'] ??
+                      map['meeting_request_id'] ??
+                      map['request_id'])
+                  ?.toString();
         }
         return MaterialPageRoute(
           builder: (_) => AddP2pMeetingScreen(
@@ -630,38 +667,440 @@ class AppRouter {
           builder: (_) => const EntrepreneurCertificationScreen(),
           settings: settings,
         );
-      case AppRoutes.postAsk:
+      case AppRoutes.askTypes:
+        final flow = settings.arguments as AskFlowEntity;
         return MaterialPageRoute(
-          builder: (_) => const PostAskFormScreen(),
+          builder: (_) => AskTypesScreen(flow: flow),
           settings: settings,
         );
-      case AppRoutes.collaborationAsk:
+      case AppRoutes.askBrief:
+        if (settings.arguments is! Map<String, dynamic>) {
+          return MaterialPageRoute(
+            builder: (_) => const AskFlowSelectionScreen(),
+            settings: settings,
+          );
+        }
+        final args = settings.arguments as Map<String, dynamic>;
+        final flow = args['flow'] as AskFlowEntity?;
+        final type = args['type'] as AskTypeEntity?;
+        if (flow == null || type == null) {
+          return MaterialPageRoute(
+            builder: (_) => const AskFlowSelectionScreen(),
+            settings: settings,
+          );
+        }
         return MaterialPageRoute(
-          builder: (_) => const AskFormScreen(),
+          builder: (_) => AskStep1BriefScreen(flow: flow, type: type),
           settings: settings,
         );
+      case AppRoutes.askFilters:
+        final submission = settings.arguments as AskSubmissionEntity;
+        return MaterialPageRoute(
+          builder: (_) => AskStep2FiltersScreen(submission: submission),
+          settings: settings,
+        );
+      case AppRoutes.askReferralReason:
+        final submission = settings.arguments as AskSubmissionEntity;
+        return MaterialPageRoute(
+          builder: (_) => AskReferralReasonScreen(submission: submission),
+          settings: settings,
+        );
+      case AppRoutes.askPreview:
+        final submission = settings.arguments as AskSubmissionEntity;
+        return MaterialPageRoute(
+          builder: (_) => AskStep3PreviewScreen(submission: submission),
+          settings: settings,
+        );
+      case AppRoutes.askMatches:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final askId = (args['askId'] ?? '').toString();
+        final submission = args['submission'] as AskSubmissionEntity?;
+        final flowTitle = (args['flowName'] ?? args['title']) as String?;
+        return MaterialPageRoute(
+          builder: (_) => AskMatchesScreen(
+            askId: askId,
+            submission: submission,
+            flowTitle: flowTitle,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.askResponses:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final askId = (args['askId'] ?? args['id'] ?? (settings.arguments is String ? settings.arguments as String : '')).toString();
+        final title = (args['title'] ?? args['askTitle'] ?? '').toString();
+        final flowName = (args['flowName'] ?? '').toString();
+        final askItem = args['askItem'] as AskItemEntity?;
+        return MaterialPageRoute(
+          builder: (_) => AskResponsesListScreen(
+            askId: askId,
+            askTitle: title.isNotEmpty ? title : askItem?.title,
+            flowName: flowName.isNotEmpty ? flowName : askItem?.flowName,
+            askItem: askItem,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.askExpressInterest:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final askId = (args['askId'] ?? '').toString();
+        final title = (args['title'] ?? '').toString();
+        final flowName = (args['flowName'] ?? 'Collaboration').toString();
+        final peer = args['peer'] as AskMatchPeerEntity? ??
+            AskMatchPeerEntity(
+              id: '',
+              name: 'Peer',
+              businessType: '',
+              location: '',
+              typeLabel: flowName,
+              isTypeMatched: true,
+              capitalLabel: '',
+              isCapitalMatched: true,
+              stageLabel: '',
+              isStageMatched: true,
+            );
+        final submission = args['submission'] as AskSubmissionEntity? ??
+            AskSubmissionEntity(
+              flow: AskFlowEntity(
+                id: 'collab',
+                code: 'collaboration',
+                name: flowName,
+                description: '',
+              ),
+              type: AskTypeEntity(
+                id: 'collab',
+                flowId: 'collab',
+                code: 'collab',
+                name: flowName,
+              ),
+              goal: title,
+            );
+        return MaterialPageRoute(
+          builder: (_) => AskExpressInterestScreen(
+            peer: peer,
+            submission: submission,
+            askId: askId,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.askCollaborationRoom:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final peer = args['peer'] as AskMatchPeerEntity? ??
+            const AskMatchPeerEntity(
+              id: '',
+              name: 'Peer',
+              businessType: '',
+              location: '',
+              typeLabel: 'Collaboration',
+              isTypeMatched: true,
+              capitalLabel: '',
+              isCapitalMatched: true,
+              stageLabel: '',
+              isStageMatched: true,
+            );
+        final submission = args['submission'] as AskSubmissionEntity? ??
+            const AskSubmissionEntity(
+              flow: AskFlowEntity(
+                id: 'collab',
+                code: 'collaboration',
+                name: 'Collaboration',
+                description: '',
+              ),
+              type: AskTypeEntity(
+                id: 'collab',
+                flowId: 'collab',
+                code: 'collab',
+                name: 'Collaboration',
+              ),
+              goal: '',
+            );
+        final isPoster = (args['isPoster'] as bool?) ?? false;
+        return MaterialPageRoute(
+          builder: (_) => AskCollaborationRoomScreen(
+            peer: peer,
+            submission: submission,
+            isPoster: isPoster,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.askReferralContact:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final peer = args['peer'] as AskMatchPeerEntity? ??
+            const AskMatchPeerEntity(
+              id: '',
+              name: 'Peer',
+              businessType: '',
+              location: '',
+              typeLabel: '',
+              isTypeMatched: false,
+              capitalLabel: '',
+              isCapitalMatched: false,
+              stageLabel: '',
+              isStageMatched: false,
+            );
+        final submission = args['submission'] as AskSubmissionEntity? ??
+            const AskSubmissionEntity(
+              flow: AskFlowEntity(
+                id: 'referral',
+                code: 'referral',
+                name: 'Referral',
+                description: '',
+              ),
+              type: AskTypeEntity(
+                id: 'referral',
+                flowId: 'referral',
+                code: 'referral',
+                name: 'Referral',
+              ),
+              goal: '',
+            );
+        final askId = (args['askId'] ?? '').toString();
+        return MaterialPageRoute(
+          builder: (_) => AskReferralContactScreen(
+            askId: askId,
+            peer: peer,
+            submission: submission,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.askCollaborationOutcome:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final peer = args['peer'] as AskMatchPeerEntity? ??
+            const AskMatchPeerEntity(
+              id: '',
+              name: 'Peer',
+              businessType: '',
+              location: '',
+              typeLabel: 'Collaboration',
+              isTypeMatched: true,
+              capitalLabel: '',
+              isCapitalMatched: true,
+              stageLabel: '',
+              isStageMatched: true,
+            );
+        final submission = args['submission'] as AskSubmissionEntity? ??
+            const AskSubmissionEntity(
+              flow: AskFlowEntity(
+                id: 'collab',
+                code: 'collaboration',
+                name: 'Collaboration',
+                description: '',
+              ),
+              type: AskTypeEntity(
+                id: 'collab',
+                flowId: 'collab',
+                code: 'collab',
+                name: 'Collaboration',
+              ),
+              goal: '',
+            );
+        return MaterialPageRoute(
+          builder: (_) =>
+              AskCollaborationOutcomeScreen(peer: peer, submission: submission),
+          settings: settings,
+        );
+      case AppRoutes.askHelpResponse:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final askId = (args['askId'] ?? '').toString();
+        final title = (args['title'] ?? '').toString();
+        final flowName = (args['flowName'] ?? 'Help & Advice').toString();
+        final peer = args['peer'] as AskMatchPeerEntity? ??
+            AskMatchPeerEntity(
+              id: '',
+              name: 'Peer',
+              businessType: '',
+              location: '',
+              typeLabel: flowName,
+              isTypeMatched: true,
+              capitalLabel: '',
+              isCapitalMatched: true,
+              stageLabel: '',
+              isStageMatched: true,
+            );
+        final submission = args['submission'] as AskSubmissionEntity? ??
+            AskSubmissionEntity(
+              flow: AskFlowEntity(
+                id: 'help',
+                code: 'help',
+                name: flowName,
+                description: '',
+              ),
+              type: AskTypeEntity(
+                id: 'help',
+                flowId: 'help',
+                code: 'help',
+                name: flowName,
+              ),
+              goal: title,
+            );
+        return MaterialPageRoute(
+          builder: (_) => AskHelpResponseScreen(
+            peer: peer,
+            submission: submission,
+            askId: askId,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.askHelpOutcome:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final peer = args['peer'] as AskMatchPeerEntity? ??
+            const AskMatchPeerEntity(
+              id: '',
+              name: 'Peer',
+              businessType: '',
+              location: '',
+              typeLabel: 'Help',
+              isTypeMatched: true,
+              capitalLabel: '',
+              isCapitalMatched: true,
+              stageLabel: '',
+              isStageMatched: true,
+            );
+        final submission = args['submission'] as AskSubmissionEntity? ??
+            const AskSubmissionEntity(
+              flow: AskFlowEntity(
+                id: 'help',
+                code: 'help',
+                name: 'Help',
+                description: '',
+              ),
+              type: AskTypeEntity(
+                id: 'help',
+                flowId: 'help',
+                code: 'help',
+                name: 'Help',
+              ),
+              goal: '',
+            );
+        return MaterialPageRoute(
+          builder: (_) =>
+              AskHelpOutcomeScreen(peer: peer, submission: submission),
+          settings: settings,
+        );
+      case AppRoutes.askReferralOutcome:
+        final args = (settings.arguments is Map)
+            ? (settings.arguments as Map).cast<String, dynamic>()
+            : <String, dynamic>{};
+        final peer = args['peer'] as AskMatchPeerEntity? ??
+            const AskMatchPeerEntity(
+              id: '',
+              name: 'Peer',
+              businessType: '',
+              location: '',
+              typeLabel: 'Referral',
+              isTypeMatched: true,
+              capitalLabel: '',
+              isCapitalMatched: true,
+              stageLabel: '',
+              isStageMatched: true,
+            );
+        final submission = args['submission'] as AskSubmissionEntity? ??
+            const AskSubmissionEntity(
+              flow: AskFlowEntity(
+                id: 'referral',
+                code: 'referral',
+                name: 'Referral',
+                description: '',
+              ),
+              type: AskTypeEntity(
+                id: 'referral',
+                flowId: 'referral',
+                code: 'referral',
+                name: 'Referral',
+              ),
+              goal: '',
+            );
+        return MaterialPageRoute(
+          builder: (_) =>
+              AskReferralOutcomeScreen(peer: peer, submission: submission),
+          settings: settings,
+        );
+      case AppRoutes.asksCollaboration:
+        return MaterialPageRoute(
+          builder: (_) => const PeersAsksHubScreen(
+            flowCode: 'collaboration',
+            flowTitle: 'Collaboration Asks',
+          ),
+          settings: settings,
+        );
+      case AppRoutes.asksReferral:
+        return MaterialPageRoute(
+          builder: (_) => const PeersAsksHubScreen(
+            flowCode: 'referral',
+            flowTitle: 'Referral Asks',
+          ),
+          settings: settings,
+        );
+      case AppRoutes.asksHelp:
+        return MaterialPageRoute(
+          builder: (_) => const PeersAsksHubScreen(
+            flowCode: 'help',
+            flowTitle: 'Get Help Asks',
+          ),
+          settings: settings,
+        );
+      case AppRoutes.peersFeed:
+      case AppRoutes.myAsks:
       case AppRoutes.openAsks:
       case AppRoutes.openRequirements:
-        final initialTab =
-            settings.arguments is int ? settings.arguments as int : 0;
+        int initialTab = (settings.name == AppRoutes.myAsks) ? 1 : 0;
+        String? highlightAskId;
+        if (settings.arguments is int) {
+          initialTab = settings.arguments as int;
+        } else if (settings.arguments is Map) {
+          final map = settings.arguments as Map;
+          initialTab = (map['initialTab'] ??
+              map['initialTabIndex'] ??
+              ((settings.name == AppRoutes.myAsks) ? 1 : 0)) as int;
+          highlightAskId =
+              (map['highlightAskId'] ?? map['askId'] ?? map['id'])?.toString();
+        } else if (settings.arguments is String) {
+          highlightAskId = settings.arguments as String;
+        }
         return MaterialPageRoute(
-          builder: (_) => OpenAsksScreen(initialTabIndex: initialTab),
+          builder: (_) => PeersAsksHubScreen(
+            initialTabIndex: initialTab,
+            highlightAskId: highlightAskId,
+          ),
           settings: settings,
         );
       case AppRoutes.collaborations:
-        final initialTab = settings.arguments is int ? settings.arguments as int : 0;
+        final initialTab = settings.arguments is int
+            ? settings.arguments as int
+            : 0;
         return MaterialPageRoute(
-          builder: (_) => CollaborationsHubScreen(initialTabIndex: initialTab),
+          builder: (_) => PeersAsksHubScreen(initialTabIndex: initialTab),
           settings: settings,
         );
       case AppRoutes.addCollaboration:
+      case AppRoutes.postAsk:
+      case AppRoutes.collaborationAsk:
         return MaterialPageRoute(
-          builder: (_) => const AddCollaborationScreen(),
+          builder: (_) => const AskFlowSelectionScreen(),
           settings: settings,
         );
       case AppRoutes.recommendPeer:
         return MaterialPageRoute(
           builder: (_) => const RecommendPeerScreen(),
+          settings: settings,
+        );
+      case AppRoutes.recommendPeerHistory:
+        return MaterialPageRoute(
+          builder: (_) => const RecommendPeerHistoryScreen(),
           settings: settings,
         );
       case AppRoutes.coins:
@@ -671,7 +1110,9 @@ class AppRouter {
         );
       case AppRoutes.claimCoins:
       case AppRoutes.claimYourCoin:
-        final initialTab = settings.arguments is int ? settings.arguments as int : 0;
+        final initialTab = settings.arguments is int
+            ? settings.arguments as int
+            : 0;
         return MaterialPageRoute(
           builder: (_) => ClaimYourCoinScreen(initialTabIndex: initialTab),
           settings: settings,
@@ -690,16 +1131,20 @@ class AppRouter {
         );
       case AppRoutes.lifeImpact:
       case AppRoutes.impactScore:
-        final initialTab = settings.arguments is int ? settings.arguments as int : 0;
+        final initialTab = settings.arguments is int
+            ? settings.arguments as int
+            : 0;
         return MaterialPageRoute(
           builder: (_) => LifeImpactScreen(initialTabIndex: initialTab),
           settings: settings,
         );
       case AppRoutes.topCommunityBuilders:
-        final initialTab =
-            settings.arguments is int ? settings.arguments as int : 0;
+        final initialTab = settings.arguments is int
+            ? settings.arguments as int
+            : 0;
         return MaterialPageRoute(
-          builder: (_) => TopCommunityBuildersScreen(initialTabIndex: initialTab),
+          builder: (_) =>
+              TopCommunityBuildersScreen(initialTabIndex: initialTab),
           settings: settings,
         );
       case AppRoutes.events:
@@ -859,9 +1304,12 @@ class AppRouter {
       case AppRoutes.editPersonalInfo:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
-            if (profile != null) return EditPersonalInfoScreen(profile: profile);
+            if (profile != null) {
+              return EditPersonalInfoScreen(profile: profile);
+            }
             return const EditProfileOverviewScreen();
           },
           settings: settings,
@@ -869,9 +1317,12 @@ class AppRouter {
       case AppRoutes.editBusinessInfo:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
-            if (profile != null) return EditBusinessInfoScreen(profile: profile);
+            if (profile != null) {
+              return EditBusinessInfoScreen(profile: profile);
+            }
             return const EditProfileOverviewScreen();
           },
           settings: settings,
@@ -879,9 +1330,12 @@ class AppRouter {
       case AppRoutes.editInterestsGoals:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
-            if (profile != null) return EditInterestsGoalsScreen(profile: profile);
+            if (profile != null) {
+              return EditInterestsGoalsScreen(profile: profile);
+            }
             return const EditProfileOverviewScreen();
           },
           settings: settings,
@@ -889,7 +1343,8 @@ class AppRouter {
       case AppRoutes.editSocialLinks:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
             if (profile != null) return EditSocialLinksScreen(profile: profile);
             return const EditProfileOverviewScreen();
@@ -899,9 +1354,12 @@ class AppRouter {
       case AppRoutes.editMediaPortfolio:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
-            if (profile != null) return EditMediaPortfolioScreen(profile: profile);
+            if (profile != null) {
+              return EditMediaPortfolioScreen(profile: profile);
+            }
             return const EditProfileOverviewScreen();
           },
           settings: settings,
@@ -909,9 +1367,12 @@ class AppRouter {
       case AppRoutes.editProfessionalJourney:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
-            if (profile != null) return EditProfessionalJourneyScreen(profile: profile);
+            if (profile != null) {
+              return EditProfessionalJourneyScreen(profile: profile);
+            }
             return const EditProfileOverviewScreen();
           },
           settings: settings,
@@ -919,9 +1380,12 @@ class AppRouter {
       case AppRoutes.editCircleMembership:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
-            if (profile != null) return EditCircleMembershipScreen(profile: profile);
+            if (profile != null) {
+              return EditCircleMembershipScreen(profile: profile);
+            }
             return const EditProfileOverviewScreen();
           },
           settings: settings,
@@ -929,9 +1393,12 @@ class AppRouter {
       case AppRoutes.editAdditionalInfo:
         return MaterialPageRoute(
           builder: (ctx) {
-            final profile = settings.arguments as ProfileEntity? ??
+            final profile =
+                settings.arguments as ProfileEntity? ??
                 ctx.read<ProfileBloc>().state.profile;
-            if (profile != null) return EditAdditionalInfoScreen(profile: profile);
+            if (profile != null) {
+              return EditAdditionalInfoScreen(profile: profile);
+            }
             return const EditProfileOverviewScreen();
           },
           settings: settings,
@@ -946,14 +1413,22 @@ class AppRouter {
         String? peerUserId;
         String? peerName;
         String? peerAvatar;
+        String? initialMessage;
         if (settings.arguments is String) {
           chatId = settings.arguments as String;
         } else if (settings.arguments is Map) {
           final args = settings.arguments as Map;
           chatId = args['chat_id']?.toString();
-          peerUserId = args['peer_id']?.toString() ?? args['user_id']?.toString();
-          peerName = args['peer_name']?.toString() ?? args['user_name']?.toString();
-          peerAvatar = args['peer_avatar']?.toString() ?? args['avatar_url']?.toString();
+          peerUserId =
+              args['peer_id']?.toString() ?? args['user_id']?.toString();
+          peerName =
+              args['peer_name']?.toString() ?? args['user_name']?.toString();
+          peerAvatar =
+              args['peer_avatar']?.toString() ?? args['avatar_url']?.toString();
+          initialMessage =
+              args['initial_message']?.toString() ??
+              args['message']?.toString() ??
+              args['initial_text']?.toString();
         } else if (settings.arguments is PeerEntity) {
           final p = settings.arguments as PeerEntity;
           peerUserId = p.id;
@@ -966,6 +1441,7 @@ class AppRouter {
             peerUserId: peerUserId,
             peerName: peerName,
             peerAvatar: peerAvatar,
+            initialMessage: initialMessage,
           ),
           settings: settings,
         );
@@ -980,10 +1456,8 @@ class AppRouter {
           circleName = args['circle_name']?.toString();
         }
         return MaterialPageRoute(
-          builder: (_) => CircleChatScreen(
-            circleId: circleId,
-            circleName: circleName,
-          ),
+          builder: (_) =>
+              CircleChatScreen(circleId: circleId, circleName: circleName),
           settings: settings,
         );
       case AppRoutes.circleLeadershipChat:
@@ -1015,7 +1489,8 @@ class AppRouter {
           final map = settings.arguments as Map;
           final partner = BrandPartnerEntity(
             id: (map['partner_id'] ?? map['id'] ?? '').toString(),
-            name: (map['partner_name'] ?? map['name'] ?? 'Brand Partner').toString(),
+            name: (map['partner_name'] ?? map['name'] ?? 'Brand Partner')
+                .toString(),
             logoUrl: (map['logo_url'] ?? map['logo'] ?? '').toString(),
           );
           return MaterialPageRoute(

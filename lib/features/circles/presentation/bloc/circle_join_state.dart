@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/circle_category_entity.dart';
 import '../../domain/entities/circle_join_request_entity.dart';
+import '../../domain/entities/circle_package_entity.dart';
 
 enum CircleJoinStatus { initial, submitting, success, error }
 
@@ -9,6 +10,8 @@ class CircleJoinState extends Equatable {
   final CircleCategoryEntity? selectedSubcategory;
   final bool isOtherSelected;
   final CircleJoinRequestEntity? submittedRequest;
+  final CirclePackageEntity? packageInfo;
+  final bool isPackageLoading;
   final String? errorMessage;
 
   const CircleJoinState({
@@ -16,6 +19,8 @@ class CircleJoinState extends Equatable {
     this.selectedSubcategory,
     this.isOtherSelected = false,
     this.submittedRequest,
+    this.packageInfo,
+    this.isPackageLoading = false,
     this.errorMessage,
   });
 
@@ -26,6 +31,8 @@ class CircleJoinState extends Equatable {
     CircleCategoryEntity? selectedSubcategory,
     bool? isOtherSelected,
     CircleJoinRequestEntity? submittedRequest,
+    CirclePackageEntity? packageInfo,
+    bool? isPackageLoading,
     String? errorMessage,
     bool clearSelected = false,
   }) {
@@ -36,6 +43,8 @@ class CircleJoinState extends Equatable {
           : (selectedSubcategory ?? this.selectedSubcategory),
       isOtherSelected: isOtherSelected ?? this.isOtherSelected,
       submittedRequest: submittedRequest ?? this.submittedRequest,
+      packageInfo: packageInfo ?? this.packageInfo,
+      isPackageLoading: isPackageLoading ?? this.isPackageLoading,
       errorMessage: errorMessage,
     );
   }
@@ -46,6 +55,8 @@ class CircleJoinState extends Equatable {
         selectedSubcategory,
         isOtherSelected,
         submittedRequest,
+        packageInfo,
+        isPackageLoading,
         errorMessage,
       ];
 }

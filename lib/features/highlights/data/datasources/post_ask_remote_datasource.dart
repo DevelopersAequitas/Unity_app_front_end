@@ -18,7 +18,7 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
   @override
   Future<List<PostAskModel>> getMyAsks() async {
     final endpoints = [
-      ApiEndpoints.collaborationAsk,
+      ApiEndpoints.supportTickets,
     ];
 
     for (final endpoint in endpoints) {
@@ -67,8 +67,6 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
   @override
   Future<String> submitAsk(PostAskModel model) async {
     final endpoints = [
-      ApiEndpoints.collaborationAsk,
-      ApiEndpoints.collaborationAsks,
       ApiEndpoints.supportTickets,
       ApiEndpoints.feedback,
     ];
@@ -109,8 +107,6 @@ class PostAskRemoteDataSourceImpl implements PostAskRemoteDataSource {
   @override
   Future<void> completeAsk(String id, {String? subject}) async {
     final endpoints = [
-      '${ApiEndpoints.collaborationAsks}/$id/close',
-      '${ApiEndpoints.collaborationAsks}/$id',
       '${ApiEndpoints.supportTickets}/$id/close',
       '${ApiEndpoints.supportTickets}/$id',
     ];

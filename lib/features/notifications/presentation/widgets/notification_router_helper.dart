@@ -88,6 +88,42 @@ class NotificationRouterHelper {
           tapDest == '/story-submissions') {
         safePush(AppRoutes.vyapaarJagatStory);
         return;
+      } else if (tapDest == '/open-asks' ||
+          tapDest == '/open_asks' ||
+          tapDest == '/asks' ||
+          tapDest == '/ask' ||
+          tapDest == '/peers-feed') {
+        final askId = (meta['ask_id'] ??
+                meta['askId'] ??
+                meta['id'] ??
+                notification.referenceId ??
+                '')
+            .toString()
+            .trim();
+        safePush(
+          AppRoutes.openAsks,
+          arguments: {
+            'initialTabIndex': 0,
+            if (askId.isNotEmpty) 'highlightAskId': askId,
+          },
+        );
+        return;
+      } else if (tapDest == '/my-asks' || tapDest == '/my_asks') {
+        final askId = (meta['ask_id'] ??
+                meta['askId'] ??
+                meta['id'] ??
+                notification.referenceId ??
+                '')
+            .toString()
+            .trim();
+        safePush(
+          AppRoutes.openAsks,
+          arguments: {
+            'initialTabIndex': 1,
+            if (askId.isNotEmpty) 'highlightAskId': askId,
+          },
+        );
+        return;
       }
     }
 
@@ -117,19 +153,83 @@ class NotificationRouterHelper {
         break;
 
       // ═════════════════════════════════════════════════════════════════════════
-      // Group 2: Business Requirements & Open Asks
+      // Group 2: Business Requirements & Open Asks / Collaboration
       // ═════════════════════════════════════════════════════════════════════════
+      case 'ask':
+      case 'asks':
+      case 'new_ask':
+      case 'ask_created':
+      case 'open_ask':
+      case 'open_asks':
+      case 'ask_match':
+      case 'ask_matched':
+      case 'ask_feed':
+      case 'collaboration_ask':
+      case 'ask_congratulated':
+      case 'ask_fulfilled':
+      case 'ask_completed':
       case 'requirement':
       case 'requirement_created':
       case 'requirement_match':
       case 'requirement_lead':
-        // Tab 0: Open Asks / Opportunities
-        safePush(AppRoutes.openAsks, arguments: 0);
+        final askId = (meta['ask_id'] ??
+                meta['askId'] ??
+                meta['id'] ??
+                notification.referenceId ??
+                '')
+            .toString()
+            .trim();
+        safePush(
+          AppRoutes.openAsks,
+          arguments: {
+            'initialTabIndex': 0,
+            if (askId.isNotEmpty) 'highlightAskId': askId,
+          },
+        );
+        break;
+
+      case 'ask_response':
+      case 'ask_interest':
+      case 'ask_referral':
+      case 'ask_introduced':
+        final askId = (meta['ask_id'] ??
+                meta['askId'] ??
+                meta['id'] ??
+                notification.referenceId ??
+                '')
+            .toString()
+            .trim();
+        if (askId.isNotEmpty) {
+          safePush(
+            AppRoutes.askResponses,
+            arguments: {
+              'askId': askId,
+              'title': (meta['ask_title'] ?? meta['title'] ?? '').toString(),
+            },
+          );
+        } else {
+          safePush(
+            AppRoutes.openAsks,
+            arguments: {'initialTabIndex': 1},
+          );
+        }
         break;
 
       case 'requirement_interest':
-        // Tab 1: My Asks (view received interest & responses)
-        safePush(AppRoutes.openAsks, arguments: 1);
+        final askId = (meta['ask_id'] ??
+                meta['askId'] ??
+                meta['id'] ??
+                notification.referenceId ??
+                '')
+            .toString()
+            .trim();
+        safePush(
+          AppRoutes.openAsks,
+          arguments: {
+            'initialTabIndex': 1,
+            if (askId.isNotEmpty) 'highlightAskId': askId,
+          },
+        );
         break;
 
       // ═════════════════════════════════════════════════════════════════════════

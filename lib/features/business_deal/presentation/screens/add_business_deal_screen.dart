@@ -19,6 +19,8 @@ import '../../domain/usecases/upload_business_deal_creative_usecase.dart';
 import '../bloc/add_business_deal_bloc.dart';
 import '../bloc/add_business_deal_event.dart';
 import '../bloc/add_business_deal_state.dart';
+import '../../../referrals/domain/entities/referral_entity.dart';
+import '../../../peers/domain/entities/peer_entity.dart';
 import '../widgets/add_business_deal/business_deal_amount_input.dart';
 import '../widgets/add_business_deal/business_deal_creative_preview_section.dart';
 import '../widgets/add_business_deal/business_type_selector.dart';
@@ -58,6 +60,38 @@ class _AddBusinessDealViewState extends State<_AddBusinessDealView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        if (args is ReferralEntity) {
+          final peer = PeerEntity(
+            id: args.fromUserId ?? args.toUserId ?? '',
+            displayName: args.peerName,
+            companyName: args.peerCompany,
+            profilePhotoUrl: args.peerPhotoUrl,
+            city: args.city ?? args.peerLocation,
+          );
+          context.read<AddBusinessDealBloc>().add(AddBusinessDealPeerSelected(peer));
+          return;
+        } else if (args is PeerEntity) {
+          context.read<AddBusinessDealBloc>().add(AddBusinessDealPeerSelected(args));
+          return;
+        } else if (args is Map) {
+          final peerId = (args['to_user_id'] ?? args['peer_id'] ?? args['toUserId'] ?? args['peerId'] ?? '').toString();
+          final peerName = (args['peer_name'] ?? args['to_user_name'] ?? args['toUserName'] ?? args['displayName'] ?? '').toString();
+          final companyName = (args['company_name'] ?? args['to_user_company'] ?? args['toUserCompany'] ?? '').toString();
+          final avatarUrl = args['avatar_url']?.toString() ?? args['profilePhotoUrl']?.toString();
+          final city = args['city']?.toString();
+          if (peerId.isNotEmpty || peerName.isNotEmpty) {
+            final peer = PeerEntity(
+              id: peerId,
+              displayName: peerName.isNotEmpty ? peerName : 'Peer',
+              companyName: companyName,
+              profilePhotoUrl: avatarUrl,
+              city: city,
+            );
+            context.read<AddBusinessDealBloc>().add(AddBusinessDealPeerSelected(peer));
+            return;
+          }
+        }
         final currentPeer =
             context.read<AddBusinessDealBloc>().state.selectedPeer;
         if (currentPeer == null) {

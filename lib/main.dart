@@ -22,11 +22,12 @@ void main() async {
       AppCacheKeys.authToken,
     );
     if (token != null && token.isNotEmpty) {
-      debugPrint('====================================================');
-      debugPrint('🔑 [AUTH] BEARER TOKEN: Bearer $token');
-      debugPrint('====================================================');
+      debugPrint('\n====================================================');
+      debugPrint('🔑 [AUTH] BEARER TOKEN ON STARTUP:');
+      debugPrint('Bearer $token');
+      debugPrint('====================================================\n');
     } else {
-      debugPrint('🔑 [AUTH] BEARER TOKEN: (No active session / not logged in)');
+      debugPrint('\n🔑 [AUTH] BEARER TOKEN: (No active session / not logged in)\n');
     }
   } catch (_) {}
 

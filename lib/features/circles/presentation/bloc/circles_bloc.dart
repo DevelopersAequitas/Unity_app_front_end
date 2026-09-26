@@ -54,11 +54,14 @@ class CirclesBloc extends Bloc<CirclesEvent, CirclesState> {
         getCircleCategoriesUseCase(),
         getMyJoinRequestsUseCase(),
       ]);
+      final requests = (results[2] as List<CircleJoinRequestEntity>).toList()
+        ..sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+
       emit(state.copyWith(
         status: CirclesStatus.success,
         myCircles: results[0] as List<CircleEntity>,
         categories: results[1] as List<CircleCategoryEntity>,
-        myJoinRequests: results[2] as List<CircleJoinRequestEntity>,
+        myJoinRequests: requests,
         clearError: true,
       ));
     } catch (e) {
@@ -81,11 +84,14 @@ class CirclesBloc extends Bloc<CirclesEvent, CirclesState> {
         getCircleCategoriesUseCase(),
         getMyJoinRequestsUseCase(),
       ]);
+      final requests = (results[2] as List<CircleJoinRequestEntity>).toList()
+        ..sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+
       emit(state.copyWith(
         status: CirclesStatus.success,
         myCircles: results[0] as List<CircleEntity>,
         categories: results[1] as List<CircleCategoryEntity>,
-        myJoinRequests: results[2] as List<CircleJoinRequestEntity>,
+        myJoinRequests: requests,
         clearError: true,
       ));
     } catch (e) {

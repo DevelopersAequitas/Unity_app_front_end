@@ -11,6 +11,7 @@ class SubmitCircleJoinUseCase {
     required String reason,
     dynamic categoryId,
     dynamic level4CategoryId,
+    bool isOtherCategory = false,
     String? customCategoryName,
   }) {
     return repository.submitJoinRequest(
@@ -18,6 +19,7 @@ class SubmitCircleJoinUseCase {
       reason: reason,
       categoryId: categoryId,
       level4CategoryId: level4CategoryId,
+      isOtherCategory: isOtherCategory,
       customCategoryName: customCategoryName,
     );
   }

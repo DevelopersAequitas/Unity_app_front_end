@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_gradient_background.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../domain/entities/circle_category_entity.dart';
+import '../../domain/usecases/get_circle_package_usecase.dart';
 import '../../domain/usecases/submit_circle_join_usecase.dart';
 import '../bloc/circle_join_bloc.dart';
 import '../bloc/circle_join_event.dart';
@@ -38,9 +39,10 @@ class CircleJoinScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => CircleJoinBloc(
         submitCircleJoinUseCase: context.read<SubmitCircleJoinUseCase>(),
+        getCirclePackageUseCase: context.read<GetCirclePackageUseCase>(),
         initialCategory: preselectedCategory,
         initialIsOther: isOtherCategory,
-      ),
+      )..add(CircleJoinPackageRequested(circleId)),
       child: _CircleJoinView(
         circleId: circleId,
         defaultSectorName: defaultSectorName,
@@ -197,6 +199,46 @@ class _CircleJoinViewState extends State<_CircleJoinView> {
                                   fontWeight: FontWeight.w500,
                                   color: primaryText,
                                 ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (state.packageInfo != null) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppColor.primaryBlue.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColor.primaryBlue.withValues(alpha: 0.25)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.workspace_premium_rounded, size: 22, color: AppColor.primaryBlue),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    state.packageInfo!.addonName ?? state.packageInfo!.circleName,
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: primaryText,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${state.packageInfo!.currency} ${state.packageInfo!.amount.toInt()} / ${state.packageInfo!.durationMonths} months',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      color: AppColor.primaryBlue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

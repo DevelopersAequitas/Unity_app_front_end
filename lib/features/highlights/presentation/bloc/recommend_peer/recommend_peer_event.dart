@@ -16,3 +16,11 @@ class SubmitPeerRecommendationEvent extends RecommendPeerEvent {
   @override
   List<Object?> get props => [recommendation];
 }
+
+class FetchPeerRecommendationsHistoryEvent extends RecommendPeerEvent {
+  const FetchPeerRecommendationsHistoryEvent();
+}
+
+class RefreshPeerRecommendationsHistoryEvent extends RecommendPeerEvent {
+  const RefreshPeerRecommendationsHistoryEvent();
+}

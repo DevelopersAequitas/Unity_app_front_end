@@ -100,8 +100,10 @@ class ApiEndpoints {
 
   // Circles
   static const String myCircles = '/circles/my';
+  static const String joinedCircles = '/joined-circles';
   static const String circleCategories = '/circle-categories';
   static String circleDetail(String id) => '/circles/$id';
+  static String circlePackage(String circleId) => '/circles/$circleId/package';
   static String circleMembers(String id) => '/circles/$id/members';
   static String circleOpenCategories(String circleId) =>
       '/circles/$circleId/open-categories';
@@ -113,6 +115,13 @@ class ApiEndpoints {
       '/circle-join-requests/$id/status';
   static String cancelCircleJoinRequest(String id) =>
       '/circle-join-requests/$id';
+  static String circleCheckout(String circleId) =>
+      '/billing/circle-checkout/$circleId';
+  static String markCircleJoinRequestPaid(String id) =>
+      '/admin/circle-join-requests/$id/mark-paid';
+  static String circleJoinRequestMarkPaid(String id) =>
+      '/admin/circle-join-requests/$id/mark-paid';
+  static String leaveCircle(String circleId) => '/circles/$circleId/leave';
 
   // Membership & Billing (Zoho)
   static const String zohoPlans = '/zoho/plans';
@@ -273,14 +282,254 @@ class ApiEndpoints {
   static const String storySubmission = '/story-submission';
   static const String storyStatus = '/story-status';
 
-  // Requirements & Asks
-  static const String timelineRequirements = '/timeline/requirements';
-  static const String activitiesRequirements = '/activities/requirements';
-  static const String myRequirements = '/activities/requirements?filter=my';
-  static const String incompletedRequirements = '/requirements/incompleted';
-  static String singleRequirement(String id) => '/activities/requirements/$id';
-  static String closeRequirement(String id) => '/requirements/$id/close';
-  static String fulfillRequirement(String id) => '/requirements/$id/fulfill';
+
+  // ===========================================================================
+  // ASK / REQUIREMENT DISCOVERY SYSTEM (NEW COMMON ASK ENGINE)
+  // Architecture: Powers Collaboration, Referral, and Get Help flows.
+  // Docs Reference: ASK_SYSTEM_API_DOCUMENTATION.md (26 Endpoints)
+  // ===========================================================================
+  static String get _askApiBase {
+    final base = AppEnvironment.baseUrl.split('/api')[0];
+    return '$base/api';
+  }
+
+  // ---------------------------------------------------------------------------
+  // PART 1: DYNAMIC CONFIGURATION APIS
+  // ---------------------------------------------------------------------------
+  /// API 1: Get Ask Flows (Canva Slide 1)
+  /// Method: GET | URL: /api/asks/flows
+  /// Loads primary modules: 'collaboration', 'referral', 'help'
+  static String get askFlows => '$_askApiBase/asks/flows';
+
+  /// API 2: Get Ask Types (Canva Slides 3, 14, 23)
+  /// Method: GET | URL: /api/asks/flows/{flow}/types
+  /// Loads hierarchical subcategories for flow (e.g., 'joint_venture', 'manufacturing_partner')
+  static String askTypes(String flow) => '$_askApiBase/asks/flows/$flow/types';
+
+  /// API 3: Get Dynamic Form Configuration
+  /// Method: GET | URL: /api/asks/form-config?flow={flow}&type={type}
+  /// Supplies dynamic question groups, input types (single/multi select, text), and options
+  static String askFormConfig({required String flow, required String type}) =>
+      '$_askApiBase/asks/form-config?flow=$flow&type=$type';
+
+  // ---------------------------------------------------------------------------
+  // PART 2: ASK CREATION, EDITING & PUBLISHING
+  // ---------------------------------------------------------------------------
+  /// API 4: Create Ask Draft (Canva Slides 4, 15, 24)
+  /// Method: POST | URL: /api/asks
+  /// Body: { "flow": "collaboration", "type": "manufacturing_partner", "title": "..." }
+  /// Returns: { "ask_id": "...", "status": "draft", ... }
+  static String get createAskDraft => '$_askApiBase/asks';
+
+  /// API 5: Save / Update Ask Details (Brief: Goal, Bring, Need)
+  /// Method: PUT | URL: /api/asks/{askId}
+  /// Body: { "answers": [ { "field_key": "goal", "value_text": "..." }, ... ] }
+  static String updateAskDetails(String askId) => '$_askApiBase/asks/$askId';
+
+  /// API 6: Save Ask Filters (Canva Slides 5, 16)
+  /// Method: PUT | URL: /api/asks/{askId}/filters
+  /// Body: { "industry": [...], "geography": [...], "business_stage": [...], "timeline": [...], "expected_outcome": "..." }
+  static String updateAskFilters(String askId) =>
+      '$_askApiBase/asks/$askId/filters';
+
+  /// API 7: Set Ask Visibility (Canva Slides 6, 17, 25)
+  /// Method: PUT | URL: /api/asks/{askId}/visibility
+  /// Body: { "visibility_type": "district"|"circle"|"global", "district_id": "...", "circle_id": "..." }
+  static String updateAskVisibility(String askId) =>
+      '$_askApiBase/asks/$askId/visibility';
+
+  /// API 8: Set Timeline Preference
+  /// Method: PUT | URL: /api/asks/{askId}/timeline-preference
+  /// Body: { "publish_to_timeline": true|false }
+  static String updateAskTimelinePreference(String askId) =>
+      '$_askApiBase/asks/$askId/timeline-preference';
+
+  /// API 9: Preview Ask (Canva Slide 6 Preview Card)
+  /// Method: GET | URL: /api/asks/{askId}/preview
+  /// Returns full preview card details before publishing
+  static String previewAsk(String askId) => '$_askApiBase/asks/$askId/preview';
+
+  /// API 10: Publish Ask
+  /// Method: POST | URL: /api/asks/{askId}/publish
+  /// Publishes request, triggers matching, creates timeline post (if enabled), sends notifications
+  static String publishAsk(String askId) => '$_askApiBase/asks/$askId/publish';
+
+  // ---------------------------------------------------------------------------
+  // PART 3: ASK LISTING & MANAGEMENT
+  // ---------------------------------------------------------------------------
+  /// API 11: My Asks Dashboard (Canva Slide 30 Dashboard)
+  /// Method: GET | URL: /api/asks?flow={flow}&status={status}&page={page}&per_page={per_page}
+  /// Supports tabs: open, in_progress, fulfilled, closed, expired
+  static String myAsks({
+    String? flow,
+    String? status,
+    int page = 1,
+    int perPage = 15,
+  }) {
+    final params = <String>[];
+    if (flow != null && flow.isNotEmpty) params.add('flow=$flow');
+    if (status != null && status.isNotEmpty) params.add('status=$status');
+    params.add('page=$page');
+    params.add('per_page=$perPage');
+    return '$_askApiBase/asks?${params.join('&')}';
+  }
+
+  /// API 12: Ask Details
+  /// Method: GET | URL: /api/asks/{askId}
+  /// Returns complete ask details, match_count, response_count, etc.
+  static String askDetail(String askId) => '$_askApiBase/asks/$askId';
+
+  /// API 13: Update Ask Info
+  /// Method: PATCH | URL: /api/asks/{askId}
+  /// Body: { "title": "..." }
+  static String patchAsk(String askId) => '$_askApiBase/asks/$askId';
+
+  /// API 14: Peers Feed (For You, My Circle, My City, All Peers)
+  /// Method: GET | URL: /api/asks/feed?scope={for_you|circle|city|all}&page={page}&per_page={per_page}
+  static String peersFeed({
+    String? scope,
+    int page = 1,
+    int perPage = 15,
+  }) {
+    final params = <String>[];
+    if (scope != null && scope.isNotEmpty) params.add('scope=$scope');
+    params.add('page=$page');
+    params.add('per_page=$perPage');
+    return '$_askApiBase/asks/feed?${params.join('&')}';
+  }
+
+  /// API 15: Congratulate Fulfilled Ask / Story
+  /// Method: POST | URL: /api/asks/{askId}/congratulate
+  static String congratulateAsk(String askId) => '$_askApiBase/asks/$askId/congratulate';
+
+  /// API 16: Save / Bookmark Ask
+  /// Method: POST | URL: /api/asks/{askId}/save
+  static String saveAsk(String askId) => '$_askApiBase/asks/$askId/save';
+
+  /// API 14: Cancel / Close Ask (Canva Slides 10, 29)
+  /// Method: PATCH | URL: /api/asks/{askId}/status
+  /// Body: { "status": "closed"|"cancelled", "reason": "..." }
+  static String updateAskStatus(String askId) =>
+      '$_askApiBase/asks/$askId/status';
+
+  // ---------------------------------------------------------------------------
+  // PART 4: MATCHING SYSTEM
+  // ---------------------------------------------------------------------------
+  /// API 15: Generate Matches
+  /// Method: POST | URL: /api/asks/{askId}/matches/generate
+  /// Manually triggers / refreshes the matching algorithm
+  static String generateAskMatches(String askId) =>
+      '$_askApiBase/asks/$askId/matches/generate';
+
+  /// API 16: Get Matched Peers (Canva Slides 7, 18, 26)
+  /// Method: GET | URL: /api/asks/{askId}/matches
+  /// Returns list of matched peers with Canonical Peer data, match_score, match_reason
+  static String askMatches(String askId) => '$_askApiBase/asks/$askId/matches';
+
+  /// API 17: Update Match Action
+  /// Method: PATCH | URL: /api/asks/{askId}/matches/{matchId}
+  /// Body: { "match_status": "interested"|"ignored"|"connected" }
+  static String updateMatchAction({
+    required String askId,
+    required String matchId,
+  }) => '$_askApiBase/asks/$askId/matches/$matchId';
+
+  // ---------------------------------------------------------------------------
+  // PART 5: PEER RESPONSE SYSTEM
+  // ---------------------------------------------------------------------------
+  /// API 18: Get Ask For Response (Canva Slides 8, 20, 27)
+  /// Method: GET | URL: /api/asks/{askId}/respond
+  /// Returns ask summary, 4 available response types, and existing user response
+  static String askForResponse(String askId) =>
+      '$_askApiBase/asks/$askId/respond';
+
+  /// API 19: Submit Ask Response (4 Responder Branches)
+  /// Method: POST | URL: /api/asks/{askId}/responses
+  /// Branches:
+  ///   - Branch A (Direct Help): { "response_type": "can_help_directly", "message": "..." }
+  ///   - Branch B (Introduce Peer): { "response_type": "can_introduce_peer", "introduced_user_id": "...", "message": "..." }
+  ///   - Branch C (External Contact): { "response_type": "know_someone", "contact": { "full_name": "...", "phone": "...", ... } }
+  ///   - Branch D (Not Relevant): { "response_type": "not_relevant" }
+  static String submitAskResponse(String askId) =>
+      '$_askApiBase/asks/$askId/responses';
+
+  /// API 20: Get Ask Responses (Ask Owner View)
+  /// Method: GET | URL: /api/asks/{askId}/responses
+  /// Returns all responses received for the ask with responder and contact info
+  static String askResponses(String askId) =>
+      '$_askApiBase/asks/$askId/responses';
+
+  /// API 21: Response Details
+  /// Method: GET | URL: /api/asks/{askId}/responses/{responseId}
+  /// Returns detailed information for a single response
+  static String askResponseDetail({
+    required String askId,
+    required String responseId,
+  }) => '$_askApiBase/asks/$askId/responses/$responseId';
+
+  /// API 22: Update Response Status
+  /// Method: PATCH | URL: /api/asks/{askId}/responses/{responseId}
+  /// Body: { "status": "accepted"|"rejected"|"archived", "note": "..." }
+  static String updateAskResponseStatus({
+    required String askId,
+    required String responseId,
+  }) => '$_askApiBase/asks/$askId/responses/$responseId';
+
+  // ---------------------------------------------------------------------------
+  // PART 6: STATUS & CONTACT HISTORY
+  // ---------------------------------------------------------------------------
+  /// API 23: Response Status History (Audit Trail)
+  /// Method: GET | URL: /api/asks/{askId}/responses/{responseId}/history
+  /// Returns audit log of status changes for a response
+  static String askResponseHistory({
+    required String askId,
+    required String responseId,
+  }) => '$_askApiBase/asks/$askId/responses/$responseId/history';
+
+  /// API 24: Ask Status History (Audit Trail)
+  /// Method: GET | URL: /api/asks/{askId}/history
+  /// Returns timeline of status transitions for an ask
+  static String askHistory(String askId) => '$_askApiBase/asks/$askId/history';
+
+  /// API 25: Update Response Contact Info
+  /// Method: PATCH | URL: /api/asks/{askId}/responses/{responseId}/contact
+  /// Body: { "full_name": "...", "company_name": "...", "designation": "...", "phone": "...", "email": "..." }
+  static String updateAskResponseContact({
+    required String askId,
+    required String responseId,
+  }) => '$_askApiBase/asks/$askId/responses/$responseId/contact';
+
+  /// API 26: Link Existing Referral to Ask
+  /// Method: POST | URL: /api/asks/{askId}/referral-link
+  /// Body: { "referral_id": "..." }
+  static String linkReferralToAsk(String askId) =>
+      '$_askApiBase/asks/$askId/referral-link';
+
+  // ---------------------------------------------------------------------------
+  // 3 DEDICATED ASKS FLOWS: 9 CORE ENDPOINTS (Global Feed, My History, Leaderboard)
+  // ---------------------------------------------------------------------------
+  // Flow 1: Collaboration
+  static String get collaborationGlobalFeed => '$_askApiBase/asks/collaboration/global';
+  static String get collaborationMyAsks => '$_askApiBase/asks/collaboration/my';
+  static String get collaborationLeaderboard => '$_askApiBase/asks/collaboration/leaderboard';
+
+  // Flow 2: Referral
+  static String get referralGlobalFeed => '$_askApiBase/asks/referral/global';
+  static String get referralMyAsks => '$_askApiBase/asks/referral/my';
+  static String get referralLeaderboard => '$_askApiBase/asks/referral/leaderboard';
+
+  // Flow 3: Get Help
+  static String get helpGlobalFeed => '$_askApiBase/asks/help/global';
+  static String get helpMyAsks => '$_askApiBase/asks/help/my';
+  static String get helpLeaderboard => '$_askApiBase/asks/help/leaderboard';
+
+  // Ask Response & Referral Direct Status Update (Alternative helper)
+  static String updateAskResponseDirectStatus(String responseId) =>
+      '$_askApiBase/asks/responses/$responseId/status';
+  static String referralStatus(String referralId) =>
+      '$_askApiBase/asks/referral/$referralId/status';
+  static String askReferralStatus(String referralId) =>
+      '$_askApiBase/asks/referral/$referralId/status';
 
   // Highlights & Impact Sub-Features
   static const String referralMembers = '/referrals/members';
@@ -316,17 +565,10 @@ class ApiEndpoints {
   // Leadership Role & Recommend Peer & Register Visitor
   static const String leaderInterest = '/forms/leader-interest';
   static const String recommendPeer = '/forms/recommend-peer';
+  static const String recommendPeerMy = '/forms/recommend-peer/my';
   static const String registerVisitor = '/forms/register-visitor';
   static const String registerVisitorMy = '/forms/register-visitor/my';
 
-  // Collaborations
-  static const String industriesTree = '/industries/tree';
-  static const String collaborationTypes = '/collaboration-types';
-  static const String collaborations = '/collaborations';
-  static const String collaborationHistory = '/collaborations/history';
-  static String acceptCollaboration(String id) => '/collaborations/$id/accept';
-  static const String collaborationAsk = '/forms/collaboration-ask';
-  static const String collaborationAsks = '/collaboration-asks';
 
   // Chat System (Direct 1-to-1, Circle Group, Circle Leadership)
   static const String chats = '/chats';

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/app_update_service.dart';
 import '../../../../core/services/location_sync_service.dart';
@@ -43,6 +44,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final cached = await getCachedAuthUseCase();
       if (cached.user != null && cached.token != null) {
+        debugPrint('\n====================================================');
+        debugPrint('🔑 [AUTH] ACTIVE SESSION TOKEN:');
+        debugPrint('Bearer ${cached.token}');
+        debugPrint('====================================================\n');
         UserPresenceService.instance.markOnlineAndStart();
         LocationSyncService.instance.syncLocationIfPermitted();
         AppUpdateService.instance.syncMobileVersion();

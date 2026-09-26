@@ -1,10 +1,10 @@
-import 'package:unity_app/features/circles/domain/entities/circle_join_request_entity.dart';
-import 'package:unity_app/features/circles/domain/entities/circle_member_entity.dart';
-
 import '../../domain/entities/circle_category_entity.dart';
 import '../../domain/entities/circle_closed_category_entity.dart';
 import '../../domain/entities/circle_entity.dart';
+import '../../domain/entities/circle_join_request_entity.dart';
+import '../../domain/entities/circle_member_entity.dart';
 import '../../domain/entities/circle_open_category_entity.dart';
+import '../../domain/entities/circle_package_entity.dart';
 import '../../domain/repositories/circles_repository.dart';
 import '../datasources/circles_local_datasource.dart';
 import '../datasources/circles_remote_datasource.dart';
@@ -29,6 +29,23 @@ class CirclesRepositoryImpl implements CirclesRepository {
       if (cached.isNotEmpty) return cached;
       rethrow;
     }
+  }
+
+  @override
+  Future<List<CircleEntity>> getJoinedCircles() async {
+    try {
+      final models = await remoteDataSource.getJoinedCircles();
+      return models;
+    } catch (_) {
+      final cached = await localDataSource.getCachedMyCircles();
+      if (cached.isNotEmpty) return cached;
+      rethrow;
+    }
+  }
+
+  @override
+  Future<CirclePackageEntity> getCirclePackage(String circleId) async {
+    return await remoteDataSource.getCirclePackage(circleId);
   }
 
   @override
@@ -75,6 +92,7 @@ class CirclesRepositoryImpl implements CirclesRepository {
     required String reason,
     dynamic categoryId,
     dynamic level4CategoryId,
+    bool isOtherCategory = false,
     String? customCategoryName,
   }) async {
     return await remoteDataSource.submitJoinRequest(
@@ -82,6 +100,7 @@ class CirclesRepositoryImpl implements CirclesRepository {
       reason: reason,
       categoryId: categoryId,
       level4CategoryId: level4CategoryId,
+      isOtherCategory: isOtherCategory,
       customCategoryName: customCategoryName,
     );
   }
@@ -99,6 +118,23 @@ class CirclesRepositoryImpl implements CirclesRepository {
   @override
   Future<bool> cancelCircleJoinRequest(String requestId) async {
     return await remoteDataSource.cancelCircleJoinRequest(requestId);
+  }
+
+  @override
+  Future<String> getCircleCheckoutUrl(String circleId) async {
+    return await remoteDataSource.getCircleCheckoutUrl(circleId);
+  }
+
+  @override
+  Future<CircleJoinRequestEntity> markCircleJoinRequestPaid(
+    String requestId,
+  ) async {
+    return await remoteDataSource.markCircleJoinRequestPaid(requestId);
+  }
+
+  @override
+  Future<bool> leaveCircle(String circleId) async {
+    return await remoteDataSource.leaveCircle(circleId);
   }
 
   @override

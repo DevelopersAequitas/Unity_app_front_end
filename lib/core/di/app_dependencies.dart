@@ -7,6 +7,11 @@ import 'package:unity_app/features/circles/domain/usecases/get_circle_closed_cat
 import 'package:unity_app/features/circles/domain/usecases/get_circle_join_request_status_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_members_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_circle_open_categories_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_package_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_circle_checkout_url_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/get_joined_circles_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/leave_circle_usecase.dart';
+import 'package:unity_app/features/circles/domain/usecases/mark_circle_join_request_paid_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/get_my_join_requests_usecase.dart';
 import 'package:unity_app/features/circles/domain/usecases/submit_circle_join_usecase.dart';
 import '../../features/events/data/datasources/events_remote_datasource.dart';
@@ -80,6 +85,7 @@ import '../../features/highlights/domain/usecases/submit_leadership_interest_use
 import '../../features/highlights/data/datasources/recommend_peer_remote_datasource.dart';
 import '../../features/highlights/data/repositories_impl/recommend_peer_repository_impl.dart';
 import '../../features/highlights/domain/repositories/recommend_peer_repository.dart';
+import '../../features/highlights/domain/usecases/get_peer_recommendations_history_usecase.dart';
 import '../../features/highlights/domain/usecases/submit_peer_recommendation_usecase.dart';
 import '../../features/highlights/data/datasources/mentor_remote_datasource.dart';
 import '../../features/highlights/data/repositories_impl/mentor_repository_impl.dart';
@@ -107,24 +113,28 @@ import '../../features/highlights/domain/repositories/register_visitor_repositor
 import '../../features/highlights/domain/usecases/get_register_visitor_submissions_usecase.dart';
 import '../../features/highlights/domain/usecases/submit_register_visitor_usecase.dart';
 import '../../features/highlights/domain/usecases/get_events_usecase.dart';
-import '../../features/collaborations/data/datasources/collaborations_remote_datasource.dart';
-import '../../features/collaborations/data/repositories/collaborations_repository_impl.dart';
-import '../../features/collaborations/domain/repositories/collaborations_repository.dart';
-import '../../features/collaborations/domain/usecases/get_industries_tree_usecase.dart';
-import '../../features/collaborations/domain/usecases/get_collaboration_types_usecase.dart';
-import '../../features/collaborations/domain/usecases/submit_collaboration_usecase.dart';
-import '../../features/collaborations/domain/usecases/get_collaboration_history_usecase.dart';
-import '../../features/collaborations/domain/usecases/accept_collaboration_usecase.dart';
-import '../../features/requirements/data/datasources/requirements_remote_datasource.dart';
-import '../../features/requirements/data/repositories_impl/requirements_repository_impl.dart';
-import '../../features/requirements/domain/repositories/requirements_repository.dart';
-import '../../features/requirements/domain/usecases/requirements_usecases.dart';
 import '../../features/menu/data/datasources/menu_remote_datasource.dart';
 import '../../features/menu/data/repositories_impl/menu_repository_impl.dart';
 import '../../features/menu/domain/repositories/menu_repository.dart';
 import '../../features/menu/domain/usecases/get_menu_summary_usecase.dart';
 import '../../features/menu/domain/usecases/get_notification_preferences_usecase.dart';
 import '../../features/menu/domain/usecases/update_notification_preferences_usecase.dart';
+import '../../features/asks/data/datasources/asks_remote_datasource.dart';
+import '../../features/asks/data/repositories_impl/asks_repository_impl.dart';
+import '../../features/asks/domain/repositories/asks_repository.dart';
+import '../../features/asks/domain/usecases/get_ask_flows_usecase.dart';
+import '../../features/asks/domain/usecases/get_ask_types_usecase.dart';
+import '../../features/asks/domain/usecases/get_ask_form_config_usecase.dart';
+import '../../features/asks/domain/usecases/create_and_publish_ask_usecase.dart';
+import '../../features/asks/domain/usecases/get_ask_matches_usecase.dart';
+import '../../features/asks/domain/usecases/submit_ask_response_usecase.dart';
+import '../../features/asks/domain/usecases/get_my_asks_usecase.dart';
+import '../../features/asks/domain/usecases/get_ask_history_usecase.dart';
+import '../../features/asks/domain/usecases/get_peers_feed_usecase.dart';
+import '../../features/asks/domain/usecases/congratulate_ask_usecase.dart';
+import '../../features/asks/domain/usecases/toggle_save_ask_usecase.dart';
+import '../../features/asks/domain/usecases/get_ask_responses_usecase.dart';
+import '../../features/asks/domain/usecases/update_ask_status_usecase.dart';
 
 
 import '../../features/peers/domain/usecases/block_peer_usecase.dart';
@@ -374,6 +384,7 @@ class AppDependencies {
   final SubmitLeadershipInterestUseCase submitLeadershipInterestUseCase;
   final RecommendPeerRepository recommendPeerRepository;
   final SubmitPeerRecommendationUseCase submitPeerRecommendationUseCase;
+  final GetPeerRecommendationsHistoryUseCase getPeerRecommendationsHistoryUseCase;
   final MentorRepository mentorRepository;
   final GetMentorSubmissionsUseCase getMentorSubmissionsUseCase;
   final SubmitMentorApplicationUseCase submitMentorApplicationUseCase;
@@ -395,21 +406,6 @@ class AppDependencies {
   final SubmitRegisterVisitorUseCase submitRegisterVisitorUseCase;
   final GetEventsUseCase getEventsUseCase;
 
-  // Collaborations
-  final CollaborationsRepository collaborationsRepository;
-  final GetIndustriesTreeUseCase getIndustriesTreeUseCase;
-  final GetCollaborationTypesUseCase getCollaborationTypesUseCase;
-  final SubmitCollaborationUseCase submitCollaborationUseCase;
-  final GetCollaborationHistoryUseCase getCollaborationHistoryUseCase;
-  final AcceptCollaborationUseCase acceptCollaborationUseCase;
-
-  // Requirements
-  final RequirementsRepository requirementsRepository;
-  final GetOpenRequirementsUseCase getOpenRequirementsUseCase;
-  final GetMyRequirementsUseCase getMyRequirementsUseCase;
-  final CreateRequirementUseCase createRequirementUseCase;
-  final CompleteRequirementUseCase completeRequirementUseCase;
-  final FulfillRequirementUseCase fulfillRequirementUseCase;
 
   // Events Feature
   final EventsRepository eventsRepository;
@@ -445,6 +441,11 @@ class AppDependencies {
   final GetMyJoinRequestsUseCase getMyJoinRequestsUseCase;
   final GetCircleJoinRequestStatusUseCase getCircleJoinRequestStatusUseCase;
   final CancelCircleJoinRequestUseCase cancelCircleJoinRequestUseCase;
+  final GetCirclePackageUseCase getCirclePackageUseCase;
+  final GetCircleCheckoutUrlUseCase getCircleCheckoutUrlUseCase;
+  final GetJoinedCirclesUseCase getJoinedCirclesUseCase;
+  final MarkCircleJoinRequestPaidUseCase markCircleJoinRequestPaidUseCase;
+  final LeaveCircleUseCase leaveCircleUseCase;
 
   // Notifications UseCases
   final GetNotificationsUseCase getNotificationsUseCase;
@@ -482,6 +483,22 @@ class AppDependencies {
   final UpdatePostUseCase updatePostUseCase;
   final ReportPostUseCase reportPostUseCase;
   final GetPostReportReasonsUseCase getPostReportReasonsUseCase;
+
+  // Asks UseCases
+  final AsksRepository asksRepository;
+  final GetAskFlowsUseCase getAskFlowsUseCase;
+  final GetAskTypesUseCase getAskTypesUseCase;
+  final GetAskFormConfigUseCase getAskFormConfigUseCase;
+  final CreateAndPublishAskUseCase createAndPublishAskUseCase;
+  final GetAskMatchesUseCase getAskMatchesUseCase;
+  final SubmitAskResponseUseCase submitAskResponseUseCase;
+  final GetMyAsksListUseCase getMyAsksListUseCase;
+  final GetAskHistoryUseCase getAskHistoryUseCase;
+  final GetPeersFeedUseCase getPeersFeedUseCase;
+  final CongratulateAskUseCase congratulateAskUseCase;
+  final ToggleSaveAskUseCase toggleSaveAskUseCase;
+  final GetAskResponsesUseCase getAskResponsesUseCase;
+  final UpdateAskStatusUseCase updateAskStatusUseCase;
 
   // Peers UseCases
   final GetAllPeersUseCase getAllPeersUseCase;
@@ -589,6 +606,7 @@ class AppDependencies {
   final SendLeadershipMessageUseCase sendLeadershipMessageUseCase;
   final MarkLeadershipMessagesReadUseCase markLeadershipMessagesReadUseCase;
   final DeleteLeadershipMessageUseCase deleteLeadershipMessageUseCase;
+  final AsksRemoteDataSource asksRemoteDataSource;
 
   AppDependencies({
     required this.menuRepository,
@@ -666,6 +684,11 @@ class AppDependencies {
     required this.getMyJoinRequestsUseCase,
     required this.getCircleJoinRequestStatusUseCase,
     required this.cancelCircleJoinRequestUseCase,
+    required this.getCirclePackageUseCase,
+    required this.getCircleCheckoutUrlUseCase,
+    required this.getJoinedCirclesUseCase,
+    required this.markCircleJoinRequestPaidUseCase,
+    required this.leaveCircleUseCase,
     required this.getNotificationsUseCase,
 
     required this.markNotificationReadUseCase,
@@ -698,6 +721,20 @@ class AppDependencies {
     required this.updatePostUseCase,
     required this.reportPostUseCase,
     required this.getPostReportReasonsUseCase,
+    required this.asksRepository,
+    required this.getAskFlowsUseCase,
+    required this.getAskTypesUseCase,
+    required this.getAskFormConfigUseCase,
+    required this.createAndPublishAskUseCase,
+    required this.getAskMatchesUseCase,
+    required this.submitAskResponseUseCase,
+    required this.getMyAsksListUseCase,
+    required this.getAskHistoryUseCase,
+    required this.getPeersFeedUseCase,
+    required this.congratulateAskUseCase,
+    required this.toggleSaveAskUseCase,
+    required this.getAskResponsesUseCase,
+    required this.updateAskStatusUseCase,
     required this.getAllPeersUseCase,
     required this.getMyConnectionsUseCase,
     required this.getConnectionRequestsUseCase,
@@ -764,6 +801,7 @@ class AppDependencies {
     required this.submitLeadershipInterestUseCase,
     required this.recommendPeerRepository,
     required this.submitPeerRecommendationUseCase,
+    required this.getPeerRecommendationsHistoryUseCase,
     required this.mentorRepository,
     required this.getMentorSubmissionsUseCase,
     required this.submitMentorApplicationUseCase,
@@ -784,18 +822,6 @@ class AppDependencies {
     required this.getRegisterVisitorSubmissionsUseCase,
     required this.submitRegisterVisitorUseCase,
     required this.getEventsUseCase,
-    required this.collaborationsRepository,
-    required this.getIndustriesTreeUseCase,
-    required this.getCollaborationTypesUseCase,
-    required this.submitCollaborationUseCase,
-    required this.getCollaborationHistoryUseCase,
-    required this.acceptCollaborationUseCase,
-    required this.requirementsRepository,
-    required this.getOpenRequirementsUseCase,
-    required this.getMyRequirementsUseCase,
-    required this.createRequirementUseCase,
-    required this.completeRequirementUseCase,
-    required this.fulfillRequirementUseCase,
     required this.eventsRepository,
     required this.getEventsAllUseCase,
     required this.getEventDetailUseCase,
@@ -822,6 +848,7 @@ class AppDependencies {
     required this.sendLeadershipMessageUseCase,
     required this.markLeadershipMessagesReadUseCase,
     required this.deleteLeadershipMessageUseCase,
+    required this.asksRemoteDataSource,
   });
 
   static Future<AppDependencies> initialize() async {
@@ -939,6 +966,12 @@ class AppDependencies {
     final cancelCircleJoinRequestUseCase = CancelCircleJoinRequestUseCase(
       circlesRepository,
     );
+    final getCirclePackageUseCase = GetCirclePackageUseCase(circlesRepository);
+    final getCircleCheckoutUrlUseCase = GetCircleCheckoutUrlUseCase(circlesRepository);
+    final getJoinedCirclesUseCase = GetJoinedCirclesUseCase(circlesRepository);
+    final markCircleJoinRequestPaidUseCase =
+        MarkCircleJoinRequestPaidUseCase(circlesRepository);
+    final leaveCircleUseCase = LeaveCircleUseCase(circlesRepository);
 
     // Highlights Data Sources & Repositories
     final highlightsLocalDataSource = HighlightsLocalDataSourceImpl();
@@ -1010,6 +1043,7 @@ class AppDependencies {
     final recommendPeerRemoteDataSource = RecommendPeerRemoteDataSourceImpl(dioClient: dioClient);
     final recommendPeerRepository = RecommendPeerRepositoryImpl(remoteDataSource: recommendPeerRemoteDataSource);
     final submitPeerRecommendationUseCase = SubmitPeerRecommendationUseCase(recommendPeerRepository);
+    final getPeerRecommendationsHistoryUseCase = GetPeerRecommendationsHistoryUseCase(recommendPeerRepository);
 
     // Mentor & Speaker
     final mentorRemoteDataSource = MentorRemoteDataSourceImpl(dioClient: dioClient);
@@ -1055,23 +1089,23 @@ class AppDependencies {
     final checkPaymentStatusUseCase = CheckPaymentStatusUseCase(eventsRepository);
     final getMyEventsWithQrUseCase = GetMyEventsWithQrUseCase(eventsRepository);
 
-    // Collaborations Data Sources & Repositories
-    final collaborationsRemoteDataSource = CollaborationsRemoteDataSourceImpl(dioClient: dioClient);
-    final collaborationsRepository = CollaborationsRepositoryImpl(remoteDataSource: collaborationsRemoteDataSource);
-    final getIndustriesTreeUseCase = GetIndustriesTreeUseCase(collaborationsRepository);
-    final getCollaborationTypesUseCase = GetCollaborationTypesUseCase(collaborationsRepository);
-    final submitCollaborationUseCase = SubmitCollaborationUseCase(collaborationsRepository);
-    final getCollaborationHistoryUseCase = GetCollaborationHistoryUseCase(collaborationsRepository);
-    final acceptCollaborationUseCase = AcceptCollaborationUseCase(collaborationsRepository);
 
-    // Requirements Data Sources & Repositories
-    final requirementsRemoteDataSource = RequirementsRemoteDataSourceImpl(dioClient: dioClient);
-    final requirementsRepository = RequirementsRepositoryImpl(remoteDataSource: requirementsRemoteDataSource);
-    final getOpenRequirementsUseCase = GetOpenRequirementsUseCase(requirementsRepository);
-    final getMyRequirementsUseCase = GetMyRequirementsUseCase(requirementsRepository);
-    final createRequirementUseCase = CreateRequirementUseCase(requirementsRepository);
-    final completeRequirementUseCase = CompleteRequirementUseCase(requirementsRepository);
-    final fulfillRequirementUseCase = FulfillRequirementUseCase(requirementsRepository);
+    // Asks Data Sources & Repositories
+    final asksRemoteDataSource = AsksRemoteDataSourceImpl(dioClient: dioClient);
+    final asksRepository = AsksRepositoryImpl(remoteDataSource: asksRemoteDataSource);
+    final getAskFlowsUseCase = GetAskFlowsUseCase(asksRepository);
+    final getAskTypesUseCase = GetAskTypesUseCase(asksRepository);
+    final getAskFormConfigUseCase = GetAskFormConfigUseCase(asksRepository);
+    final createAndPublishAskUseCase = CreateAndPublishAskUseCase(repository: asksRepository);
+    final getAskMatchesUseCase = GetAskMatchesUseCase(repository: asksRepository);
+    final submitAskResponseUseCase = SubmitAskResponseUseCase(repository: asksRepository);
+    final getMyAsksListUseCase = GetMyAsksListUseCase(asksRepository);
+    final getAskHistoryUseCase = GetAskHistoryUseCase(asksRepository);
+    final getPeersFeedUseCase = GetPeersFeedUseCase(asksRepository);
+    final congratulateAskUseCase = CongratulateAskUseCase(asksRepository);
+    final toggleSaveAskUseCase = ToggleSaveAskUseCase(asksRepository);
+    final getAskResponsesUseCase = GetAskResponsesUseCase(repository: asksRepository);
+    final updateAskStatusUseCase = UpdateAskStatusUseCase(asksRepository);
 
     // Menu Data Sources & Repositories
     final menuRemoteDataSource = MenuRemoteDataSourceImpl(dioClient);
@@ -1538,6 +1572,20 @@ class AppDependencies {
       updatePostUseCase: updatePostUseCase,
       reportPostUseCase: reportPostUseCase,
       getPostReportReasonsUseCase: getPostReportReasonsUseCase,
+      asksRepository: asksRepository,
+      getAskFlowsUseCase: getAskFlowsUseCase,
+      getAskTypesUseCase: getAskTypesUseCase,
+      getAskFormConfigUseCase: getAskFormConfigUseCase,
+      createAndPublishAskUseCase: createAndPublishAskUseCase,
+      getAskMatchesUseCase: getAskMatchesUseCase,
+      submitAskResponseUseCase: submitAskResponseUseCase,
+      getMyAsksListUseCase: getMyAsksListUseCase,
+      getAskHistoryUseCase: getAskHistoryUseCase,
+      getPeersFeedUseCase: getPeersFeedUseCase,
+      congratulateAskUseCase: congratulateAskUseCase,
+      toggleSaveAskUseCase: toggleSaveAskUseCase,
+      getAskResponsesUseCase: getAskResponsesUseCase,
+      updateAskStatusUseCase: updateAskStatusUseCase,
       getAllPeersUseCase: getAllPeersUseCase,
       getMyConnectionsUseCase: getMyConnectionsUseCase,
       getConnectionRequestsUseCase: getConnectionRequestsUseCase,
@@ -1604,6 +1652,7 @@ class AppDependencies {
       submitLeadershipInterestUseCase: submitLeadershipInterestUseCase,
       recommendPeerRepository: recommendPeerRepository,
       submitPeerRecommendationUseCase: submitPeerRecommendationUseCase,
+      getPeerRecommendationsHistoryUseCase: getPeerRecommendationsHistoryUseCase,
       mentorRepository: mentorRepository,
       getMentorSubmissionsUseCase: getMentorSubmissionsUseCase,
       submitMentorApplicationUseCase: submitMentorApplicationUseCase,
@@ -1624,18 +1673,6 @@ class AppDependencies {
       getRegisterVisitorSubmissionsUseCase: getRegisterVisitorSubmissionsUseCase,
       submitRegisterVisitorUseCase: submitRegisterVisitorUseCase,
       getEventsUseCase: getEventsUseCase,
-      collaborationsRepository: collaborationsRepository,
-      getIndustriesTreeUseCase: getIndustriesTreeUseCase,
-      getCollaborationTypesUseCase: getCollaborationTypesUseCase,
-      submitCollaborationUseCase: submitCollaborationUseCase,
-      getCollaborationHistoryUseCase: getCollaborationHistoryUseCase,
-      acceptCollaborationUseCase: acceptCollaborationUseCase,
-      requirementsRepository: requirementsRepository,
-      getOpenRequirementsUseCase: getOpenRequirementsUseCase,
-      getMyRequirementsUseCase: getMyRequirementsUseCase,
-      createRequirementUseCase: createRequirementUseCase,
-      completeRequirementUseCase: completeRequirementUseCase,
-      fulfillRequirementUseCase: fulfillRequirementUseCase,
       eventsRepository: eventsRepository,
       getEventsAllUseCase: getEventsAllUseCase,
       getEventDetailUseCase: getEventDetailUseCase,
@@ -1650,6 +1687,11 @@ class AppDependencies {
       getSubscriptionHistoryUseCase: getSubscriptionHistoryUseCase,
       getCircleJoinRequestStatusUseCase: getCircleJoinRequestStatusUseCase,
       cancelCircleJoinRequestUseCase: cancelCircleJoinRequestUseCase,
+      getCirclePackageUseCase: getCirclePackageUseCase,
+      getCircleCheckoutUrlUseCase: getCircleCheckoutUrlUseCase,
+      getJoinedCirclesUseCase: getJoinedCirclesUseCase,
+      markCircleJoinRequestPaidUseCase: markCircleJoinRequestPaidUseCase,
+      leaveCircleUseCase: leaveCircleUseCase,
       chatRepository: chatRepository,
       getDirectChatsUseCase: getDirectChatsUseCase,
       getOrCreateDirectChatUseCase: getOrCreateDirectChatUseCase,
@@ -1669,6 +1711,7 @@ class AppDependencies {
       sendLeadershipMessageUseCase: sendLeadershipMessageUseCase,
       markLeadershipMessagesReadUseCase: markLeadershipMessagesReadUseCase,
       deleteLeadershipMessageUseCase: deleteLeadershipMessageUseCase,
+      asksRemoteDataSource: asksRemoteDataSource,
       shortsRepository: shortsRepository,
       getIntroVideosUseCase: getIntroVideosUseCase,
     );

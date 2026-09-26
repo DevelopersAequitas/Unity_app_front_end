@@ -101,10 +101,7 @@ class _BrandPartnerDetailsScreenState extends State<BrandPartnerDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeroCard(context, isDark),
-              if (partner.coverImageUrl != null && partner.coverImageUrl!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _buildCoverCard(context, isDark),
-              ],
+              _buildCoverCard(context, isDark),
               _buildOfferCard(context, isDark),
               _buildAboutCard(context, isDark),
               _buildContactAndLocationCard(context, isDark),
@@ -121,9 +118,14 @@ class _BrandPartnerDetailsScreenState extends State<BrandPartnerDetailsScreen> {
 
   Widget _buildHeroCard(BuildContext context, bool isDark) {
     final initials = _getInitials(partner.name);
-    final website = partner.websiteUrl ?? '';
+    final website = partner.websiteUrl?.trim() ?? '';
     final discount = partner.discountValue;
     final discountType = partner.discountType;
+
+    final hasBadges = partner.isFeatured ||
+        partner.isSponsored ||
+        partner.isVerified ||
+        (discount != null && discount > 0);
 
     return Container(
       decoration: BoxDecoration(
@@ -160,9 +162,9 @@ class _BrandPartnerDetailsScreenState extends State<BrandPartnerDetailsScreen> {
                   ],
                 ),
                 child: ClipOval(
-                  child: partner.logoUrl != null && partner.logoUrl!.isNotEmpty
+                  child: partner.logoUrl != null && partner.logoUrl!.trim().isNotEmpty
                       ? CachedNetworkImage(
-                          imageUrl: partner.logoUrl!,
+                          imageUrl: partner.logoUrl!.trim(),
                           fit: BoxFit.cover,
                           errorWidget: (_, _, _) => _initialsWidget(initials),
                         )
@@ -203,10 +205,10 @@ class _BrandPartnerDetailsScreenState extends State<BrandPartnerDetailsScreen> {
                         ],
                       ],
                     ),
-                    if ((partner.shortDescription ?? '').isNotEmpty) ...[
+                    if ((partner.shortDescription ?? '').trim().isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
-                        partner.shortDescription!,
+                        partner.shortDescription!.trim(),
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 12,
@@ -251,26 +253,28 @@ class _BrandPartnerDetailsScreenState extends State<BrandPartnerDetailsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Embedded Badges Row
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              if (partner.isFeatured)
-                _heroBadge('Featured', Icons.star_rounded, Colors.amber),
-              if (partner.isSponsored)
-                _heroBadge('Sponsored', Icons.campaign_rounded, Colors.lightBlueAccent),
-              if (partner.isVerified)
-                _heroBadge('Verified Partner', Icons.verified_rounded, const Color(0xFF6EE7B7)),
-              if (discount != null && discount > 0)
-                _heroBadge(
-                  '${discount.toStringAsFixed(0)}${discountType == 'percentage' ? '%' : '₹'} OFF',
-                  Icons.local_offer_rounded,
-                  const Color(0xFF34D399),
-                ),
-            ],
-          ),
+          if (hasBadges) ...[
+            const SizedBox(height: 12),
+            // Embedded Badges Row
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (partner.isFeatured)
+                  _heroBadge('Featured', Icons.star_rounded, Colors.amber),
+                if (partner.isSponsored)
+                  _heroBadge('Sponsored', Icons.campaign_rounded, Colors.lightBlueAccent),
+                if (partner.isVerified)
+                  _heroBadge('Verified Partner', Icons.verified_rounded, const Color(0xFF6EE7B7)),
+                if (discount != null && discount > 0)
+                  _heroBadge(
+                    '${discount.toStringAsFixed(0)}${discountType == 'percentage' ? '%' : '₹'} OFF',
+                    Icons.local_offer_rounded,
+                    const Color(0xFF34D399),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -321,27 +325,38 @@ class _BrandPartnerDetailsScreenState extends State<BrandPartnerDetailsScreen> {
   // ── Cover Showcase ─────────────────────────────────────────────────────────────
 
   Widget _buildCoverCard(BuildContext context, bool isDark) {
-    final coverUrl = partner.coverImageUrl;
-    if (coverUrl == null || coverUrl.isEmpty) return const SizedBox.shrink();
+    final coverUrl = partner.coverImageUrl?.trim();
+    if (coverUrl == null || coverUrl.isEmpty || !coverUrl.startsWith('http')) {
+      return const SizedBox.shrink();
+    }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: CachedNetworkImage(
-        imageUrl: coverUrl,
-        height: 150,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        errorWidget: (_, _, _) => const SizedBox.shrink(),
+    return CachedNetworkImage(
+      imageUrl: coverUrl,
+      imageBuilder: (context, imageProvider) => Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Container(
+          height: 150,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            image: DecorationImage(
+              image: imageProvider,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
       ),
+      placeholder: (_, _) => const SizedBox.shrink(),
+      errorWidget: (_, _, _) => const SizedBox.shrink(),
     );
   }
 
   // ── Exclusive Offer (Compressed) ───────────────────────────────────────────────
 
   Widget _buildOfferCard(BuildContext context, bool isDark) {
-    final title = partner.offerTitle;
-    final desc = partner.offerDescription;
-    final coupon = partner.couponCode;
+    final title = partner.offerTitle?.trim();
+    final desc = partner.offerDescription?.trim();
+    final coupon = partner.couponCode?.trim();
     final discount = partner.discountValue;
     final discountType = partner.discountType;
     final validFrom = _formatDate(partner.validFrom);

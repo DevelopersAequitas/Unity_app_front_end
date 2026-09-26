@@ -29,6 +29,13 @@ class NotificationTypeHelper {
         fallbackIcon: Icons.people_outline_rounded,
       );
     }
+    if (t.contains('ask') || c.contains('ask') || t.contains('requirement')) {
+      return const NotificationBadgeConfig(
+        icon: Icons.handshake_rounded,
+        backgroundColor: Color(0xFF0284C7),
+        fallbackIcon: Icons.handshake_outlined,
+      );
+    }
     if (t.contains('connection_request') || t.contains('request') || c.contains('connection_request')) {
       return const NotificationBadgeConfig(
         icon: Icons.person_add_alt_1_rounded,

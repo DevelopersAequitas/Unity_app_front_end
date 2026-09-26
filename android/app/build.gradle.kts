@@ -53,7 +53,7 @@ android {
             res.srcDirs("src/main/res")
         }
         getByName("peersGlobal") {
-            res.srcDirs("src/peersGlobal/res", "src/peers_global/res")
+            res.srcDirs("src/peersGlobal/res")
         }
         getByName("greenpreneur") {
             res.srcDirs("src/greenpreneur/res")

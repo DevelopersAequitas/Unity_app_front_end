@@ -77,10 +77,25 @@ class CircleJoinRequestEntity extends Equatable {
     this.canPay = false,
   });
 
+  bool get isPendingCdApproval => status.toLowerCase() == 'pending_cd_approval';
+  bool get isPendingIdApproval => status.toLowerCase() == 'pending_id_approval';
+  bool get isPendingCircleFee =>
+      status.toLowerCase() == 'pending_circle_fee' || canPay;
+  bool get isMember =>
+      status.toLowerCase() == 'paid' ||
+      status.toLowerCase() == 'circle_member' ||
+      isApproved;
+
+  bool get isRejectedByCd => status.toLowerCase() == 'rejected_by_cd';
+  bool get isRejectedById => status.toLowerCase() == 'rejected_by_id';
+  bool get isCancelled => status.toLowerCase() == 'cancelled';
+
   bool get isApproved =>
       status.toLowerCase() == 'approved' ||
       displayStatus.toLowerCase() == 'approved' ||
-      status.toLowerCase() == 'active';
+      status.toLowerCase() == 'active' ||
+      status.toLowerCase() == 'paid' ||
+      status.toLowerCase() == 'circle_member';
 
   bool get isRejected =>
       status.toLowerCase().contains('rejected') ||
@@ -89,37 +104,53 @@ class CircleJoinRequestEntity extends Equatable {
   String get effectiveRejectionReason =>
       cdRejectionReason ?? idRejectionReason ?? rejectionReason ?? '';
 
-  bool get isCdApproved =>
-      cdApprovedAt != null ||
-      (cdApprovedBy != null && cdApprovedBy!.isNotEmpty) ||
-      cdApprovalStatus?.toLowerCase() == 'approved' ||
-      status.toLowerCase().contains('approved_by_cd') ||
-      status.toLowerCase().contains('pending_id') ||
-      status.toLowerCase().contains('pending_ded') ||
-      status.toLowerCase().contains('fee') ||
-      isApproved;
+  bool get isCdApproved {
+    if (isPendingCdApproval || isRejectedByCd || isCancelled) return false;
+    if (cdApprovalStatus?.toLowerCase() == 'pending' ||
+        cdApprovalStatus?.toLowerCase() == 'rejected') {
+      return false;
+    }
+    return cdApprovalStatus?.toLowerCase() == 'approved' ||
+        status.toLowerCase() == 'pending_id_approval' ||
+        status.toLowerCase() == 'pending_circle_fee' ||
+        status.toLowerCase().contains('approved_by_cd') ||
+        (cdApprovedAt != null && cdApprovalStatus?.toLowerCase() != 'pending') ||
+        isApproved;
+  }
 
-  bool get isIdApproved =>
-      idApprovedAt != null ||
-      (idApprovedBy != null && idApprovedBy!.isNotEmpty) ||
-      idApprovalStatus?.toLowerCase() == 'approved' ||
-      status.toLowerCase().contains('approved_by_id') ||
-      status.toLowerCase().contains('pending_ded') ||
-      status.toLowerCase().contains('fee') ||
-      isApproved;
+  bool get isIdApproved {
+    if (isPendingCdApproval ||
+        isPendingIdApproval ||
+        isRejectedByCd ||
+        isRejectedById ||
+        isCancelled) {
+      return false;
+    }
+    if (idApprovalStatus?.toLowerCase() == 'pending' ||
+        idApprovalStatus?.toLowerCase() == 'rejected') {
+      return false;
+    }
+    return idApprovalStatus?.toLowerCase() == 'approved' ||
+        status.toLowerCase() == 'pending_circle_fee' ||
+        status.toLowerCase().contains('approved_by_id') ||
+        (idApprovedAt != null && idApprovalStatus?.toLowerCase() != 'pending') ||
+        isApproved;
+  }
 
   bool get isPaymentRequired =>
-      (paymentUrl != null && paymentUrl!.isNotEmpty) ||
-      feeMarkedAt != null ||
-      status.toLowerCase().contains('fee') ||
-      status.toLowerCase().contains('payment') ||
-      paymentStatus.toLowerCase() == 'unpaid' ||
-      paymentStatus.toLowerCase() == 'pending';
+      !isPaid &&
+      isCdApproved &&
+      isIdApproved &&
+      (canPay ||
+          status.toLowerCase() == 'pending_circle_fee' ||
+          (paymentUrl != null && paymentUrl!.isNotEmpty));
 
   bool get isPaid =>
       paymentStatus.toLowerCase() == 'paid' ||
+      status.toLowerCase() == 'paid' ||
+      status.toLowerCase() == 'circle_member' ||
       feePaidAt != null ||
-      isApproved;
+      status.toLowerCase() == 'approved';
 
   @override
   List<Object?> get props => [

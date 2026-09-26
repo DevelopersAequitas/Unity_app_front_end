@@ -13,4 +13,9 @@ class RecommendPeerRepositoryImpl implements RecommendPeerRepository {
     final model = PeerRecommendationModel.fromEntity(recommendation);
     await remoteDataSource.submitPeerRecommendation(model);
   }
+
+  @override
+  Future<List<PeerRecommendationEntity>> getPeerRecommendationsHistory() async {
+    return await remoteDataSource.getPeerRecommendationsHistory();
+  }
 }

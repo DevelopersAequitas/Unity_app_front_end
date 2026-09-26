@@ -25,6 +25,7 @@ class TimelineItemModel {
   final String createdAt;
   final TimelineCollaborationModel? acceptedBy;
   final TimelineImpactModel? impact;
+  final Map<String, dynamic>? askData;
 
   const TimelineItemModel({
     required this.id,
@@ -44,6 +45,7 @@ class TimelineItemModel {
     required this.createdAt,
     this.acceptedBy,
     this.impact,
+    this.askData,
   });
 
   factory TimelineItemModel.fromJson(Map<String, dynamic> json) {
@@ -155,6 +157,7 @@ class TimelineItemModel {
       createdAt: (json['created_at'] ?? json['createdAt'] ?? json['date'] ?? json['posted_at'] ?? '').toString(),
       acceptedBy: acceptedMap != null ? TimelineCollaborationModel.fromJson(acceptedMap) : null,
       impact: impactMap != null ? TimelineImpactModel.fromJson(impactMap) : null,
+      askData: json['ask'] as Map<String, dynamic>?,
     );
   }
 
@@ -177,6 +180,7 @@ class TimelineItemModel {
       createdAt: createdAt,
       acceptedBy: acceptedBy?.toEntity(),
       impact: impact?.toEntity(),
+      askData: askData,
     );
   }
 }

@@ -73,12 +73,41 @@ class ReferralCard extends StatelessWidget {
       context,
       referral: referral,
       availableStatuses: bloc.state.availableStatuses,
-      onStatusSelected: (statusId, statusName) {
-        bloc.add(ReferralStatusUpdated(
-          referralId: referral.id,
-          statusId: statusId,
-          statusName: statusName,
-        ));
+      onStatusSelected: (statusId, statusName) async {
+        final cleanName = statusName.trim().toLowerCase();
+        if (statusId == 4 || cleanName.contains('got business') || cleanName.contains('got the business')) {
+          final result = await Navigator.pushNamed(
+            context,
+            AppRoutes.addBusinessDeal,
+            arguments: referral,
+          );
+          if (result == true || result is Map) {
+            bloc.add(ReferralStatusUpdated(
+              referralId: referral.id,
+              statusId: 4,
+              statusName: 'Got Business',
+            ));
+          }
+        } else if (statusId == 5 || cleanName.contains('got things done') || cleanName.contains('testimonial')) {
+          final result = await Navigator.pushNamed(
+            context,
+            AppRoutes.addTestimonial,
+            arguments: referral,
+          );
+          if (result == true || result is Map) {
+            bloc.add(ReferralStatusUpdated(
+              referralId: referral.id,
+              statusId: 5,
+              statusName: statusName,
+            ));
+          }
+        } else {
+          bloc.add(ReferralStatusUpdated(
+            referralId: referral.id,
+            statusId: statusId,
+            statusName: statusName,
+          ));
+        }
       },
     );
   }

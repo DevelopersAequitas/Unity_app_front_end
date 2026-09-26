@@ -48,14 +48,14 @@ class HomeQuickTabConfig {
       accentColor: Color(0xFFE11D48),
       badge: 'Daily',
       items: [
-        HomeQuickTabItem(id: 'post_ask', title: 'Post an Ask', icon: Icons.post_add_rounded, color: Color(0xFFE11D48), route: AppRoutes.postAsk),
-        HomeQuickTabItem(id: 'open_asks', title: 'Open Asks', icon: Icons.inbox_rounded, color: Color(0xFF7C3AED), route: AppRoutes.openAsks),
         HomeQuickTabItem(id: 'referrals', title: 'Referral', icon: Icons.person_pin_circle_rounded, color: Color(0xFF2563EB), route: AppRoutes.referrals),
         HomeQuickTabItem(id: 'business_deals', title: 'Business Deal', icon: Icons.business_center_rounded, color: Color(0xFF059669), route: AppRoutes.businessDeals),
         HomeQuickTabItem(id: 'p2p_meeting', title: 'P2P Meeting', icon: Icons.groups_rounded, color: Color(0xFF7C3AED), route: AppRoutes.p2pMeetings),
         HomeQuickTabItem(id: 'add_impact', title: 'Add Impact', icon: Icons.volunteer_activism_rounded, color: Color(0xFFF43F5E), route: AppRoutes.lifeImpact),
         HomeQuickTabItem(id: 'testimonials', title: 'Testimonial', icon: Icons.thumb_up_rounded, color: Color(0xFFD97706), route: AppRoutes.testimonials),
         HomeQuickTabItem(id: 'register_visitor', title: 'Register Visitor', icon: Icons.person_add_rounded, color: Color(0xFF10B981), route: AppRoutes.registerVisitor),
+        HomeQuickTabItem(id: 'gratitude_script', title: 'Gratitude Script', icon: Icons.rate_review_rounded, color: Color(0xFF8B5CF6), route: AppRoutes.gratitudeScript),
+        HomeQuickTabItem(id: 'last_month_activity', title: 'Last Month Activity', icon: Icons.history_edu_rounded, color: Color(0xFF0284C7), route: AppRoutes.lastMonthActivity),
       ],
     ),
     HomeQuickMainTab(

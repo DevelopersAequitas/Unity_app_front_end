@@ -1,14 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/circle_category_entity.dart';
+import '../../domain/usecases/get_circle_package_usecase.dart';
 import '../../domain/usecases/submit_circle_join_usecase.dart';
 import 'circle_join_event.dart';
 import 'circle_join_state.dart';
 
 class CircleJoinBloc extends Bloc<CircleJoinEvent, CircleJoinState> {
   final SubmitCircleJoinUseCase submitCircleJoinUseCase;
+  final GetCirclePackageUseCase? getCirclePackageUseCase;
 
   CircleJoinBloc({
     required this.submitCircleJoinUseCase,
+    this.getCirclePackageUseCase,
     CircleCategoryEntity? initialCategory,
     bool initialIsOther = false,
   }) : super(CircleJoinState(
@@ -16,6 +19,7 @@ class CircleJoinBloc extends Bloc<CircleJoinEvent, CircleJoinState> {
           isOtherSelected: initialIsOther,
         )) {
     on<CircleJoinSubcategoryUpdated>(_onSubcategoryUpdated);
+    on<CircleJoinPackageRequested>(_onPackageRequested);
     on<CircleJoinSubmitted>(_onJoinSubmitted);
   }
 
@@ -30,6 +34,23 @@ class CircleJoinBloc extends Bloc<CircleJoinEvent, CircleJoinState> {
     ));
   }
 
+  Future<void> _onPackageRequested(
+    CircleJoinPackageRequested event,
+    Emitter<CircleJoinState> emit,
+  ) async {
+    if (getCirclePackageUseCase == null) return;
+    emit(state.copyWith(isPackageLoading: true));
+    try {
+      final packageInfo = await getCirclePackageUseCase!(event.circleId);
+      emit(state.copyWith(
+        isPackageLoading: false,
+        packageInfo: packageInfo,
+      ));
+    } catch (_) {
+      emit(state.copyWith(isPackageLoading: false));
+    }
+  }
+
   Future<void> _onJoinSubmitted(
     CircleJoinSubmitted event,
     Emitter<CircleJoinState> emit,
@@ -39,9 +60,10 @@ class CircleJoinBloc extends Bloc<CircleJoinEvent, CircleJoinState> {
       final req = await submitCircleJoinUseCase(
         circleId: event.circleId,
         reason: event.reason,
-        categoryId: event.defaultSectorId,
+        categoryId: event.defaultSectorId ?? state.selectedSubcategory?.id,
         level4CategoryId:
             state.isOtherSelected ? null : state.selectedSubcategory?.id,
+        isOtherCategory: state.isOtherSelected,
         customCategoryName: event.customCategoryName,
       );
 
